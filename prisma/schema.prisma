@@ -38,6 +38,10 @@ model Recipient {
   specialNeeds    String?       // Optional special care instructions
   
   // Ownership (one-to-many)
+  // NOTE: We keep both ownerId AND CareCircle OWNER role for pragmatic reasons:
+  // - ownerId enables fast ownership queries without joins
+  // - CareCircle enables future shared access features
+  // - When CareCircle is implemented, we'll auto-create OWNER entry in API
   ownerId         String
   owner           User          @relation("PetOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   
@@ -90,12 +94,12 @@ model CareLog {
   activityType  ActivityType
   notes         String?       // Optional details (e.g., "1 cup kibble", "20 min walk")
   
-  timestamp     DateTime      @default(now())
+  // Timestamp - removed redundant 'timestamp' field, using only createdAt
   createdAt     DateTime      @default(now())
   
   @@index([recipientId])
   @@index([userId])
-  @@index([timestamp])
+  @@index([createdAt])  // Index on createdAt for sorting activity timeline
 }
 
 // Enums
