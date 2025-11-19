@@ -1,0 +1,120 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// User model - handles authentication and ownership
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  name          String
+  passwordHash  String
+  
+  // Relationships
+  ownedPets     Recipient[]   @relation("PetOwner")  // Pets this user owns
+  careCircles   CareCircle[]                         // Pets this user can access
+  careLogs      CareLog[]                            // Activities this user logged
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// Recipient (Pet) model - the pets being cared for
+model Recipient {
+  id              String        @id @default(cuid())
+  name            String
+  type            PetType
+  breed           String
+  birthDate       DateTime
+  weight          Float         // in lbs
+  specialNeeds    String?       // Optional special care instructions
+  
+  // Ownership (one-to-many)
+  ownerId         String
+  owner           User          @relation("PetOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  // Relationships
+  careCircles     CareCircle[]  // Who else can access this pet (many-to-many)
+  careLogs        CareLog[]     // Activity history
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@index([ownerId])
+}
+
+// CareCircle - Join table for shared pet access with roles
+model CareCircle {
+  id            String        @id @default(cuid())
+  
+  // Pet being shared
+  recipientId   String
+  recipient     Recipient     @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  
+  // User being granted access
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Access control
+  role          CircleRole    @default(VIEWER)
+  
+  grantedAt     DateTime      @default(now())
+  
+  // Prevent duplicate access grants
+  @@unique([recipientId, userId])
+  @@index([recipientId])
+  @@index([userId])
+}
+
+// CareLog - Activity records (who did what when)
+model CareLog {
+  id            String        @id @default(cuid())
+  
+  // Which pet
+  recipientId   String
+  recipient     Recipient     @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  
+  // Who logged it
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // What happened
+  activityType  ActivityType
+  notes         String?       // Optional details (e.g., "1 cup kibble", "20 min walk")
+  
+  timestamp     DateTime      @default(now())
+  createdAt     DateTime      @default(now())
+  
+  @@index([recipientId])
+  @@index([userId])
+  @@index([timestamp])
+}
+
+// Enums
+enum PetType {
+  DOG
+  CAT
+}
+
+enum CircleRole {
+  OWNER      // Full CRUD on pet
+  CAREGIVER  // Can log activities, view details
+  VIEWER     // Read-only access
+}
+
+enum ActivityType {
+  FEED
+  WALK
+  MEDICATE
+  BATHROOM
+  ACCIDENT
+  VOMIT
+}
