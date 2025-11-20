@@ -93,3 +93,45 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+// GET /api/pets - Get all pets for the logged-in user
+export async function GET(request: NextRequest) {
+  try {
+    // Step 1: Check if user is logged in
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'You must be logged in to view pets' },
+        { status: 401 }
+      );
+    }
+
+    // Step 2: Fetch all pets for this user
+    const pets = await prisma.recipient.findMany({
+      where: {
+        ownerId: session.user.id
+      },
+      orderBy: {
+        createdAt: 'desc' // Newest first
+      }
+    });
+
+    console.log(`✅ Found ${pets.length} pets for user:`, session.user.email);
+
+    // Step 3: Return the pets
+    return NextResponse.json(
+      { 
+        pets,
+        count: pets.length
+      },
+      { status: 200 }
+    );
+    
+  } catch (error) {
+    console.error('❌ Error in GET /api/pets:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch pets' },
+      { status: 500 }
+    );
+  }
+}
