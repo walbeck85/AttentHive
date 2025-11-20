@@ -13,7 +13,7 @@ type Pet = {
   createdAt: string;
 };
 
-export default function PetList() {
+export default function PetList({ refreshTrigger }: { refreshTrigger?: number }) {
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +52,7 @@ export default function PetList() {
     };
 
     fetchPets();
-  }, []);
+}, [refreshTrigger]);
 
   if (loading) {
     return (
