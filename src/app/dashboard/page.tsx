@@ -2,13 +2,19 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import AddPetForm from '@/components/pets/AddPetForm';
 import PetList from '@/components/pets/PetList';
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handlePetAdded = () => {
+    // Increment to trigger refresh
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -54,13 +60,13 @@ export default function DashboardPage() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           {/* Add Pet Form */}
-          <AddPetForm />
+          <AddPetForm onPetAdded={handlePetAdded} />
 
           {/* Divider */}
           <div className="my-8 border-t border-gray-300"></div>
 
           {/* Pet List */}
-          <PetList />
+          <PetList refreshTrigger={refreshTrigger} />
         </div>
       </main>
     </div>

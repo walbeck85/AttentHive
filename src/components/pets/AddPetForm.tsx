@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-export default function AddPetForm() {
+export default function AddPetForm({ onPetAdded }: { onPetAdded?: () => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -46,10 +46,16 @@ export default function AddPetForm() {
           setError(data.error || 'Something went wrong');
         }
       } else {
-        setSuccess(true);
-        (e.target as HTMLFormElement).reset();
-        setTimeout(() => setSuccess(false), 3000);
-      }
+  setSuccess(true);
+  // Clear form
+  (e.target as HTMLFormElement).reset();
+  // Clear success message after 3 seconds
+  setTimeout(() => setSuccess(false), 3000);
+  // Call the callback to refresh pet list
+  if (onPetAdded) {
+    onPetAdded();
+  }
+}
     } catch (err) {
       setError('Failed to connect to server');
     } finally {
