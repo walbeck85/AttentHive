@@ -4,6 +4,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import AddPetForm from '@/components/pets/AddPetForm';
+import PetList from '@/components/pets/PetList';
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -52,7 +53,14 @@ export default function DashboardPage() {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
+          {/* Add Pet Form */}
           <AddPetForm />
+
+          {/* Divider */}
+          <div className="my-8 border-t border-gray-300"></div>
+
+          {/* Pet List */}
+          <PetList />
         </div>
       </main>
     </div>
