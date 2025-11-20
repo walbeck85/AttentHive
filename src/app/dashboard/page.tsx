@@ -3,6 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import AddPetForm from '@/components/pets/AddPetForm';
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -51,22 +52,7 @@ export default function DashboardPage() {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <div className="border-4 border-dashed border-gray-200 rounded-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Welcome, {session.user?.name}! 🎉
-            </h2>
-            <p className="text-gray-600 mb-4">
-              You're successfully logged in to Mimamori.
-            </p>
-            <div className="bg-green-50 border border-green-200 rounded-md p-4">
-              <p className="text-sm text-green-800 font-semibold">
-                ✅ Authentication working!
-              </p>
-              <p className="text-sm text-green-700 mt-2">
-                Next steps: Build pet dashboard, activity logging, and care circles.
-              </p>
-            </div>
-          </div>
+          <AddPetForm />
         </div>
       </main>
     </div>
