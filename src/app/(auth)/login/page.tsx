@@ -1,21 +1,31 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
-import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { signIn, useSession } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { data: session } = useSession();
+  const searchParams = useSearchParams();
 
-  const handleSubmit = async (e: FormEvent) => {
+  const signupSuccess = searchParams.get('signup') === 'success';
+
+  useEffect(() => {
+    if (session) {
+      router.push('/dashboard');
+    }
+  }, [session, router]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
+    setIsLoading(true);
 
     try {
       const result = await signIn('credentials', {
@@ -25,97 +35,108 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError(result.error);
-      } else {
+        setError('Invalid email or password');
+      } else if (result?.ok) {
         router.push('/dashboard');
-        router.refresh();
       }
-    } catch (error) {
+    } catch (err) {
       setError('Something went wrong. Please try again.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to Mimamori
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            見守り - Watching over your pets
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#FAF7F2' }}>
+      <div className="max-w-md w-full bg-white shadow-lg p-8" style={{ borderRadius: '16px' }}>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-2" style={{ color: '#D17D45' }}>
+            Mimamori
+          </h1>
+          <p className="text-sm" style={{ color: '#6B6B6B' }}>
+            Welcome back! Sign in to your account.
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
+        {signupSuccess && (
+          <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: '#E8F5E9', color: '#2E7D32', border: '2px solid #8BA888' }}>
+            <p className="text-sm font-medium">✅ Account created! Please sign in.</p>
+          </div>
+        )}
 
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-              />
-            </div>
+        {error && (
+          <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: '#FFEBEE', color: '#C62828', border: '2px solid #EF5350' }}>
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label htmlFor="email" className="block text-sm font-semibold mb-2" style={{ color: '#4A4A4A' }}>
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-4 py-3 border-2 focus:outline-none transition-all"
+              style={{
+                borderRadius: '12px',
+                borderColor: '#F4D5B8',
+                backgroundColor: '#FEFEFE'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#D17D45'}
+              onBlur={(e) => e.target.style.borderColor = '#F4D5B8'}
+            />
           </div>
 
           <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
+            <label htmlFor="password" className="block text-sm font-semibold mb-2" style={{ color: '#4A4A4A' }}>
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-4 py-3 border-2 focus:outline-none transition-all"
+              style={{
+                borderRadius: '12px',
+                borderColor: '#F4D5B8',
+                backgroundColor: '#FEFEFE'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#D17D45'}
+              onBlur={(e) => e.target.style.borderColor = '#F4D5B8'}
+            />
           </div>
 
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
-                Sign up
-              </Link>
-            </p>
-          </div>
-
-          <div className="mt-4 p-4 bg-gray-100 rounded-md">
-            <p className="text-xs text-gray-600 font-semibold mb-2">Test Credentials:</p>
-            <p className="text-xs text-gray-600">Email: test@example.com</p>
-            <p className="text-xs text-gray-600">Password: password123</p>
-          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-4 px-6 font-semibold text-white text-lg transition-all shadow-md"
+            style={{
+              borderRadius: '12px',
+              backgroundColor: isLoading ? '#D1D5DB' : '#D17D45',
+              cursor: isLoading ? 'not-allowed' : 'pointer'
+            }}
+            onMouseEnter={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#B8663D')}
+            onMouseLeave={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#D17D45')}
+          >
+            {isLoading ? 'Signing in...' : 'Sign in'}
+          </button>
         </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm" style={{ color: '#6B6B6B' }}>
+            Don't have an account?{' '}
+            <Link href="/signup" className="font-semibold hover:underline" style={{ color: '#D17D45' }}>
+              Sign up
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
