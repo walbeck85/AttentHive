@@ -202,18 +202,14 @@ See `prisma/schema.prisma` for the complete data model.
    - `NEXTAUTH_URL` (your Vercel URL)
 4. Deploy!
 
-## Development Timeline
+## Project Instructions
+### Testing Authenticated API Routes
 
-- **Week 1 (Nov 17-23)**: Foundation + Auth
-- **Week 2 (Nov 24-30)**: Pet CRUD + CareLog System
-- **Week 3 (Dec 1-6)**: Stretch Goals + Polish + Submission
+When testing routes that require authentication:
+- ❌ **curl won't work** - it doesn't have login cookies
+- ✅ **Browser console works** - it has the session cookies
+- ✅ **Thunder Client can work** - if you configure cookies
+- ✅ **UI forms work** - they automatically send cookies
 
-**Due Date**: December 6, 2025
+For quick testing during development, use the browser console with fetch().
 
-## License
-
-MIT
-
-## Author
-
-Will Albeck - Software Engineering Bootcamp Student

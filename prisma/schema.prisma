@@ -33,6 +33,7 @@ model Recipient {
   name            String
   type            PetType
   breed           String
+  gender          Gender
   birthDate       DateTime
   weight          Float         // in lbs
   specialNeeds    String?       // Optional special care instructions
@@ -106,6 +107,11 @@ model CareLog {
 enum PetType {
   DOG
   CAT
+}
+
+enum Gender {
+  MALE
+  FEMALE
 }
 
 enum CircleRole {
