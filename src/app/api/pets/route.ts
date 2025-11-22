@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
 // GET /api/pets - Get all pets for the logged-in user
 export async function GET(request: NextRequest) {
   try {
@@ -106,13 +107,30 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Step 2: Fetch all pets for this user
+    // Step 2: Fetch all pets for this user WITH their last activity
+    // We use 'include' to join the CareLogs table
     const pets = await prisma.recipient.findMany({
       where: {
         ownerId: session.user.id
       },
+      include: {
+        careLogs: {
+          take: 1,                // Limit to only 1 record (the most recent)
+          orderBy: {
+            createdAt: 'desc'     // Sort by newest first
+          },
+          include: {
+            user: {               // Join User table to get the caregiver's name
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
+      },
       orderBy: {
-        createdAt: 'desc' // Newest first
+        createdAt: 'desc'         // Sort pets by when they were added
       }
     });
 
