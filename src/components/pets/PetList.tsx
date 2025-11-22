@@ -254,9 +254,13 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
                 }}
               >
                 <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-xl font-bold" style={{ color: '#D17D45' }}>
-                    {pet.name}
-                  </h3>
+                  {/* Connected Pet Name Link */}
+                  <Link href={`/pets/${pet.id}`} className="hover:opacity-80 transition-opacity">
+                    <h3 className="text-xl font-bold" style={{ color: '#D17D45' }}>
+                      {pet.name}
+                    </h3>
+                  </Link>
+                  
                   <span className="text-3xl">
                     {pet.type === 'DOG' ? '🐕' : '🐱'}
                   </span>
