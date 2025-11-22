@@ -15,9 +15,7 @@ export async function POST(request: NextRequest) {
   try {
     // Step 1: Check if user is logged in
     const session = await getServerSession(authOptions);
-    
-    console.log('🔍 DEBUG Session:', JSON.stringify(session, null, 2));
-    
+        
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'You must be logged in to log activities' },
@@ -30,9 +28,7 @@ export async function POST(request: NextRequest) {
     
     const validationResult = createCareLogSchema.safeParse(body);
     
-    if (!validationResult.success) {
-      console.log('❌ Validation failed:', validationResult.error);
-      
+    if (!validationResult.success) {      
       const formattedErrors = validationResult.error.errors.map(err => ({
         field: err.path.join('.'),
         message: err.message
@@ -48,9 +44,6 @@ export async function POST(request: NextRequest) {
     }
 
     const { recipientId, activityType, notes } = validationResult.data;
-
-    console.log('🔍 DEBUG - Looking for pet with ID:', recipientId);
-    console.log('🔍 DEBUG - User ID from session:', session.user.id);
 
     // Step 3: CRITICAL - Verify user has access to this pet
     const pet = await prisma.recipient.findFirst({
@@ -71,10 +64,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    console.log('🔍 DEBUG - Pet found:', pet);
-
     if (!pet) {
-      console.log('❌ Unauthorized: User does not have access to pet:', recipientId);
       return NextResponse.json(
         { error: 'Pet not found or you do not have access to this pet' },
         { status: 403 }
