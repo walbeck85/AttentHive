@@ -17,8 +17,9 @@ type CareLog = {
 
 export default function ActivityLogPage() {
   const router = useRouter();
-  const params = useParams();
-  const petId = params?.id as string;
+  // Next.js 15/16 params typing
+  const params = useParams<{ id: string }>();
+  const petId = params?.id;
 
   // -- State --
   const [logs, setLogs] = useState<CareLog[]>([]);
@@ -32,7 +33,9 @@ export default function ActivityLogPage() {
     if (!petId) return;
 
     const fetchLogs = async () => {
+      setLoading(true); // Reset loading state on ID change
       try {
+        console.log(`🔍 Fetching logs for Pet ID: ${petId}`);
         const response = await fetch(`/api/pets/${petId}/care-logs`);
         const data = await response.json();
 
@@ -43,6 +46,7 @@ export default function ActivityLogPage() {
         setLogs(data.logs);
         setPetName(data.petName);
       } catch (err) {
+        console.error(err);
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);

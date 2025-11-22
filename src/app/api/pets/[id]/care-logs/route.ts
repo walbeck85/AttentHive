@@ -3,16 +3,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-// Context type for the dynamic route params
-type RouteContext = {
-  params: {
-    id: string;
-  };
-};
-
 // GET /api/pets/[id]/care-logs
 // Fetches the full activity history for a specific pet
-export async function GET(request: NextRequest, context: RouteContext) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     // 1. Check Authentication
     const session = await getServerSession(authOptions);
@@ -24,14 +20,17 @@ export async function GET(request: NextRequest, context: RouteContext) {
       );
     }
 
-    // await params in case of future Next.js versions, though in 14 it's synchronous
-    const { id: petId } = context.params;
+    // 2. Await params to ensure we get the ID correctly (CRITICAL FIX)
+    const { id: petId } = await params;
 
-    // 2. Authorization: Verify the user has access to this pet
-    // We check if the user is the OWNER or a member of the CARE CIRCLE
+    if (!petId) {
+      return NextResponse.json({ error: 'Invalid Pet ID' }, { status: 400 });
+    }
+
+    // 3. Authorization: Verify the user has access to this SPECIFIC pet
     const pet = await prisma.recipient.findFirst({
       where: {
-        id: petId,
+        id: petId, // Must match exact ID
         OR: [
           { ownerId: session.user.id },
           {
@@ -50,7 +49,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       );
     }
 
-    // 3. Fetch the Care Logs
+    // 4. Fetch the Care Logs
     const logs = await prisma.careLog.findMany({
       where: {
         recipientId: petId
@@ -67,8 +66,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
         }
       }
     });
-
-    console.log(`✅ Fetched ${logs.length} logs for pet: ${pet.name}`);
 
     return NextResponse.json(
       { 
