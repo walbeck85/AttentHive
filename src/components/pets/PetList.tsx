@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import ConfirmActionModal from './ConfirmActionModal';
 
-// 1. Update Types to include the new careLogs structure
+// 1. Types
 type CareLog = {
   id: string;
   activityType: 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
@@ -25,7 +26,7 @@ type Pet = {
   birthDate: string;
   weight: number;
   createdAt: string;
-  careLogs: CareLog[]; // Added this relation
+  careLogs: CareLog[];
 };
 
 type PendingAction = {
@@ -35,13 +36,15 @@ type PendingAction = {
 } | null;
 
 export default function PetList({ refreshTrigger }: { refreshTrigger?: number }) {
-  const { data: session } = useSession(); // Get current session for "You" logic
+  const { data: session } = useSession();
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // -- Helpers --
 
   const calculateAge = (birthDate: string) => {
     const birth = new Date(birthDate);
@@ -55,7 +58,6 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
     return age;
   };
 
-  // 2. Helper to format time (requested in handoff)
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -70,7 +72,6 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
     return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
   };
 
-  // 3. Helper for Activity Styling
   const getActivityConfig = (type: string) => {
     switch (type) {
       case 'FEED': return { icon: '🍽️', verb: 'fed', color: '#D17D45' }; // Brand Orange
@@ -80,6 +81,8 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
       default: return { icon: '📝', verb: 'logged activity for', color: '#6B6B6B' };
     }
   };
+
+  // -- Effects --
 
   useEffect(() => {
     const fetchPets = async () => {
@@ -101,6 +104,8 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
 
     fetchPets();
   }, [refreshTrigger]);
+
+  // -- Handlers --
 
   const handleQuickAction = (petId: string, petName: string, actionType: 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT') => {
     setPendingAction({ petId, petName, actionType });
@@ -137,20 +142,18 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
         setSuccessMessage(null);
       }, 3000);
 
-      // Optimistic Update: 
-      // Immediately update the UI state so we don't have to wait for a re-fetch
-      // This makes the app feel instant
+      // Optimistic Update
       setPets(currentPets => currentPets.map(pet => {
         if (pet.id === pendingAction.petId) {
           return {
             ...pet,
             careLogs: [{
-              id: 'temp-id', // Temporary ID
+              id: Date.now().toString(),
               activityType: pendingAction.actionType,
               notes: null,
               createdAt: new Date().toISOString(),
               user: {
-                id: session?.user?.id || 'unknown', // Fallback ID
+                id: session?.user?.name || 'unknown',
                 name: session?.user?.name || 'You'
               }
             }]
@@ -172,6 +175,8 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
   const handleCancelAction = () => {
     setPendingAction(null);
   };
+
+  // -- Render States --
 
   if (loading) {
     return (
@@ -203,6 +208,8 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
     );
   }
 
+  // -- Main Render --
+
   return (
     <>
       {successMessage && (
@@ -221,11 +228,9 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {pets.map((pet) => {
-            // Extract last activity logic
             const lastLog = pet.careLogs && pet.careLogs[0];
             const activityConfig = lastLog ? getActivityConfig(lastLog.activityType) : null;
-            const isCurrentUser = lastLog?.user.name === session?.user?.name; 
-            // Checking name match as robust fallback
+            const isCurrentUser = lastLog?.user.name === session?.user?.name;
             const displayName = isCurrentUser ? 'You' : lastLog?.user.name;
 
             return (
@@ -295,11 +300,20 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
                   </div>
                 </div>
 
-                {/* --- NEW: Recent Activity Section --- */}
+                {/* --- Recent Activity Section --- */}
                 <div className="mt-6 pt-4 border-t" style={{ borderColor: '#F4D5B8' }}>
-                  <p className="text-xs font-bold mb-2 uppercase tracking-wide" style={{ color: '#9ca3af' }}>
-                    Recent Activity
-                  </p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-bold uppercase tracking-wide" style={{ color: '#9ca3af' }}>
+                      Recent Activity
+                    </p>
+                    <Link 
+                      href={`/pets/${pet.id}/activity`}
+                      className="text-xs font-medium hover:underline"
+                      style={{ color: '#D17D45' }}
+                    >
+                      View All
+                    </Link>
+                  </div>
                   
                   {lastLog && activityConfig ? (
                     <div className="flex items-center text-sm rounded-lg p-2" style={{ backgroundColor: '#FAF7F2' }}>
@@ -322,9 +336,8 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
                     </div>
                   )}
                 </div>
-                {/* ------------------------------------ */}
 
-                {/* Quick Actions Section */}
+                {/* --- Quick Actions Section --- */}
                 <div className="mt-4 pt-4 border-t" style={{ borderColor: '#F4D5B8' }}>
                   <p className="text-xs font-semibold mb-3" style={{ color: '#4A4A4A' }}>
                     Quick Actions:
