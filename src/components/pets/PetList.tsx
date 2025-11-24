@@ -17,7 +17,7 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
   const [pets, setPets] = useState<PetData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Modal & Action State
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -40,7 +40,7 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
     fetchPets();
   }, [refreshTrigger]);
 
-  // API Handler
+  // API Handler for quick actions
   const handleConfirmAction = async () => {
     if (!pendingAction || isSubmitting) return;
     setIsSubmitting(true);
@@ -58,29 +58,33 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
 
       if (!response.ok) throw new Error('Failed to log activity');
 
-      // Success Feedback
-      setSuccessMessage(`✅ Logged ${pendingAction.actionType.toLowerCase()} for ${pendingAction.petName}!`);
-      setTimeout(() => setSuccessMessage(null), 3000);
+      // Success feedback
+      setSuccessMessage(
+        `Logged ${pendingAction.actionType.toLowerCase()} for ${pendingAction.petName}.`,
+      );
+      setTimeout(() => setSuccessMessage(null), 2500);
 
-      // Optimistic UI Update
-      setPets(current => current.map(pet => {
-        if (pet.id === pendingAction.petId) {
-          return {
-            ...pet,
-            careLogs: [{
-              id: Date.now().toString(),
-              activityType: pendingAction.actionType,
-              createdAt: new Date().toISOString(),
-              user: { name: session?.user?.name || 'You' }
-            }]
-          };
-        }
-        return pet;
-      }));
-
+      // Optimistic UI update – prepend a new log
+      setPets((current) =>
+        current.map((pet) =>
+          pet.id === pendingAction.petId
+            ? {
+                ...pet,
+                careLogs: [
+                  {
+                    id: Date.now().toString(),
+                    activityType: pendingAction.actionType,
+                    createdAt: new Date().toISOString(),
+                    user: { name: session?.user?.name || 'You' },
+                  },
+                  ...(pet.careLogs || []),
+                ],
+              }
+            : pet,
+        ),
+      );
     } catch (err) {
       console.error(err);
-      // Optional: Use a better UI notification here instead of alert in future polish
       alert('Failed to log activity. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -89,41 +93,67 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
   };
 
   // Loading / Error / Empty States
-  if (loading) return <div className="max-w-6xl mx-auto p-6 text-[#4A4A4A]">Loading pets...</div>;
-  if (error) return <div className="max-w-6xl mx-auto p-6 text-red-500">{error}</div>;
-  if (pets.length === 0) return (
-    <div className="max-w-6xl mx-auto p-6 text-center py-12 bg-white rounded-xl border-2 border-dashed border-[#F4D5B8]">
-      <p className="text-lg text-[#4A4A4A]">No pets yet. Add your first pet above! 🐾</p>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="mm-section">
+        <p className="mm-muted">Loading inventory...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mm-section">
+        <p className="text-sm text-red-600">{error}</p>
+      </div>
+    );
+  }
 
   return (
-    <>
-      {/* Success Toast */}
+    <section className="mm-section space-y-6">
+      {/* Toast */}
       {successMessage && (
-        <div className="fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg bg-[#4CAF50] text-white animate-fade-in">
+        <div className="fixed bottom-4 right-4 z-50 rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-lg">
           {successMessage}
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto p-6">
-        <h2 className="text-3xl font-bold mb-6 text-[#D17D45]">
-          My Pets ({pets.length})
-        </h2>
+      {/* Header for list section */}
+      <header className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-[#382110]">
+            Manage your home ({pets.length})
+          </h2>
+          <p className="mm-muted text-sm">
+            Log care for each member of your household.
+          </p>
+        </div>
+      </header>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {/* Card grid */}
+      {pets.length > 0 ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {pets.map((pet) => (
             <PetCard
               key={pet.id}
               pet={pet}
               currentUserName={session?.user?.name}
-              onQuickAction={(id, name, type) => setPendingAction({ 
-                petId: id, petName: name, actionType: type 
-              })}
+              onQuickAction={(id, name, type) =>
+                setPendingAction({ petId: id, petName: name, actionType: type })
+              }
             />
           ))}
         </div>
-      </div>
+      ) : (
+        <div className="rounded-lg border border-dashed border-[#E5D9C6] bg-white px-6 py-12 text-center">
+          <p className="text-base font-medium text-[#382110]">
+            No pets added yet.
+          </p>
+          <p className="mm-muted mt-1 text-sm">
+            Use the “Add New Pet” panel above to start your home inventory.
+          </p>
+        </div>
+      )}
 
       {/* Shared Modal */}
       {pendingAction && (
@@ -135,6 +165,6 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
           onCancel={() => setPendingAction(null)}
         />
       )}
-    </>
+    </section>
   );
 }

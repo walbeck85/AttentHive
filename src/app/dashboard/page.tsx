@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AddPetForm from '@/components/pets/AddPetForm';
@@ -12,7 +12,7 @@ export default function DashboardPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handlePetAdded = () => {
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   useEffect(() => {
@@ -23,8 +23,10 @@ export default function DashboardPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF7F2' }}>
-        <p className="text-gray-600">Loading...</p>
+      <div className="mm-page">
+        <main className="mm-shell flex items-center justify-center">
+          <p className="mm-muted">Loading…</p>
+        </main>
       </div>
     );
   }
@@ -34,46 +36,47 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAF7F2' }}>
-      {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b" style={{ borderColor: '#F4D5B8' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold" style={{ color: '#D17D45' }}>
-                Mimamori
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm" style={{ color: '#4A4A4A' }}>
-                {session.user?.email}
-              </span>
-              <button
-                onClick={() => signOut({ callbackUrl: '/login' })}
-                className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
-                style={{ backgroundColor: '#D17D45' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#B8663D'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#D17D45'}
-              >
-                Sign out
-              </button>
+    <div className="mm-page">
+      <main className="mm-shell">
+        {/* Hero header */}
+        <section className="mm-section mb-6">
+          <div className="rounded-lg border border-[#E5D9C6] bg-[#FDF7EE] px-4 py-4 sm:px-6 sm:py-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="mm-kicker text-[11px] tracking-[0.22em] text-[#8B7A65]">
+                  Dashboard
+                </p>
+                <h1 className="mm-h1 mt-1">Manage your home</h1>
+                <p className="mm-muted mt-1 text-sm max-w-xl">
+                  Keep track of pets, plants, family, and housemates you&apos;re
+                  caring for in one place.
+                </p>
+              </div>
+
+              <div className="flex flex-col items-start gap-1 text-xs sm:items-end">
+                <p className="mm-muted">
+                  Signed in as{' '}
+                  <span className="font-semibold text-mm-ink">
+                    {session.user?.email}
+                  </span>
+                </p>
+                <p className="text-[11px] uppercase tracking-wide text-[#A08C72]">
+                  Household dashboard
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </nav>
+        </section>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          {/* Add Pet Form */}
+        {/* Add Pet panel */}
+        <section className="mm-section mb-8">
           <AddPetForm onPetAdded={handlePetAdded} />
+        </section>
 
-          {/* Divider */}
-          <div className="my-8"></div>
-
-          {/* Pet List */}
+        {/* Pet grid / list */}
+        <section className="mm-section">
           <PetList refreshTrigger={refreshTrigger} />
-        </div>
+        </section>
       </main>
     </div>
   );

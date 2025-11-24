@@ -1,252 +1,344 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default function AddPetForm({ onPetAdded }: { onPetAdded?: () => void }) {
+type AddPetFormProps = {
+  onPetAdded?: () => void;
+};
+
+type FormState = {
+  name: string;
+  type: 'DOG' | 'CAT';
+  breed: string;
+  gender: 'MALE' | 'FEMALE';
+  birthDate: string;
+  weight: string;
+  weightUnit: 'lbs' | 'kg';
+};
+
+type FieldErrors = Partial<Record<keyof FormState, string>>;
+
+export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Form State
+  const [formData, setFormData] = useState<FormState>({
+    name: '',
+    type: 'DOG',
+    breed: '',
+    gender: 'MALE',
+    birthDate: '',
+    weight: '',
+    weightUnit: 'lbs',
+  });
+
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      type: 'DOG',
+      breed: '',
+      gender: 'MALE',
+      birthDate: '',
+      weight: '',
+      weightUnit: 'lbs',
+    });
+    setFieldErrors({});
+    setError(null);
+  };
+
+  const validate = (data: FormState): FieldErrors => {
+    const errors: FieldErrors = {};
+
+    if (!data.name.trim()) errors.name = 'Name is required.';
+    if (!data.breed.trim()) errors.breed = 'Breed is required.';
+    if (!data.birthDate) errors.birthDate = 'Birth date is required.';
+
+    if (!data.weight.trim()) {
+      errors.weight = 'Weight is required.';
+    } else {
+      const val = parseFloat(data.weight);
+      if (Number.isNaN(val) || val <= 0) {
+        errors.weight = 'Enter a valid weight greater than 0.';
+      }
+    }
+
+    // type, gender, weightUnit have constrained inputs already,
+    // so no extra validation needed beyond presence.
+    return errors;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-    setSuccess(false);
-    setValidationErrors({});
 
-    const formData = new FormData(e.currentTarget);
-    
-    const petData = {
-      name: formData.get('name') as string,
-      type: formData.get('type') as string,
-      breed: formData.get('breed') as string,
-      gender: formData.get('gender') as string,
-      birthDate: formData.get('birthDate') as string,
-      weight: parseFloat(formData.get('weight') as string),
-    };
+    // Client-side validation first
+    const errors = validate(formData);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
-      const response = await fetch('/api/pets', {
+      const numericWeight = parseFloat(formData.weight);
+      const weightInLbs =
+        formData.weightUnit === 'kg' ? numericWeight * 2.20462 : numericWeight;
+
+      const res = await fetch('/api/pets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(petData),
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          type: formData.type,
+          breed: formData.breed.trim(),
+          gender: formData.gender,
+          birthDate: formData.birthDate,
+          weight: weightInLbs,
+        }),
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (!response.ok) {
-        if (data.validationErrors) {
-          const errors: Record<string, string> = {};
-          data.validationErrors.forEach((err: { field: string; message: string }) => {
-            errors[err.field] = err.message;
-          });
-          setValidationErrors(errors);
-        } else {
-          setError(data.error || 'Something went wrong');
-        }
-      } else {
-        setSuccess(true);
-        (e.target as HTMLFormElement).reset();
-        setTimeout(() => setSuccess(false), 3000);
-        if (onPetAdded) {
-          onPetAdded();
-        }
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to add pet');
       }
+
+      resetForm();
+      setIsExpanded(false);
+      router.refresh();
+      if (onPetAdded) onPetAdded();
     } catch (err) {
-      setError('Failed to connect to server');
+      setError(err instanceof Error ? err.message : 'Failed to add pet');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Helper to update a single field and clear its error
+  const updateField = <K extends keyof FormState>(
+    key: K,
+    value: FormState[K]
+  ) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  // -------- Collapsed CTA --------
+  if (!isExpanded) {
+    return (
+      <div className="mm-card mb-6 border border-[#E1D6C5] bg-[#FBF4E8]">
+        <button
+          type="button"
+          onClick={() => setIsExpanded(true)}
+          className="flex w-full items-center justify-between px-4 py-3 text-left"
+        >
+          <div>
+            <p className="text-[11px] font-semibold tracking-[0.12em] text-[#A68A5B] uppercase">
+              Add new pet
+            </p>
+            <p className="mt-1 text-sm text-[#5C4A34]">
+              Create a profile for another member of your household.
+            </p>
+          </div>
+          <div className="ml-4 text-xl font-semibold text-[#3E6B3A]">›</div>
+        </button>
+      </div>
+    );
+  }
+
+  // -------- Expanded form --------
   return (
-    <div className="max-w-2xl mx-auto p-8 bg-white shadow-lg" style={{ borderRadius: '16px' }}>
-      <h2 className="text-3xl font-bold mb-6" style={{ color: '#D17D45' }}>
+    <div className="mm-card mb-6 border border-[#E1D6C5] bg-[#FFFDF8] p-4 md:p-6 relative">
+      <button
+        type="button"
+        onClick={() => {
+          resetForm();
+          setIsExpanded(false);
+        }}
+        className="absolute top-3 right-3 text-sm text-[#B39A80] hover:text-[#5C4A34] transition-colors"
+      >
+        ✕
+      </button>
+
+      <h2 className="mb-4 text-lg font-semibold tracking-[0.16em] text-[#A68A5B] uppercase">
         Add New Pet
       </h2>
 
-      {success && (
-        <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: '#E8F5E9', color: '#2E7D32', border: '2px solid #8BA888' }}>
-          <span className="text-lg">✅ Pet added successfully!</span>
-        </div>
-      )}
-
       {error && (
-        <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: '#FFEBEE', color: '#C62828', border: '2px solid #EF5350' }}>
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Name */}
-        <div>
-          <label htmlFor="name" className="block text-sm font-semibold mb-2" style={{ color: '#4A4A4A' }}>
-            Name <span style={{ color: '#D17D45' }}>*</span>
-          </label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            required
-            className="w-full px-4 py-3 border-2 focus:outline-none transition-all"
-            style={{
-              borderRadius: '12px',
-              borderColor: validationErrors.name ? '#EF5350' : '#F4D5B8',
-              backgroundColor: '#FEFEFE'
-            }}
-            onFocus={(e) => e.target.style.borderColor = '#D17D45'}
-            onBlur={(e) => !validationErrors.name && (e.target.style.borderColor = '#F4D5B8')}
-          />
-          {validationErrors.name && (
-            <p className="text-sm mt-1" style={{ color: '#C62828' }}>{validationErrors.name}</p>
-          )}
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          {/* Name */}
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold tracking-[0.12em] text-[#A08C72] uppercase">
+              Name
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => updateField('name', e.target.value)}
+              className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+              placeholder="e.g. Truffle"
+            />
+            {fieldErrors.name && (
+              <p className="mt-1 text-[11px] text-red-600">{fieldErrors.name}</p>
+            )}
+          </div>
+
+          {/* Type */}
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold tracking-[0.12em] text-[#A08C72] uppercase">
+              Type
+            </label>
+            <div className="flex gap-4 text-sm text-[#3A2A18]">
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  name="type"
+                  value="DOG"
+                  checked={formData.type === 'DOG'}
+                  onChange={(e) => updateField('type', e.target.value as FormState['type'])}
+                  className="text-[#3E6B3A] focus:ring-[#3E6B3A]"
+                />
+                <span>Dog</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  name="type"
+                  value="CAT"
+                  checked={formData.type === 'CAT'}
+                  onChange={(e) => updateField('type', e.target.value as FormState['type'])}
+                  className="text-[#3E6B3A] focus:ring-[#3E6B3A]"
+                />
+                <span>Cat</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Breed */}
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold tracking-[0.12em] text-[#A08C72] uppercase">
+              Breed
+            </label>
+            <input
+              type="text"
+              value={formData.breed}
+              onChange={(e) => updateField('breed', e.target.value)}
+              className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+              placeholder="e.g. Corgi"
+            />
+            {fieldErrors.breed && (
+              <p className="mt-1 text-[11px] text-red-600">{fieldErrors.breed}</p>
+            )}
+          </div>
+
+          {/* Gender */}
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold tracking-[0.12em] text-[#A08C72] uppercase">
+              Gender
+            </label>
+            <select
+              value={formData.gender}
+              onChange={(e) =>
+                updateField('gender', e.target.value as FormState['gender'])
+              }
+              className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+            >
+              <option value="MALE">Male</option>
+              <option value="FEMALE">Female</option>
+            </select>
+          </div>
+
+          {/* Birth Date */}
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold tracking-[0.12em] text-[#A08C72] uppercase">
+              Birth Date
+            </label>
+            <input
+              type="date"
+              value={formData.birthDate}
+              onChange={(e) => updateField('birthDate', e.target.value)}
+              className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+            />
+            {fieldErrors.birthDate && (
+              <p className="mt-1 text-[11px] text-red-600">
+                {fieldErrors.birthDate}
+              </p>
+            )}
+          </div>
+
+          {/* Weight + Unit */}
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold tracking-[0.12em] text-[#A08C72] uppercase">
+              Weight
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                step="0.1"
+                value={formData.weight}
+                onChange={(e) => updateField('weight', e.target.value)}
+                className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+                placeholder="e.g. 25"
+              />
+              <select
+                value={formData.weightUnit}
+                onChange={(e) =>
+                  updateField(
+                    'weightUnit',
+                    e.target.value as FormState['weightUnit']
+                  )
+                }
+                className="w-24 rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+              >
+                <option value="lbs">lbs</option>
+                <option value="kg">kg</option>
+              </select>
+            </div>
+            {fieldErrors.weight && (
+              <p className="mt-1 text-[11px] text-red-600">
+                {fieldErrors.weight}
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* Type */}
-        <div>
-          <label htmlFor="type" className="block text-sm font-semibold mb-2" style={{ color: '#4A4A4A' }}>
-            Type <span style={{ color: '#D17D45' }}>*</span>
-          </label>
-          <select
-            id="type"
-            name="type"
-            required
-            className="w-full px-4 py-3 border-2 focus:outline-none transition-all"
-            style={{
-              borderRadius: '12px',
-              borderColor: validationErrors.type ? '#EF5350' : '#F4D5B8',
-              backgroundColor: '#FEFEFE'
+        {/* Actions */}
+        <div className="mt-2 flex justify-end gap-3 border-t border-[#E9DECF] pt-3">
+          <button
+            type="button"
+            onClick={() => {
+              resetForm();
+              setIsExpanded(false);
             }}
-            onFocus={(e) => e.target.style.borderColor = '#D17D45'}
-            onBlur={(e) => !validationErrors.type && (e.target.style.borderColor = '#F4D5B8')}
+            className="rounded-md px-4 py-1.5 text-sm font-medium text-[#6A5740] hover:bg-[#F3E6D3] transition-colors"
           >
-            <option value="">Select type...</option>
-            <option value="DOG">🐕 Dog</option>
-            <option value="CAT">🐱 Cat</option>
-          </select>
-          {validationErrors.type && (
-            <p className="text-sm mt-1" style={{ color: '#C62828' }}>{validationErrors.type}</p>
-          )}
-        </div>
-
-        {/* Breed */}
-        <div>
-          <label htmlFor="breed" className="block text-sm font-semibold mb-2" style={{ color: '#4A4A4A' }}>
-            Breed <span style={{ color: '#D17D45' }}>*</span>
-          </label>
-          <input
-            id="breed"
-            name="breed"
-            type="text"
-            required
-            className="w-full px-4 py-3 border-2 focus:outline-none transition-all"
-            style={{
-              borderRadius: '12px',
-              borderColor: validationErrors.breed ? '#EF5350' : '#F4D5B8',
-              backgroundColor: '#FEFEFE'
-            }}
-            onFocus={(e) => e.target.style.borderColor = '#D17D45'}
-            onBlur={(e) => !validationErrors.breed && (e.target.style.borderColor = '#F4D5B8')}
-          />
-          {validationErrors.breed && (
-            <p className="text-sm mt-1" style={{ color: '#C62828' }}>{validationErrors.breed}</p>
-          )}
-        </div>
-
-        {/* Gender */}
-        <div>
-          <label htmlFor="gender" className="block text-sm font-semibold mb-2" style={{ color: '#4A4A4A' }}>
-            Gender <span style={{ color: '#D17D45' }}>*</span>
-          </label>
-          <select
-            id="gender"
-            name="gender"
-            required
-            className="w-full px-4 py-3 border-2 focus:outline-none transition-all"
-            style={{
-              borderRadius: '12px',
-              borderColor: validationErrors.gender ? '#EF5350' : '#F4D5B8',
-              backgroundColor: '#FEFEFE'
-            }}
-            onFocus={(e) => e.target.style.borderColor = '#D17D45'}
-            onBlur={(e) => !validationErrors.gender && (e.target.style.borderColor = '#F4D5B8')}
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="rounded-md bg-[#3E6B3A] px-5 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#355B32] disabled:opacity-50"
           >
-            <option value="">Select gender...</option>
-            <option value="MALE">Male</option>
-            <option value="FEMALE">Female</option>
-          </select>
-          {validationErrors.gender && (
-            <p className="text-sm mt-1" style={{ color: '#C62828' }}>{validationErrors.gender}</p>
-          )}
+            {isSubmitting ? 'Adding…' : 'Add Pet'}
+          </button>
         </div>
-
-        {/* Birth Date */}
-        <div>
-          <label htmlFor="birthDate" className="block text-sm font-semibold mb-2" style={{ color: '#4A4A4A' }}>
-            Birth Date <span style={{ color: '#D17D45' }}>*</span>
-          </label>
-          <input
-            id="birthDate"
-            name="birthDate"
-            type="date"
-            max={new Date().toISOString().split('T')[0]}
-            required
-            className="w-full px-4 py-3 border-2 focus:outline-none transition-all"
-            style={{
-              borderRadius: '12px',
-              borderColor: validationErrors.birthDate ? '#EF5350' : '#F4D5B8',
-              backgroundColor: '#FEFEFE'
-            }}
-            onFocus={(e) => e.target.style.borderColor = '#D17D45'}
-            onBlur={(e) => !validationErrors.birthDate && (e.target.style.borderColor = '#F4D5B8')}
-          />
-          {validationErrors.birthDate && (
-            <p className="text-sm mt-1" style={{ color: '#C62828' }}>{validationErrors.birthDate}</p>
-          )}
-        </div>
-
-        {/* Weight */}
-        <div>
-          <label htmlFor="weight" className="block text-sm font-semibold mb-2" style={{ color: '#4A4A4A' }}>
-            Weight (lbs) <span style={{ color: '#D17D45' }}>*</span>
-          </label>
-          <input
-            id="weight"
-            name="weight"
-            type="number"
-            step="0.1"
-            min="0"
-            required
-            className="w-full px-4 py-3 border-2 focus:outline-none transition-all"
-            style={{
-              borderRadius: '12px',
-              borderColor: validationErrors.weight ? '#EF5350' : '#F4D5B8',
-              backgroundColor: '#FEFEFE'
-            }}
-            onFocus={(e) => e.target.style.borderColor = '#D17D45'}
-            onBlur={(e) => !validationErrors.weight && (e.target.style.borderColor = '#F4D5B8')}
-          />
-          {validationErrors.weight && (
-            <p className="text-sm mt-1" style={{ color: '#C62828' }}>{validationErrors.weight}</p>
-          )}
-        </div>
-
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full py-4 px-6 font-semibold text-white text-lg transition-all shadow-md"
-          style={{
-            borderRadius: '12px',
-            backgroundColor: isSubmitting ? '#D1D5DB' : '#D17D45',
-            cursor: isSubmitting ? 'not-allowed' : 'pointer'
-          }}
-          onMouseEnter={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = '#B8663D')}
-          onMouseLeave={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = '#D17D45')}
-        >
-          {isSubmitting ? 'Adding Pet...' : 'Add Pet'}
-        </button>
       </form>
     </div>
   );

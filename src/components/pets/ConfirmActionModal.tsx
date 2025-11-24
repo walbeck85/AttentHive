@@ -1,21 +1,44 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-type ConfirmActionModalProps = {
+// Supported quick action types (mirrors PetCard / QuickActions)
+export type ActionType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
+
+export type ConfirmActionModalProps = {
   isOpen: boolean;
   petName: string;
-  actionType: 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
+  actionType: ActionType;
   onConfirm: () => void;
   onCancel: () => void;
 };
 
-const ACTION_DISPLAY = {
-  FEED: { emoji: '🍽️', text: 'feed', color: '#D17D45' },
-  WALK: { emoji: '🚶', text: 'walk', color: '#D17D45' },
-  MEDICATE: { emoji: '💊', text: 'medicate', color: '#D17D45' },
-  ACCIDENT: { emoji: '⚠️', text: 'record accident for', color: '#C62828' },
+// Display metadata for each action (text, emoji, brand color)
+const ACTION_DISPLAY: Record<
+  ActionType,
+  { text: string; emoji: string; color: string }
+> = {
+  FEED: {
+    text: 'a meal',
+    emoji: '🍽️',
+    color: '#D17D45', // warm orange
+  },
+  WALK: {
+    text: 'a walk',
+    emoji: '🚶‍♀️',
+    color: '#3E5C2E', // green
+  },
+  MEDICATE: {
+    text: 'medication',
+    emoji: '💊',
+    color: '#2563EB', // blue
+  },
+  ACCIDENT: {
+    text: 'an accident',
+    emoji: '⚠️',
+    color: '#C62828', // red
+  },
 };
 
 export default function ConfirmActionModal({
@@ -27,82 +50,130 @@ export default function ConfirmActionModal({
 }: ConfirmActionModalProps) {
   const [mounted, setMounted] = useState(false);
 
+  // Only render on the client + lock body scroll while open
   useEffect(() => {
     setMounted(true);
-  }, []);
+
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   if (!isOpen || !mounted) return null;
 
+  const portalContainer =
+    typeof document !== 'undefined' ? document.body : null;
+  if (!portalContainer) return null;
+
   const action = ACTION_DISPLAY[actionType];
 
-  const modalContent = (
+  return createPortal(
     <div
-  className="fixed inset-0 flex items-center justify-center"
-  style={{ 
-    zIndex: 9999,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  }}
-  onClick={onCancel}
->
+      role="dialog"
+      aria-modal="true"
+      // Use inline styles to guarantee full-screen overlay + centering,
+      // regardless of any Tailwind / global CSS oddities.
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1.5rem',
+      }}
+      className="font-sans"
+    >
+      {/* Backdrop */}
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={onCancel}
+        className="absolute inset-0 bg-black/50"
+      />
+
+      {/* Modal content */}
       <div
-  className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4"
-  style={{ 
-    border: '2px solid #F4D5B8',
-    backgroundColor: 'white',
-    opacity: 1
-  }}
-  onClick={(e) => e.stopPropagation()}
->
-        <div className="text-center mb-6">
-          <div className="text-5xl mb-3">{action.emoji}</div>
-          <h2 className="text-2xl font-bold" style={{ color: '#D17D45' }}>
-            Confirm Action
+        onClick={(e) => e.stopPropagation()}
+        className="
+          relative w-full max-w-md
+          mm-card
+          px-6 py-6
+        "
+      >
+        {/* Close icon */}
+        <button
+          type="button"
+          onClick={onCancel}
+          aria-label="Cancel"
+          className="
+            absolute right-4 top-4
+            text-xs font-bold tracking-[0.16em]
+            uppercase text-[#7A6A56]
+            hover:text-[#382110]
+          "
+        >
+          ✕
+        </button>
+
+        {/* Header */}
+        <div className="flex flex-col items-center text-center gap-3 mb-5 mt-1">
+          <div className="text-4xl">{action.emoji}</div>
+          <h2 className="text-xl font-extrabold tracking-[0.08em] uppercase text-[#382110]">
+            Confirm action
           </h2>
         </div>
 
-        <p className="text-center text-lg mb-6" style={{ color: '#4A4A4A' }}>
-          Log <span className="font-bold" style={{ color: action.color }}>{action.text}</span> for{' '}
-          <span className="font-bold" style={{ color: '#D17D45' }}>{petName}</span>?
+        {/* Body copy */}
+        <p className="text-sm text-center text-[#7A6A56] mb-7">
+          Log{' '}
+          <span className="font-bold" style={{ color: action.color }}>
+            {action.text}
+          </span>{' '}
+          for{' '}
+          <span className="font-bold text-[#382110]">
+            {petName}
+          </span>
+          ?
         </p>
 
+        {/* Buttons */}
         <div className="flex gap-3">
           <button
+            type="button"
             onClick={onCancel}
-            className="flex-1 px-4 py-3 rounded-lg font-medium transition-colors"
-            style={{ 
-              backgroundColor: '#F4D5B8',
-              color: '#4A4A4A'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#E8C9AC'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F4D5B8'}
+            className="
+              flex-1 px-4 py-2 rounded-full
+              text-xs font-bold uppercase tracking-[0.16em]
+              border border-[#E5D9C6]
+              text-[#7A6A56]
+              hover:bg-[#F5F3EA]
+              transition-colors
+            "
           >
             Cancel
           </button>
           <button
+            type="button"
             onClick={onConfirm}
-            className="flex-1 px-4 py-3 rounded-lg font-medium text-white transition-colors"
+            className="
+              flex-1 px-4 py-2 rounded-full
+              text-xs font-bold uppercase tracking-[0.16em]
+              text-white
+              shadow-sm
+              transition-colors
+            "
             style={{ backgroundColor: action.color }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = actionType === 'ACCIDENT' ? '#B71C1C' : '#B8663D';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = action.color;
-            }}
           >
             Confirm
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    portalContainer
   );
-
-  return modalContent;
 }
