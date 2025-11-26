@@ -108,8 +108,9 @@ export default function ActivityLogPage() {
             <span className="font-medium text-sm hidden sm:inline">Back</span>
           </button>
           <h1 className="text-xl font-bold text-[#4A4A4A] truncate">
-            {petName}'s Activity Log
-          </h1>
+  {petName}
+  {"'s Activity Log"}
+</h1>
         </div>
       </div>
 

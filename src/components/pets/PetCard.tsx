@@ -1,9 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import QuickActions from './QuickActions';
+import { Dog, Cat } from 'lucide-react';
 
-// -- Types (Shared) --
 type ActionType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
 
 type CareLog = {
@@ -30,113 +29,182 @@ type Props = {
   onQuickAction: (petId: string, petName: string, action: ActionType) => void;
 };
 
+// Helpers ------------------------------------------------------
+
+function calculateAge(birthDate: string): number {
+  const birth = new Date(birthDate);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+function formatTimeAgo(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffSecs = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffSecs < 60) return 'just now';
+  const diffMins = Math.floor(diffSecs / 60);
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+}
+
+function getActivityNoun(type: ActionType): string {
+  switch (type) {
+    case 'FEED':
+      return 'a meal';
+    case 'WALK':
+      return 'a walk';
+    case 'MEDICATE':
+      return 'medication';
+    case 'ACCIDENT':
+      return 'an accident';
+    default:
+      return 'care';
+  }
+}
+
+function describeActivity(log: CareLog, currentUserName?: string | null): string {
+  const actor =
+    log.user?.name && log.user.name === currentUserName
+      ? 'You'
+      : log.user?.name || 'Someone';
+
+  const noun = getActivityNoun(log.activityType);
+  return `${actor} logged ${noun}`;
+}
+
+// Component -----------------------------------------------------
+
 export default function PetCard({ pet, currentUserName, onQuickAction }: Props) {
-  
-  // -- Logic moved from PetList --
-  const calculateAge = (birthDate: string) => {
-    const birth = new Date(birthDate);
-    const today = new Date();
-    let age = today.getFullYear() - birth.getFullYear();
-    const m = today.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-    return age;
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffSecs = Math.floor((now.getTime() - date.getTime()) / 1000);
-    if (diffSecs < 60) return 'just now';
-    const diffMins = Math.floor(diffSecs / 60);
-    if (diffMins < 60) return `${diffMins}m ago`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${Math.floor(diffHours / 24)}d ago`;
-  };
-
-  const getActivityConfig = (type: string) => {
-    switch (type) {
-      case 'FEED': return { icon: '🍽️', verb: 'fed', color: '#D17D45' };
-      case 'WALK': return { icon: '🚶', verb: 'walked', color: '#2E7D32' };
-      case 'MEDICATE': return { icon: '💊', verb: 'medicated', color: '#7B1FA2' };
-      case 'ACCIDENT': return { icon: '⚠️', verb: 'reported accident', color: '#C62828' };
-      default: return { icon: '📝', verb: 'logged', color: '#6B6B6B' };
-    }
-  };
-
-  // -- Derived State --
   const lastLog = pet.careLogs?.[0];
-  const activityConfig = lastLog ? getActivityConfig(lastLog.activityType) : null;
-  const displayName = lastLog?.user.name === currentUserName ? 'You' : lastLog?.user.name;
 
   return (
-    <div className="bg-white shadow-lg rounded-2xl border-2 border-[#F4D5B8] p-6 hover:-translate-y-1 hover:shadow-xl hover:border-[#D17D45] transition-all flex flex-col">
-      
-      {/* Header */}
-      <div className="flex justify-between items-start mb-4">
-        <Link href={`/pets/${pet.id}`} className="hover:opacity-70 transition-opacity">
-          <h3 className="text-xl font-bold text-[#D17D45]">{pet.name}</h3>
-        </Link>
-        <span className="text-3xl" role="img" aria-label={pet.type}>
-          {pet.type === 'DOG' ? '🐕' : '🐱'}
-        </span>
-      </div>
-
-      {/* Stats Grid - Cleaner Layout */}
-      <div className="grid grid-cols-2 gap-y-2 text-sm text-[#6B6B6B] mb-4">
-        <div>
-          <span className="font-semibold text-[#4A4A4A]">Breed: </span>{pet.breed}
-        </div>
-        <div>
-          <span className="font-semibold text-[#4A4A4A]">Sex: </span>
-          {pet.gender === 'MALE' ? 'Male' : 'Female'}
-        </div>
-        <div>
-          <span className="font-semibold text-[#4A4A4A]">Age: </span>
-          {calculateAge(pet.birthDate)} yrs
-        </div>
-        <div>
-          <span className="font-semibold text-[#4A4A4A]">Weight: </span>{pet.weight} lbs
-        </div>
-      </div>
-
-      <div className="flex-grow"></div>
-
-      {/* Recent Activity */}
-      <div className="pt-4 border-t border-[#F4D5B8]">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-xs font-bold uppercase tracking-wide text-[#9ca3af]">
-            Recent Activity
-          </span>
-          <Link 
-            href={`/pets/${pet.id}/activity`} 
-            className="text-xs font-medium text-[#D17D45] hover:underline"
-          >
-            View All
-          </Link>
-        </div>
-
-        {lastLog && activityConfig ? (
-          <div className="flex items-center p-2 rounded-lg bg-[#FAF7F2] text-sm">
-            <span className="text-lg mr-3">{activityConfig.icon}</span>
-            <div className="flex flex-col">
-              <span className="font-medium text-[#4A4A4A]">
-                {displayName} <span style={{ color: activityConfig.color }}>{activityConfig.verb}</span>
-              </span>
-              <span className="text-xs text-gray-400">
-                {formatTimeAgo(lastLog.createdAt)}
-              </span>
-            </div>
+    <article className="mm-card group">
+      {/* HEADER */}
+      <header className="flex items-center justify-between border-b border-[#E5D9C6] bg-[#FDF7EE] px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#D17D45] bg-[#FAF3E7]">
+            {pet.type === 'DOG' ? (
+              <Dog className="h-5 w-5 text-[#D17D45]" />
+            ) : (
+              <Cat className="h-5 w-5 text-[#D17D45]" />
+            )}
           </div>
-        ) : (
-          <div className="text-sm text-gray-400 italic p-2">No recent activity</div>
+
+          <div>
+            <h3 className="font-serif text-lg font-bold text-[#382110] leading-tight">
+              {pet.name}
+            </h3>
+            <p className="text-sm font-medium uppercase tracking-wide text-[#A08C72]">
+              {pet.breed}
+            </p>
+          </div>
+        </div>
+
+        <div className="text-right text-sm text-[#A08C72]">
+          <div>
+            {calculateAge(pet.birthDate)} yrs • {pet.weight} lbs
+          </div>
+          <div>{pet.gender === 'MALE' ? 'Male' : 'Female'}</div>
+        </div>
+      </header>
+
+      {/* BODY */}
+      <div className="px-5 py-4 text-sm text-[#7A6A56]">
+        <dl className="grid grid-cols-3 gap-y-2 text-xs uppercase tracking-wide text-[#B09A7C]">
+          <div>
+            <dt>Age</dt>
+            <dd className="mt-1 font-medium normal-case text-[#382110]">
+              {calculateAge(pet.birthDate)} yrs
+            </dd>
+          </div>
+
+          <div>
+            <dt>Weight</dt>
+            <dd className="mt-1 font-medium normal-case text-[#382110]">
+              {pet.weight} lbs
+            </dd>
+          </div>
+
+          <div>
+            <dt>Sex</dt>
+            <dd className="mt-1 font-medium normal-case text-[#382110]">
+              {pet.gender === 'MALE' ? 'Male' : 'Female'}
+            </dd>
+          </div>
+        </dl>
+
+        {/* Last log */}
+        {lastLog && (
+          <div className="mt-4 border-t border-dotted border-[#E5D9C6] pt-3 text-sm text-[#7A6A56]">
+            <span className="font-semibold">
+              {describeActivity(lastLog, currentUserName)}
+            </span>{' '}
+            <span className="text-[#A08C72]">
+              {formatTimeAgo(lastLog.createdAt)}
+            </span>
+          </div>
         )}
       </div>
 
-      {/* Quick Actions Component */}
-      <QuickActions 
-        onAction={(type) => onQuickAction(pet.id, pet.name, type)} 
-      />
-    </div>
+      {/* FOOTER */}
+      <footer className="border-t border-[#E5D9C6] bg-[#FCF5EA] px-5 py-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Quick actions left */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => onQuickAction(pet.id, pet.name, 'FEED')}
+              className="mm-chip"
+            >
+              Feed
+            </button>
+
+            <button
+              onClick={() => onQuickAction(pet.id, pet.name, 'WALK')}
+              className="mm-chip"
+            >
+              Walk
+            </button>
+
+            <button
+              onClick={() => onQuickAction(pet.id, pet.name, 'MEDICATE')}
+              className="mm-chip"
+            >
+              Meds
+            </button>
+
+            <button
+              onClick={() => onQuickAction(pet.id, pet.name, 'ACCIDENT')}
+              className="mm-chip mm-chip--danger"
+            >
+              Oops
+            </button>
+          </div>
+
+          {/* Details / History right */}
+          <div className="flex flex-wrap gap-2 sm:justify-end">
+            <Link
+              href={`/pets/${pet.id}`}
+              className="mm-chip mm-chip--solid-primary"
+            >
+              + Details
+            </Link>
+
+            <Link
+              href={`/pets/${pet.id}/activity`}
+              className="mm-chip mm-chip--solid-green"
+            >
+              View History
+            </Link>
+          </div>
+        </div>
+      </footer>
+    </article>
   );
 }

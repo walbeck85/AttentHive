@@ -1,26 +1,76 @@
+// src/app/pets/[id]/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { Dog, Cat } from 'lucide-react';
 
-type Pet = {
+type ActionType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
+
+type CareLog = {
   id: string;
-  name: string;
-  type: 'DOG' | 'CAT';
-  breed: string;
-  gender: 'MALE' | 'FEMALE';
-  birthDate: string;
-  weight: number;
-  specialNeeds: string | null;
+  activityType: ActionType;
+  createdAt: string;
+  notes?: string | null;
+  user: { name: string | null };
 };
 
-export default function PetDetailPage() {
-  const router = useRouter();
-  const params = useParams();
-  const petId = params?.id as string;
+type PetData = {
+  id: string;
+  name: string;
+  type: string;
+  breed: string;
+  gender: string;
+  birthDate: string;
+  weight: number;
+  careLogs: CareLog[];
+};
 
-  const [pet, setPet] = useState<Pet | null>(null);
+// helpers ------------------------------------------------------
+
+function calculateAge(birthDate: string): number {
+  const birth = new Date(birthDate);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+function formatDateTime(dateString: string): string {
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true,
+  }).format(date);
+}
+
+function getActivityLabel(type: ActionType): string {
+  switch (type) {
+    case 'FEED':
+      return 'Feed';
+    case 'WALK':
+      return 'Walk';
+    case 'MEDICATE':
+      return 'Medicate';
+    case 'ACCIDENT':
+      return 'Accident';
+    default:
+      return 'Log';
+  }
+}
+
+// page --------------------------------------------------------
+
+export default function PetDetailsPage() {
+  const router = useRouter();
+  const params = useParams<{ id: string }>();
+  const petId = params?.id;
+
+  const [pet, setPet] = useState<PetData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,14 +79,22 @@ export default function PetDetailPage() {
 
     const fetchPet = async () => {
       try {
-        const response = await fetch(`/api/pets/${petId}`);
-        const data = await response.json();
+        setLoading(true);
+        setError(null);
 
-        if (!response.ok) throw new Error(data.error || 'Failed to load pet');
-        
+        const res = await fetch(`/api/pets/${petId}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to load pet details');
+        }
+
         setPet(data.pet);
       } catch (err) {
-        setError('Failed to load pet details');
+        console.error(err);
+        setError(
+          err instanceof Error ? err.message : 'Failed to load pet details'
+        );
       } finally {
         setLoading(false);
       }
@@ -45,92 +103,140 @@ export default function PetDetailPage() {
     fetchPet();
   }, [petId]);
 
-  const calculateAge = (birthDate: string) => {
-    const birth = new Date(birthDate);
-    const today = new Date();
-    let age = today.getFullYear() - birth.getFullYear();
-    const m = today.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age;
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[var(--mm-bg)] flex items-center justify-center">
+        <p className="mm-muted">Loading pet details…</p>
+      </div>
+    );
+  }
 
-  if (loading) return <div className="p-6 text-center text-[#6B6B6B]">Loading profile...</div>;
-  if (error || !pet) return <div className="p-6 text-center text-red-500">{error || 'Pet not found'}</div>;
+  if (error || !pet) {
+    return (
+      <div className="min-h-screen bg-[var(--mm-bg)] flex flex-col items-center justify-center gap-4">
+        <p className="text-[#382110] text-lg font-semibold">
+          Failed to load pet details
+        </p>
+        {error && <p className="mm-muted text-sm">{error}</p>}
+        <button
+          type="button"
+          onClick={() => router.push('/dashboard')}
+          className="mm-chip mm-chip--solid-primary"
+        >
+          Back to dashboard
+        </button>
+      </div>
+    );
+  }
+
+  const lastLog = pet.careLogs[0];
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2]">
-      {/* Header */}
-      <div className="bg-white border-b border-[#F4D5B8] sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <button 
-              onClick={() => router.push('/dashboard')} 
-              className="mr-4 p-2 hover:bg-gray-100 rounded-full text-[#6B6B6B]"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h1 className="text-xl font-bold text-[#4A4A4A]">{pet.name}</h1>
-          </div>
-          {/* Edit button could go here in future */}
-        </div>
-      </div>
+    <div className="mm-page">
+      <main className="mm-shell space-y-6">
+        {/* Back + header */}
+        <section className="mm-section">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="mm-chip"
+          >
+            ← Back
+          </button>
 
-      <div className="max-w-2xl mx-auto p-4 space-y-4">
-        
-        {/* Main Profile Card */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-[#F4D5B8]">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <p className="text-3xl mb-2">{pet.type === 'DOG' ? '🐕' : '🐱'}</p>
-              <h2 className="text-2xl font-bold text-[#D17D45]">{pet.name}</h2>
-              <p className="text-[#6B6B6B]">{pet.breed}</p>
-            </div>
-            <div className="text-right">
-              <span className="inline-block px-3 py-1 bg-[#FAF7F2] text-[#D17D45] rounded-full text-sm font-medium">
-                {pet.gender === 'MALE' ? 'Male' : 'Female'}
-              </span>
-            </div>
-          </div>
+          <div className="mt-4 mm-card px-5 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D17D45] bg-[#FAF3E7]">
+                {pet.type === 'DOG' ? (
+                  <Dog className="h-5 w-5 text-[#D17D45]" />
+                ) : (
+                  <Cat className="h-5 w-5 text-[#D17D45]" />
+                )}
+              </div>
 
-          <div className="grid grid-cols-2 gap-4 py-4 border-t border-[#F4D5B8]">
-            <div>
-              <p className="text-xs text-[#9ca3af] uppercase tracking-wide font-bold">Age</p>
-              <p className="text-lg font-medium text-[#4A4A4A]">{calculateAge(pet.birthDate)} years</p>
-            </div>
-            <div>
-              <p className="text-xs text-[#9ca3af] uppercase tracking-wide font-bold">Weight</p>
-              <p className="text-lg font-medium text-[#4A4A4A]">{pet.weight} lbs</p>
-            </div>
-          </div>
-
-          {/* Special Needs Section - Only shows if data exists */}
-          {pet.specialNeeds && (
-            <div className="mt-4 pt-4 border-t border-[#F4D5B8]">
-              <p className="text-xs text-[#9ca3af] uppercase tracking-wide font-bold mb-2">
-                Special Needs / Notes
-              </p>
-              <div className="bg-[#FFF8E1] p-3 rounded-lg text-[#F57F17] text-sm">
-                {pet.specialNeeds}
+              <div>
+                <h1 className="mm-h2">{pet.name}</h1>
+                <p className="text-sm font-medium uppercase tracking-wide text-[#A08C72]">
+                  {pet.breed}
+                </p>
               </div>
             </div>
-          )}
-        </div>
 
-        {/* Actions Card */}
-        <div className="bg-white rounded-xl shadow-sm p-4 border border-[#F4D5B8]">
-          <h3 className="font-bold text-[#4A4A4A] mb-4">Actions</h3>
-          <Link 
-            href={`/pets/${pet.id}/activity`}
-            className="block w-full py-3 px-4 bg-[#FAF7F2] text-[#D17D45] text-center rounded-lg font-medium hover:bg-[#F4D5B8] transition-colors"
-          >
-            View Full Activity Log →
-          </Link>
-        </div>
-      </div>
+            <div className="text-right text-sm text-[#A08C72]">
+              <div>
+                {calculateAge(pet.birthDate)} yrs • {pet.weight} lbs
+              </div>
+              <div>{pet.gender === 'MALE' ? 'Male' : 'Female'}</div>
+            </div>
+          </div>
+        </section>
+
+        {/* Stats / attributes */}
+        <section className="mm-section">
+          <div className="mm-card px-5 py-4">
+            <dl className="grid grid-cols-3 gap-y-2 text-xs uppercase tracking-wide text-[#B09A7C]">
+              <div>
+                <dt>Age</dt>
+                <dd className="mt-1 font-medium normal-case text-[#382110]">
+                  {calculateAge(pet.birthDate)} yrs
+                </dd>
+              </div>
+              <div>
+                <dt>Weight</dt>
+                <dd className="mt-1 font-medium normal-case text-[#382110]">
+                  {pet.weight} lbs
+                </dd>
+              </div>
+              <div>
+                <dt>Sex</dt>
+                <dd className="mt-1 font-medium normal-case text-[#382110]">
+                  {pet.gender === 'MALE' ? 'Male' : 'Female'}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+
+        {/* Recent activity */}
+        <section className="mm-section">
+          <div className="mm-card px-5 py-4">
+            <h2 className="mm-h3 mb-3">Recent activity</h2>
+
+            {pet.careLogs.length === 0 && (
+              <p className="mm-muted-sm">No activity logged yet.</p>
+            )}
+
+            {pet.careLogs.length > 0 && (
+              <ul className="space-y-3 text-sm">
+                {pet.careLogs.map((log) => (
+                  <li
+                    key={log.id}
+                    className="flex items-start justify-between border-b border-[#E5D9C6]/60 pb-2 last:border-0 last:pb-0"
+                  >
+                    <div>
+                      <p className="font-semibold text-[#382110]">
+                        {getActivityLabel(log.activityType)}
+                      </p>
+                      <p className="mm-muted-sm">
+                        by{' '}
+                        <span className="text-[#D17D45] font-medium">
+                          {log.user?.name || 'Someone'}
+                        </span>
+                      </p>
+                      {log.notes && (
+                        <p className="mt-1 text-xs text-[#7A6A56]">
+                          {log.notes}
+                        </p>
+                      )}
+                    </div>
+                    <p className="mm-meta">{formatDateTime(log.createdAt)}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

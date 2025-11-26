@@ -1,3 +1,235 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ---- Base theme tokens ---- */
+@layer base {
+  :root {
+    /* Mimamori base theme (light mode) */
+    --mm-bg: #F5F3EA;      /* warm paper background, Dog Watch-esque */
+    --mm-card: #FFF9F0;    /* card surface */
+    --mm-border: #E5D9C6;  /* subtle tan border */
+    --mm-ink: #382110;     /* main text */
+    --mm-muted: #7A6A56;   /* secondary text */
+    --mm-green: #3E5C2E;      /* brand primary green (navbar, buttons) */
+    --mm-green-dark: #2F4A24; /* darker green for hover/active states */
+  }
+
+
+  body {
+    margin: 0;
+    font-family: 'Nunito', system-ui, -apple-system, BlinkMacSystemFont,
+      'Segoe UI', sans-serif;
+    background-color: var(--mm-bg);
+    color: var(--mm-ink);
+    line-height: 1.5;
+  }
+
+  a {
+    color: inherit;
+    text-decoration-color: currentColor;
+  }
+
+  a:visited {
+    color: inherit;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+}
+
+/* ---- Layout + reusable components ---- */
+@layer components {
+  /* NavBar brand wordmark */
+  .mm-nav-brand {
+    color: #ffffff !important;       /* force white text on green bar */
+    font-weight: 800 !important;     /* extra-bold to match design */
+    letter-spacing: 0.16em;          /* same tracking as other kickers */
+    text-transform: uppercase;       /* ensure caps even without Tailwind */
+  }
+
+  /* Page shell (centers content, sets max width) */
+  .mm-page {
+  max-width: 72rem; /* ~max-w-6xl */
+  margin-left: auto;
+  margin-right: auto;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+
+  /* match NavBar: px-8 sm:px-10 lg:px-12 */
+  padding-left: 2rem;   /* base ~ px-8 */
+  padding-right: 2rem;
+}
+
+@media (min-width: 640px) { /* sm */
+  .mm-page {
+    padding-left: 2.5rem;  /* ~ px-10 */
+    padding-right: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) { /* lg */
+  .mm-page {
+    padding-left: 3rem;    /* ~ px-12 */
+    padding-right: 3rem;
+  }
+}
+
+  /* Inner shell to keep sections aligned */
+  .mm-shell {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Generic section wrapper */
+  .mm-section {
+    background-color: transparent;
+  }
+
+  /* Card surface for entities, activities, etc. */
+  .mm-card {
+    border-radius: 0.375rem;  /* rounded-md */
+    border-width: 1px;
+    border-style: solid;
+    border-color: var(--mm-border);
+    background-color: var(--mm-card);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.04); /* very soft shadow */
+  }
+
+  /* ---- Typography helpers ---- */
+
+  /* Main page H1 (dashboard title) */
+  .mm-h1 {
+    font-size: 1.875rem;      /* text-3xl */
+    line-height: 2.25rem;     /* leading-9-ish */
+    font-weight: 800;
+    letter-spacing: 0.03em;
+  }
+
+  /* Section titles, e.g. "Manage your home (3)" */
+  .mm-h2 {
+    font-size: 1.25rem;       /* text-xl */
+    line-height: 1.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  /* Card titles, e.g. pet name */
+  .mm-h3 {
+    font-size: 1rem;          /* text-base */
+    line-height: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  .mm-kicker {
+    font-size: 0.75rem;       /* text-xs */
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--mm-muted);
+    font-weight: 700;
+  }
+
+  .mm-muted {
+    font-size: 0.875rem;      /* text-sm */
+    color: var(--mm-muted);
+  }
+
+  /* Tiny muted text for meta lines like "Log care for each member..." */
+  .mm-muted-sm {
+    font-size: 0.75rem;
+    color: var(--mm-muted);
+  }
+
+  /* Labels for AGE / WEIGHT / SEX etc */
+  .mm-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--mm-muted);
+    font-weight: 700;
+  }
+
+  /* Super small meta (timestamps, helper copy) */
+  .mm-meta {
+    font-size: 0.6875rem;     /* ~11px */
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mm-muted);
+    font-weight: 600;
+  }
+
+  /* ---- Spacing helpers (optional but handy) ---- */
+
+  /* Vertical stacks with consistent gap */
+  .mm-stack-sm {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .mm-stack-md {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .mm-stack-lg {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  /* ---- Pills / chips ---- */
+  .mm-chip {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    border: 1px solid #D17D45;
+    background-color: #FFF9F0;
+    color: #D17D45;
+    font-weight: 600;
+    text-transform: none;
+    line-height: 1.1;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .mm-chip:hover {
+    background-color: #FAF3E7;
+  }
+
+  .mm-chip--danger {
+    border-color: #C62828;
+    color: #C62828;
+  }
+
+  .mm-chip--danger:hover {
+    background-color: #FDECEA;
+  }
+
+  /* Solid chip variants for footer actions */
+  .mm-chip--solid-primary {
+    background-color: #D17D45;
+    border-color: #D17D45;
+    color: #FFFFFF !important; /* ensure white text wins over .mm-chip base */
+    font-weight: 700;
+  }
+
+  .mm-chip--solid-primary:hover {
+    background-color: #B86532;
+  }
+
+  .mm-chip--solid-green {
+    background-color: #3E5C2E;
+    border-color: #3E5C2E;
+    color: #FFFFFF !important; /* ensure white text wins over .mm-chip base */
+    font-weight: 700;
+  }
+
+  .mm-chip--solid-green:hover {
+    background-color: #2F4A24;
+  }
+}

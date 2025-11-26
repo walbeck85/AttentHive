@@ -1,31 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { signIn, useSession } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
-  const { data: session } = useSession();
-  const searchParams = useSearchParams();
-
-  const signupSuccess = searchParams.get('signup') === 'success';
-
-  useEffect(() => {
-    if (session) {
-      router.push('/dashboard');
-    }
-  }, [session, router]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setIsLoading(true);
+    setLoading(true);
+    setError(null);
 
     try {
       const result = await signIn('credentials', {
@@ -36,108 +26,96 @@ export default function LoginPage() {
 
       if (result?.error) {
         setError('Invalid email or password');
-      } else if (result?.ok) {
+      } else {
         router.push('/dashboard');
+        router.refresh();
       }
     } catch (err) {
-      setError('Something went wrong. Please try again.');
+      console.error('Login error:', err);
+      setError('An unexpected error occurred');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#FAF7F2' }}>
-      <div className="max-w-md w-full bg-white shadow-lg p-8" style={{ borderRadius: '16px' }}>
+    <div className="mm-page w-full">
+      <section className="mm-card px-6 py-8 md:px-8 md:py-9">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2" style={{ color: '#D17D45' }}>
-            Mimamori
+          <p className="mm-kicker mb-2">Welcome back</p>
+          <h1 className="mm-h2 tracking-[0.18em] uppercase text-[#382110]">
+            Sign in to Mimamori
           </h1>
-          <p className="text-sm" style={{ color: '#6B6B6B' }}>
-            Welcome back! Sign in to your account.
+          <p className="mm-muted mt-3">
+            Log in to view your household&apos;s care activity.
           </p>
         </div>
 
-        {signupSuccess && (
-          <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: '#E8F5E9', color: '#2E7D32', border: '2px solid #8BA888' }}>
-            <p className="text-sm font-medium">✅ Account created! Please sign in.</p>
-          </div>
-        )}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="p-3 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm text-center">
+              {error}
+            </div>
+          )}
 
-        {error && (
-          <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: '#FFEBEE', color: '#C62828', border: '2px solid #EF5350' }}>
-            <p className="text-sm font-medium">{error}</p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="email" className="block text-sm font-semibold mb-2" style={{ color: '#4A4A4A' }}>
-              Email
-            </label>
+            <label className="mm-label mb-1 block">Email</label>
             <input
-              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="
+                w-full rounded-md border border-[#E5D9C6] bg-white
+                px-3 py-2 text-sm text-[#382110]
+                focus:outline-none focus:ring-2 focus:ring-[#3E5C2E] focus:border-[#3E5C2E]
+              "
+              placeholder="you@example.com"
               required
-              className="w-full px-4 py-3 border-2 focus:outline-none transition-all"
-              style={{
-                borderRadius: '12px',
-                borderColor: '#F4D5B8',
-                backgroundColor: '#FEFEFE'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#D17D45'}
-              onBlur={(e) => e.target.style.borderColor = '#F4D5B8'}
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-semibold mb-2" style={{ color: '#4A4A4A' }}>
-              Password
-            </label>
+            <label className="mm-label mb-1 block">Password</label>
             <input
-              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="
+                w-full rounded-md border border-[#E5D9C6] bg-white
+                px-3 py-2 text-sm text-[#382110]
+                focus:outline-none focus:ring-2 focus:ring-[#3E5C2E] focus:border-[#3E5C2E]
+              "
               required
-              className="w-full px-4 py-3 border-2 focus:outline-none transition-all"
-              style={{
-                borderRadius: '12px',
-                borderColor: '#F4D5B8',
-                backgroundColor: '#FEFEFE'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#D17D45'}
-              onBlur={(e) => e.target.style.borderColor = '#F4D5B8'}
             />
           </div>
 
           <button
             type="submit"
-            disabled={isLoading}
-            className="w-full py-4 px-6 font-semibold text-white text-lg transition-all shadow-md"
-            style={{
-              borderRadius: '12px',
-              backgroundColor: isLoading ? '#D1D5DB' : '#D17D45',
-              cursor: isLoading ? 'not-allowed' : 'pointer'
-            }}
-            onMouseEnter={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#B8663D')}
-            onMouseLeave={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#D17D45')}
+            disabled={loading}
+            className="
+              w-full mt-2 rounded-full
+              bg-[#3E5C2E] text-white
+              text-[11px] font-bold uppercase tracking-[0.16em]
+              py-2.5
+              hover:bg-[#2f4a24]
+              disabled:opacity-60 disabled:cursor-not-allowed
+              transition-colors
+            "
           >
-            {isLoading ? 'Signing in...' : 'Sign in'}
+            {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-sm" style={{ color: '#6B6B6B' }}>
-            Don't have an account?{' '}
-            <Link href="/signup" className="font-semibold hover:underline" style={{ color: '#D17D45' }}>
-              Sign up
-            </Link>
-          </p>
-        </div>
-      </div>
+        <p className="mm-muted-sm text-center mt-5">
+          New to Mimamori?{' '}
+          <Link
+            href="/signup"
+            className="font-semibold text-[#382110] underline underline-offset-2"
+          >
+            Create an account
+          </Link>
+        </p>
+      </section>
     </div>
   );
 }

@@ -1,13 +1,17 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import './globals.css';
-import SessionProvider from '@/components/SessionProvider';
+// src/app/layout.tsx
+import "./globals.css";
+import { Nunito } from "next/font/google";
+import Providers from "./providers";
+import NavBar from "@/components/NavBar";
 
-const inter = Inter({ subsets: ['latin'] });
+const nunito = Nunito({
+  subsets: ["latin"],
+  variable: "--font-nunito",
+});
 
-export const metadata: Metadata = {
-  title: 'Mimamori - Pet Care Coordination',
-  description: '見守り - Watching over your pets',
+export const metadata = {
+  title: "Mimamori",
+  description: "Care coordination for pets, people, and plants",
 };
 
 export default function RootLayout({
@@ -17,8 +21,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <SessionProvider>{children}</SessionProvider>
+      <body className={`${nunito.variable} font-sans bg-mm-cream min-h-screen`}>
+        <Providers>
+          {/* Sticky global nav */}
+          <NavBar />
+
+          {/* Page content */}
+          <main className="mx-auto max-w-6xl px-4 py-10">{children}</main>
+        </Providers>
       </body>
     </html>
   );
