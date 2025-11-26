@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { Dog, Cat } from 'lucide-react';
-import QuickActions from './QuickActions';
 
 type ActionType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
 
@@ -91,9 +90,11 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
       <header className="flex items-center justify-between border-b border-[#E5D9C6] bg-[#FDF7EE] px-5 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#D17D45] bg-[#FAF3E7]">
-            {pet.type === 'DOG'
-              ? <Dog className="h-5 w-5 text-[#D17D45]" />
-              : <Cat className="h-5 w-5 text-[#D17D45]" />}
+            {pet.type === 'DOG' ? (
+              <Dog className="h-5 w-5 text-[#D17D45]" />
+            ) : (
+              <Cat className="h-5 w-5 text-[#D17D45]" />
+            )}
           </div>
 
           <div>
@@ -154,7 +155,8 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
 
       {/* FOOTER */}
       <footer className="border-t border-[#E5D9C6] bg-[#FCF5EA] px-5 py-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Quick actions left */}
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => onQuickAction(pet.id, pet.name, 'FEED')}
@@ -185,18 +187,18 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
             </button>
           </div>
 
-          {/* FIX: add spacing between the two links */}
-          <div className="flex gap-4 text-sm font-semibold uppercase tracking-wide">
+          {/* Details / History right */}
+          <div className="flex flex-wrap gap-2 sm:justify-end">
             <Link
               href={`/pets/${pet.id}`}
-              className="text-[#D17D45] underline-offset-2 hover:underline"
+              className="mm-chip mm-chip--solid-primary"
             >
               + Details
             </Link>
 
             <Link
               href={`/pets/${pet.id}/activity`}
-              className="text-[#3E5C2E] underline-offset-2 hover:underline"
+              className="mm-chip mm-chip--solid-green"
             >
               View History
             </Link>

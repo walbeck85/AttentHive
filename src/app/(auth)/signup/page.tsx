@@ -6,7 +6,11 @@ import Link from 'next/link';
 
 export default function SignupPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+  });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -28,7 +32,6 @@ export default function SignupPage() {
         throw new Error(data.error || 'Signup failed');
       }
 
-      // Redirect to login on success
       router.push('/login?registered=true');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed');
@@ -38,70 +41,106 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-light-50 dark:bg-dark-900 p-4">
-      <div className="w-full max-w-md bg-white dark:bg-dark-800 rounded-lg shadow-md border border-gray-200 dark:border-dark-700 p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary-500 mb-2 tracking-wide uppercase">Join Mimamori</h1>
-          <p className="text-gray-600 dark:text-gray-400">Create your user account</p>
-        </div>
+    <div className="mm-page">
+      <main className="mm-shell max-w-2xl mx-auto py-10">
+        <section className="mm-card px-6 py-8 md:px-8 md:py-9">
+          <div className="text-center mb-8">
+            <p className="mm-kicker mb-2">Create account</p>
+            <h1 className="mm-h2 tracking-[0.18em] uppercase text-[#382110]">
+              Join Mimamori
+            </h1>
+            <p className="mm-muted mt-3">
+              Set up a shared space to track care across your household.
+            </p>
+          </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded text-sm text-center">
-              {error}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="p-3 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm text-center">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label className="mm-label mb-1 block">Name</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                className="
+                  w-full rounded-md border border-[#E5D9C6] bg-white
+                  px-3 py-2 text-sm text-[#382110]
+                  focus:outline-none focus:ring-2 focus:ring-[#3E5C2E] focus:border-[#3E5C2E]
+                "
+                required
+              />
             </div>
-          )}
 
-          <div>
-            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Name</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full p-3 border border-gray-300 dark:border-dark-600 rounded bg-white dark:bg-dark-900 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
-              required
-            />
-          </div>
+            <div>
+              <label className="mm-label mb-1 block">Email</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                className="
+                  w-full rounded-md border border-[#E5D9C6] bg-white
+                  px-3 py-2 text-sm text-[#382110]
+                  focus:outline-none focus:ring-2 focus:ring-[#3E5C2E] focus:border-[#3E5C2E]
+                "
+                required
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Email</label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full p-3 border border-gray-300 dark:border-dark-600 rounded bg-white dark:bg-dark-900 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
-              required
-            />
-          </div>
+            <div>
+              <label className="mm-label mb-1 block">Password</label>
+              <input
+                type="password"
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+                className="
+                  w-full rounded-md border border-[#E5D9C6] bg-white
+                  px-3 py-2 text-sm text-[#382110]
+                  focus:outline-none focus:ring-2 focus:ring-[#3E5C2E] focus:border-[#3E5C2E]
+                "
+                required
+                minLength={6}
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Password</label>
-            <input
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full p-3 border border-gray-300 dark:border-dark-600 rounded bg-white dark:bg-dark-900 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
-              required
-              minLength={6}
-            />
-          </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="
+                w-full mt-2 rounded-full
+                bg-[#3E5C2E] text-white
+                text-[11px] font-bold uppercase tracking-[0.16em]
+                py-2.5
+                hover:bg-[#2f4a24]
+                disabled:opacity-60 disabled:cursor-not-allowed
+                transition-colors
+              "
+            >
+              {loading ? 'Creating account…' : 'Sign up'}
+            </button>
+          </form>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-primary-500 text-white font-bold rounded hover:bg-primary-600 transition-colors disabled:opacity-50 uppercase tracking-wide mt-4"
-          >
-            {loading ? 'Creating Account...' : 'Sign Up'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-          Already have an account?{' '}
-          <Link href="/login" className="text-primary-500 hover:text-primary-600 hover:underline font-bold">
-            Sign in
-          </Link>
-        </div>
-      </div>
+          <p className="mm-muted-sm text-center mt-5">
+            Already have an account?{' '}
+            <Link
+              href="/login"
+              className="font-semibold text-[#382110] underline underline-offset-2"
+            >
+              Sign in
+            </Link>
+          </p>
+        </section>
+      </main>
     </div>
   );
 }

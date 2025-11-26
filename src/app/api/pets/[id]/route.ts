@@ -1,61 +1,55 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+// src/app/api/pets/[id]/route.ts
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  _req: Request,
+  context: { params: Promise<{ id: string }> } | { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    const { id: petId } = await params;
+    // Support both sync and async params (Next 15/16 dynamic API behavior)
+    const resolvedParams =
+      'then' in context.params
+        ? await context.params
+        : context.params;
 
-    // --- DEBUG LOGS START ---
-    console.log('\n🔍 --- DEBUGGING PET DETAIL API ---');
-    console.log('👤 User ID:', session?.user?.id);
-    console.log('🐕 Pet ID from URL:', petId);
-    // --- DEBUG LOGS END ---
+    const { id } = resolvedParams;
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Pet id is required' },
+        { status: 400 }
+      );
     }
 
-    if (!petId) {
-      console.log('❌ Pet ID is missing or undefined');
-      return NextResponse.json({ error: 'Invalid Pet ID' }, { status: 400 });
-    }
-
-    const pet = await prisma.recipient.findFirst({
-      where: {
-        id: petId,
-        OR: [
-          { ownerId: session.user.id },
-          { careCircles: { some: { userId: session.user.id } } }
-        ]
+    const pet = await prisma.recipient.findUnique({
+      where: { id },
+      include: {
+        careLogs: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: {
+              select: { name: true },
+            },
+          },
+        },
       },
     });
 
-    // --- DEBUG LOGS START ---
-    console.log('✅ Database Result:', pet ? `Found ${pet.name}` : 'Not Found');
     if (!pet) {
-      // Double check: Does the pet exist at all?
-      const exists = await prisma.recipient.findUnique({ where: { id: petId } });
-      console.log('🧐 Does pet exist ANYWHERE?', exists ? `Yes, owned by ${exists.ownerId}` : 'No, ID is invalid');
-    }
-    console.log('----------------------------------\n');
-    // --- DEBUG LOGS END ---
-
-    if (!pet) {
-      return NextResponse.json({ error: 'Pet not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Pet not found' },
+        { status: 404 }
+      );
     }
 
-    return NextResponse.json({ pet }, { status: 200 });
-
+    // Shape is already compatible with your PetDetailsPage expectations:
+    // id, name, type, breed, gender, birthDate, weight, careLogs[...]
+    return NextResponse.json({ pet });
   } catch (error) {
-    console.error('❌ Error fetching pet details:', error);
+    console.error('[GET /api/pets/[id]]', error);
     return NextResponse.json(
-      { error: 'Failed to fetch pet details' },
+      { error: 'Failed to load pet' },
       { status: 500 }
     );
   }

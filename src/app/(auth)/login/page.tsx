@@ -31,6 +31,7 @@ export default function LoginPage() {
         router.refresh();
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -38,39 +39,52 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-light-50 dark:bg-dark-900 p-4">
-      <div className="w-full max-w-md bg-white dark:bg-dark-800 rounded-lg shadow-md border border-gray-200 dark:border-dark-700 p-8">
+    <div className="mm-page w-full">
+      <section className="mm-card px-6 py-8 md:px-8 md:py-9">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary-500 mb-2 tracking-wide uppercase">User Login</h1>
-          <p className="text-gray-600 dark:text-gray-400">Welcome to Mimamori</p>
+          <p className="mm-kicker mb-2">Welcome back</p>
+          <h1 className="mm-h2 tracking-[0.18em] uppercase text-[#382110]">
+            Sign in to Mimamori
+          </h1>
+          <p className="mm-muted mt-3">
+            Log in to view your household&apos;s care activity.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded text-sm text-center">
+            <div className="p-3 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm text-center">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Username / Email *</label>
+            <label className="mm-label mb-1 block">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 border border-gray-300 dark:border-dark-600 rounded bg-white dark:bg-dark-900 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
-              placeholder="user"
+              className="
+                w-full rounded-md border border-[#E5D9C6] bg-white
+                px-3 py-2 text-sm text-[#382110]
+                focus:outline-none focus:ring-2 focus:ring-[#3E5C2E] focus:border-[#3E5C2E]
+              "
+              placeholder="you@example.com"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Password *</label>
+            <label className="mm-label mb-1 block">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 border border-gray-300 dark:border-dark-600 rounded bg-white dark:bg-dark-900 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
+              className="
+                w-full rounded-md border border-[#E5D9C6] bg-white
+                px-3 py-2 text-sm text-[#382110]
+                focus:outline-none focus:ring-2 focus:ring-[#3E5C2E] focus:border-[#3E5C2E]
+              "
               required
             />
           </div>
@@ -78,19 +92,30 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-primary-500 text-white font-bold rounded hover:bg-primary-600 transition-colors disabled:opacity-50 uppercase tracking-wide"
+            className="
+              w-full mt-2 rounded-full
+              bg-[#3E5C2E] text-white
+              text-[11px] font-bold uppercase tracking-[0.16em]
+              py-2.5
+              hover:bg-[#2f4a24]
+              disabled:opacity-60 disabled:cursor-not-allowed
+              transition-colors
+            "
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-          New user?{' '}
-          <Link href="/signup" className="text-primary-500 hover:text-primary-600 hover:underline font-bold">
-            Sign Up
+        <p className="mm-muted-sm text-center mt-5">
+          New to Mimamori?{' '}
+          <Link
+            href="/signup"
+            className="font-semibold text-[#382110] underline underline-offset-2"
+          >
+            Create an account
           </Link>
-        </div>
-      </div>
+        </p>
+      </section>
     </div>
   );
 }

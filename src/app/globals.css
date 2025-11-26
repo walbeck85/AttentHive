@@ -13,6 +13,8 @@
     --mm-border: #E5D9C6;  /* subtle tan border */
     --mm-ink: #382110;     /* main text */
     --mm-muted: #7A6A56;   /* secondary text */
+    --mm-green: #3E5C2E;      /* brand primary green (navbar, buttons) */
+    --mm-green-dark: #2F4A24; /* darker green for hover/active states */
   }
 
 
@@ -41,6 +43,14 @@
 
 /* ---- Layout + reusable components ---- */
 @layer components {
+  /* NavBar brand wordmark */
+  .mm-nav-brand {
+    color: #ffffff !important;       /* force white text on green bar */
+    font-weight: 800 !important;     /* extra-bold to match design */
+    letter-spacing: 0.16em;          /* same tracking as other kickers */
+    text-transform: uppercase;       /* ensure caps even without Tailwind */
+  }
+
   /* Page shell (centers content, sets max width) */
   .mm-page {
   max-width: 72rem; /* ~max-w-6xl */
@@ -198,5 +208,28 @@
 
   .mm-chip--danger:hover {
     background-color: #FDECEA;
+  }
+
+  /* Solid chip variants for footer actions */
+  .mm-chip--solid-primary {
+    background-color: #D17D45;
+    border-color: #D17D45;
+    color: #FFFFFF !important; /* ensure white text wins over .mm-chip base */
+    font-weight: 700;
+  }
+
+  .mm-chip--solid-primary:hover {
+    background-color: #B86532;
+  }
+
+  .mm-chip--solid-green {
+    background-color: #3E5C2E;
+    border-color: #3E5C2E;
+    color: #FFFFFF !important; /* ensure white text wins over .mm-chip base */
+    font-weight: 700;
+  }
+
+  .mm-chip--solid-green:hover {
+    background-color: #2F4A24;
   }
 }

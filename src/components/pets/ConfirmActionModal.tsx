@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 // Supported quick action types (mirrors PetCard / QuickActions)
@@ -48,22 +48,20 @@ export default function ConfirmActionModal({
   onConfirm,
   onCancel,
 }: ConfirmActionModalProps) {
-  const [mounted, setMounted] = useState(false);
-
-  // Only render on the client + lock body scroll while open
+  // Lock body scroll while modal is open
   useEffect(() => {
-    setMounted(true);
+    if (!isOpen) return;
 
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    }
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
 
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = originalOverflow || '';
     };
   }, [isOpen]);
 
-  if (!isOpen || !mounted) return null;
+  // Don't render anything if modal is closed
+  if (!isOpen) return null;
 
   const portalContainer =
     typeof document !== 'undefined' ? document.body : null;
@@ -75,8 +73,7 @@ export default function ConfirmActionModal({
     <div
       role="dialog"
       aria-modal="true"
-      // Use inline styles to guarantee full-screen overlay + centering,
-      // regardless of any Tailwind / global CSS oddities.
+      // Use inline styles to guarantee full-screen overlay + centering
       style={{
         position: 'fixed',
         inset: 0,

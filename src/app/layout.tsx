@@ -1,18 +1,17 @@
-import type { Metadata } from 'next';
-import { Nunito } from 'next/font/google';
-import './globals.css';
-import SessionProvider from '@/components/SessionProvider';
-import NavBar from '@/components/NavBar';
+// src/app/layout.tsx
+import "./globals.css";
+import { Nunito } from "next/font/google";
+import Providers from "./providers";
+import NavBar from "@/components/NavBar";
 
-const nunito = Nunito({ 
-  subsets: ['latin'],
-  variable: '--font-nunito',
-  display: 'swap',
+const nunito = Nunito({
+  subsets: ["latin"],
+  variable: "--font-nunito",
 });
 
-export const metadata: Metadata = {
-  title: 'Mimamori - Pet Care Coordination',
-  description: 'Professional Pet Inventory & Care Management',
+export const metadata = {
+  title: "Mimamori",
+  description: "Care coordination for pets, people, and plants",
 };
 
 export default function RootLayout({
@@ -21,16 +20,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-  className={`${nunito.variable} font-sans bg-background text-foreground min-h-screen flex flex-col transition-colors duration-200`}
->
-        <SessionProvider>
+    <html lang="en">
+      <body className={`${nunito.variable} font-sans bg-mm-cream min-h-screen`}>
+        <Providers>
+          {/* Sticky global nav */}
           <NavBar />
-          <main className="flex-grow">
-            {children}
-          </main>
-        </SessionProvider>
+
+          {/* Page content */}
+          <main className="mx-auto max-w-6xl px-4 py-10">{children}</main>
+        </Providers>
       </body>
     </html>
   );
