@@ -3,10 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 
-// -- Types --
+// Types --------------------------------------------------------
+
+type ActivityType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
+
 type CareLog = {
   id: string;
-  activityType: 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
+  activityType: ActivityType;
   notes: string | null;
   createdAt: string;
   user: {
@@ -15,27 +18,48 @@ type CareLog = {
   };
 };
 
+// Helper functions ---------------------------------------------
+
+function formatDateTime(dateString: string): string {
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true,
+  }).format(date);
+}
+
+const ACTIVITY_LABELS: Record<ActivityType, string> = {
+  FEED: 'Feed',
+  WALK: 'Walk',
+  MEDICATE: 'Medicate',
+  ACCIDENT: 'Accident',
+};
+
+// Page component -----------------------------------------------
+
 export default function ActivityLogPage() {
   const router = useRouter();
-  // Next.js 15/16 params typing
   const params = useParams<{ id: string }>();
   const petId = params?.id;
 
-  // -- State --
   const [logs, setLogs] = useState<CareLog[]>([]);
   const [petName, setPetName] = useState<string>('Pet');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<string>('ALL');
+  const [filter, setFilter] = useState<'ALL' | ActivityType>('ALL');
 
-  // -- Fetch Data --
+  // Fetch data -------------------------------------------------
   useEffect(() => {
     if (!petId) return;
 
     const fetchLogs = async () => {
-      setLoading(true); // Reset loading state on ID change
       try {
-        console.log(`🔍 Fetching logs for Pet ID: ${petId}`);
+        setLoading(true);
+        setError(null);
+
         const response = await fetch(`/api/pets/${petId}/care-logs`);
         const data = await response.json();
 
@@ -56,133 +80,134 @@ export default function ActivityLogPage() {
     fetchLogs();
   }, [petId]);
 
-  // -- Helpers --
-  const getActivityStyle = (type: string) => {
-    switch (type) {
-      case 'FEED': return { icon: '🍽️', bg: '#E3F2FD', text: '#1565C0', label: 'Feed' }; // Blue
-      case 'WALK': return { icon: '🚶', bg: '#E8F5E9', text: '#2E7D32', label: 'Walk' }; // Green
-      case 'MEDICATE': return { icon: '💊', bg: '#F3E5F5', text: '#7B1FA2', label: 'Medicate' }; // Purple
-      case 'ACCIDENT': return { icon: '⚠️', bg: '#FFEBEE', text: '#C62828', label: 'Accident' }; // Red
-      default: return { icon: '📝', bg: '#F5F5F5', text: '#616161', label: 'Log' };
-    }
-  };
+  // Derived data -----------------------------------------------
 
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true
-    }).format(date);
-  };
+  const filteredLogs =
+    filter === 'ALL'
+      ? logs
+      : logs.filter((log) => log.activityType === filter);
 
-  // -- Filter Logic --
-  const filteredLogs = filter === 'ALL' 
-    ? logs 
-    : logs.filter(log => log.activityType === filter);
+  // Loading / error states -------------------------------------
 
-  // -- Loading State --
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAF7F2] p-6 flex justify-center">
-        <p className="text-[#4A4A4A]">Loading history...</p>
+      <div className="min-h-screen bg-[var(--mm-bg)] flex items-center justify-center">
+        <p className="mm-muted">Loading activity…</p>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-[#FAF7F2]">
-      {/* Header */}
-      <div className="bg-white border-b border-[#F4D5B8] sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center">
-          <button 
-            onClick={() => router.back()} 
-            className="mr-4 flex items-center gap-2 px-3 py-2 rounded-lg text-[#6B6B6B] hover:bg-[#FAF7F2] hover:text-[#D17D45] transition-all"
-            aria-label="Go back"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            <span className="font-medium text-sm hidden sm:inline">Back</span>
-          </button>
-          <h1 className="text-xl font-bold text-[#4A4A4A] truncate">
-  {petName}
-  {"'s Activity Log"}
-</h1>
-        </div>
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[var(--mm-bg)] flex flex-col items-center justify-center gap-4">
+        <p className="text-[#382110] text-lg font-semibold">
+          Failed to load activity history
+        </p>
+        <p className="mm-muted text-sm">{error}</p>
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="mm-chip mm-chip--solid-primary"
+        >
+          Back
+        </button>
       </div>
+    );
+  }
 
-      <div className="max-w-2xl mx-auto p-4">
-        {/* Filter Pills */}
-        <div className="bg-white rounded-xl shadow-sm p-4 mb-6 border border-[#F4D5B8]">
-          <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-            {['ALL', 'FEED', 'WALK', 'MEDICATE'].map((type) => (
-              <button
-                key={type}
-                onClick={() => setFilter(type)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                  filter === type 
-                    ? 'bg-[#D17D45] text-white' 
-                    : 'bg-gray-100 text-[#4A4A4A] hover:bg-gray-200'
-                }`}
-              >
-                {type === 'ALL' ? 'All Activity' : getActivityStyle(type).label}
-              </button>
-            ))}
-          </div>
-        </div>
+  // Main layout ------------------------------------------------
 
-        {/* Log List */}
-        <div className="space-y-4">
-          {filteredLogs.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-xl border-2 border-dashed border-[#F4D5B8]">
-              <p className="text-[#6B6B6B]">No records found for this filter.</p>
+  return (
+    <div className="mm-page">
+      <main className="mm-shell space-y-6">
+        {/* Back + header */}
+        <section className="mm-section">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="mm-chip"
+          >
+            ← Back
+          </button>
+
+          <div className="mt-4 mm-card px-5 py-4 flex items-center justify-between">
+            <div>
+              <h1 className="mm-h2">{petName}</h1>
+              <p className="mm-muted-sm">Activity log</p>
             </div>
-          ) : (
-            filteredLogs.map((log) => {
-              const style = getActivityStyle(log.activityType);
-              return (
-                <div key={log.id} className="bg-white rounded-xl shadow-sm p-4 border border-[#F4D5B8]">
-                  <div className="flex items-start gap-4">
-                    {/* Icon Circle */}
-                    <div 
-                      className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: style.bg }}
+          </div>
+        </section>
+
+        {/* Filters */}
+        <section className="mm-section">
+          <div className="mm-card px-5 py-4">
+            <div className="flex flex-wrap gap-2">
+              {(['ALL', 'FEED', 'WALK', 'MEDICATE', 'ACCIDENT'] as const).map(
+                (type) => {
+                  const isAll = type === 'ALL';
+                  const isActive = filter === type;
+                  const label = isAll
+                    ? 'All activity'
+                    : ACTIVITY_LABELS[type as ActivityType];
+
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() =>
+                        setFilter(type === 'ALL' ? 'ALL' : (type as ActivityType))
+                      }
+                      className={`mm-chip ${
+                        isActive ? 'mm-chip--solid-primary' : ''
+                      }`}
                     >
-                      <span className="text-2xl">{style.icon}</span>
-                    </div>
-                    
-                    {/* Content */}
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-1">
-                        <div>
-                          <p className="font-bold text-[#4A4A4A] capitalize">
-                            {style.label}
-                          </p>
-                          <p className="text-sm text-[#6B6B6B]">
-                            by <span className="font-medium text-[#D17D45]">{log.user.name}</span>
-                          </p>
-                        </div>
-                        <p className="text-xs text-[#9ca3af] whitespace-nowrap ml-2">
-                          {formatDateTime(log.createdAt)}
-                        </p>
-                      </div>
-                      
+                      {label}
+                    </button>
+                  );
+                }
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Activity list */}
+        <section className="mm-section">
+          <div className="mm-card px-5 py-4">
+            <h2 className="mm-h3 mb-3">Recent activity</h2>
+
+            {filteredLogs.length === 0 ? (
+              <p className="mm-muted-sm">No records found for this filter.</p>
+            ) : (
+              <ul className="space-y-3 text-sm">
+                {filteredLogs.map((log) => (
+                  <li
+                    key={log.id}
+                    className="flex items-start justify-between border-b border-[#E5D9C6]/60 pb-2 last:border-0 last:pb-0"
+                  >
+                    <div>
+                      <p className="font-semibold text-[#382110]">
+                        {ACTIVITY_LABELS[log.activityType]}
+                      </p>
+                      <p className="mm-muted-sm">
+                        by{' '}
+                        <span className="text-[#D17D45] font-medium">
+                          {log.user?.name || 'Someone'}
+                        </span>
+                      </p>
                       {log.notes && (
-                        <div className="mt-2 bg-[#FAF7F2] p-3 rounded-lg text-sm text-[#4A4A4A]">
+                        <p className="mt-1 text-xs text-[#7A6A56]">
                           {log.notes}
-                        </div>
+                        </p>
                       )}
                     </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
+                    <p className="mm-meta">{formatDateTime(log.createdAt)}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      </main>
     </div>
   );
 }
