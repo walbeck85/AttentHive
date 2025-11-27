@@ -2,24 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { z } from 'zod';
+import { z, type ZodIssue } from 'zod';
 
 // Validation schema for creating a pet
 const createPetSchema = z.object({
   name: z.string().min(1, 'Name is required').max(50, 'Name too long'),
-  type: z.enum(['DOG', 'CAT'], {
-    errorMap: () => ({ message: 'Pet type must be DOG or CAT' })
-  }),
+  type: z.enum(['DOG', 'CAT'] as const),
   breed: z.string().min(1, 'Breed is required').max(100, 'Breed too long'),
-  gender: z.enum(['MALE', 'FEMALE'], {
-    errorMap: () => ({ message: 'Gender must be MALE or FEMALE' })
-  }),
+  gender: z.enum(['MALE', 'FEMALE'] as const),
   birthDate: z.string().refine((date) => {
     const birthDate = new Date(date);
     const today = new Date();
     return birthDate <= today;
   }, 'Birth date cannot be in the future'),
-  weight: z.number().positive('Weight must be positive')
+  weight: z.number().positive('Weight must be positive'),
 });
 
 // POST /api/pets - Create a new pet
@@ -42,22 +38,22 @@ export async function POST(request: NextRequest) {
     const validationResult = createPetSchema.safeParse(body);
     
     if (!validationResult.success) {
-      console.log('❌ Validation failed:', validationResult.error);
-      
-      // Format errors for easier reading
-      const formattedErrors = validationResult.error.errors.map(err => ({
-        field: err.path.join('.'),
-        message: err.message
-      }));
-      
-      return NextResponse.json(
-        { 
-          error: 'Invalid pet data',
-          validationErrors: formattedErrors
-        },
-        { status: 400 }
-      );
-    }
+  console.log('❌ Validation failed:', validationResult.error);
+  
+  // Format errors for easier reading
+  const formattedErrors = validationResult.error.issues.map((err: ZodIssue) => ({
+    field: err.path.join('.'),
+    message: err.message,
+  }));
+  
+  return NextResponse.json(
+    { 
+      error: 'Invalid pet data',
+      validationErrors: formattedErrors,
+    },
+    { status: 400 }
+  );
+}
 
     // Step 4: Data is valid! Save to database
     const petData = validationResult.data;
