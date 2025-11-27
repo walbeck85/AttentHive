@@ -12,7 +12,7 @@ export async function GET(
   try {
     // 1. Check Authentication
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'You must be logged in' },
@@ -20,26 +20,26 @@ export async function GET(
       );
     }
 
-    // 2. Await params to ensure we get the ID correctly (CRITICAL FIX)
+    // 2. Unwrap dynamic route params (Next.js 16: params is a Promise)
     const { id: petId } = await params;
 
     if (!petId) {
       return NextResponse.json({ error: 'Invalid Pet ID' }, { status: 400 });
     }
 
-    // 3. Authorization: Verify the user has access to this SPECIFIC pet
+    // 3. Authorization: verify the user has access to this specific pet
     const pet = await prisma.recipient.findFirst({
       where: {
-        id: petId, // Must match exact ID
+        id: petId,
         OR: [
           { ownerId: session.user.id },
           {
             careCircles: {
-              some: { userId: session.user.id }
-            }
-          }
-        ]
-      }
+              some: { userId: session.user.id },
+            },
+          },
+        ],
+      },
     });
 
     if (!pet) {
@@ -52,29 +52,28 @@ export async function GET(
     // 4. Fetch the Care Logs
     const logs = await prisma.careLog.findMany({
       where: {
-        recipientId: petId
+        recipientId: petId,
       },
       orderBy: {
-        createdAt: 'desc' // Newest first
+        createdAt: 'desc', // Newest first
       },
       include: {
         user: {
           select: {
             id: true,
-            name: true
-          }
-        }
-      }
+            name: true,
+          },
+        },
+      },
     });
 
     return NextResponse.json(
-      { 
+      {
         logs,
-        petName: pet.name 
+        petName: pet.name,
       },
       { status: 200 }
     );
-
   } catch (error) {
     console.error('❌ Error fetching care logs:', error);
     return NextResponse.json(
