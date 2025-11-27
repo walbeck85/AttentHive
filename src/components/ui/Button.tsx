@@ -1,40 +1,67 @@
-// src/components/ui/Button.tsx
+'use client';
+
 import * as React from 'react';
-import clsx from 'clsx';
 
-type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'outline' | 'ghost';
-  size?: 'sm' | 'md';
-};
+type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+type ButtonSize = 'sm' | 'md' | 'lg';
 
-export function Button({
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  fullWidth?: boolean;
+}
+
+function getVariantClasses(variant: ButtonVariant): string {
+  switch (variant) {
+    case 'secondary':
+      return 'bg-white text-primary-600 border border-primary-500 hover:bg-primary-50';
+    case 'ghost':
+      return 'bg-transparent text-primary-600 hover:bg-primary-50';
+    case 'primary':
+    default:
+      return 'bg-primary-600 text-white hover:bg-primary-700';
+  }
+}
+
+function getSizeClasses(size: ButtonSize): string {
+  switch (size) {
+    case 'sm':
+      return 'px-3 py-1.5 text-sm';
+    case 'lg':
+      return 'px-5 py-3 text-base';
+    case 'md':
+    default:
+      return 'px-4 py-2 text-sm';
+  }
+}
+
+export default function Button({
   variant = 'primary',
   size = 'md',
-  className,
+  fullWidth = false,
+  className = '',
   children,
   ...props
 }: ButtonProps) {
-  const base =
-    'inline-flex items-center justify-center rounded-md font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500 disabled:opacity-60 disabled:cursor-not-allowed';
+  const baseClasses =
+    'inline-flex items-center justify-center rounded-md font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed';
 
-  const variants: Record<string, string> = {
-    primary: 'bg-primary-500 text-white hover:bg-primary-600',
-    outline:
-      'border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 dark:bg-dark-800 dark:text-gray-100 dark:border-dark-700',
-    ghost:
-      'bg-transparent text-gray-900 hover:bg-light-100 dark:text-gray-100 dark:hover:bg-dark-800',
-  };
+  const widthClasses = fullWidth ? 'w-full' : '';
 
-  const sizes: Record<string, string> = {
-    sm: 'text-sm px-3 py-1.5',
-    md: 'text-sm md:text-base px-4 py-2',
-  };
+  const finalClassName = [
+    baseClasses,
+    getVariantClasses(variant),
+    getSizeClasses(size),
+    widthClasses,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
 
   return (
-    <button
-      className={clsx(base, variants[variant], sizes[size], className)}
-      {...props}
-    >
+    <button className={finalClassName} {...props}>
       {children}
     </button>
   );
