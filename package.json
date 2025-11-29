@@ -10,15 +10,17 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
-    "check": "npm run lint && npm run typecheck && npm run test"
+    "check": "npm run lint && npm run typecheck && npm run test",
+    "seed": "prisma db seed"
   },
-
   "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
+    "better-auth": "^1.4.3",
     "lucide-react": "^0.554.0",
     "next": "16.0.3",
     "next-auth": "^4.24.13",
@@ -43,6 +45,7 @@
     "jest-environment-jsdom": "^30.2.0",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
     "typescript": "^5",
     "whatwg-fetch": "^3.6.20"
   }
