@@ -18,13 +18,37 @@ const createPetSchema = z.object({
   weight: z.number().positive('Weight must be positive'),
 });
 
+// Helper: ensure there is a Prisma User row for the current session user.
+// This is important for OAuth (Google) users who may not have been created
+// in our own User table yet.
+async function getOrCreateDbUserForSession() {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user?.email) {
+    return { session, dbUser: null as null };
+  }
+
+  const dbUser = await prisma.user.upsert({
+    where: { email: session.user.email },
+    update: {},
+    create: {
+      email: session.user.email,
+      name: session.user.name ?? '',
+      // This value is never used for login; it just satisfies the schema.
+      passwordHash: 'google-oauth',
+    },
+  });
+
+  return { session, dbUser };
+}
+
 // POST /api/pets - Create a new pet
 export async function POST(request: NextRequest) {
   try {
-    // Step 1: Check if user is logged in
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
+    // Step 1: Ensure we have a logged-in user AND a backing DB user
+    const { session, dbUser } = await getOrCreateDbUserForSession();
+
+    if (!session || !dbUser) {
       return NextResponse.json(
         { error: 'You must be logged in to add a pet' },
         { status: 401 }
@@ -33,31 +57,33 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Get the data from the request
     const body = await request.json();
-    
+
     // Step 3: Validate the data with Zod
     const validationResult = createPetSchema.safeParse(body);
-    
+
     if (!validationResult.success) {
-  console.log('❌ Validation failed:', validationResult.error);
-  
-  // Format errors for easier reading
-  const formattedErrors = validationResult.error.issues.map((err: ZodIssue) => ({
-    field: err.path.join('.'),
-    message: err.message,
-  }));
-  
-  return NextResponse.json(
-    { 
-      error: 'Invalid pet data',
-      validationErrors: formattedErrors,
-    },
-    { status: 400 }
-  );
-}
+      console.log('❌ Validation failed:', validationResult.error);
+
+      // Format errors for easier reading
+      const formattedErrors = validationResult.error.issues.map(
+        (err: ZodIssue) => ({
+          field: err.path.join('.'),
+          message: err.message,
+        })
+      );
+
+      return NextResponse.json(
+        {
+          error: 'Invalid pet data',
+          validationErrors: formattedErrors,
+        },
+        { status: 400 }
+      );
+    }
 
     // Step 4: Data is valid! Save to database
     const petData = validationResult.data;
-    
+
     const newPet = await prisma.recipient.create({
       data: {
         name: petData.name,
@@ -66,21 +92,20 @@ export async function POST(request: NextRequest) {
         gender: petData.gender,
         birthDate: new Date(petData.birthDate),
         weight: petData.weight,
-        ownerId: session.user.id,
-      }
+        ownerId: dbUser.id, // ✅ use real DB user id, not session.user.id
+      },
     });
 
     console.log('✅ Pet created successfully:', newPet.id);
-    
+
     // Step 5: Return the created pet
     return NextResponse.json(
-      { 
+      {
         message: 'Pet created successfully!',
-        pet: newPet
+        pet: newPet,
       },
       { status: 201 }
     );
-    
   } catch (error) {
     console.error('❌ Error in POST /api/pets:', error);
     return NextResponse.json(
@@ -93,10 +118,10 @@ export async function POST(request: NextRequest) {
 // GET /api/pets - Get all pets for the logged-in user
 export async function GET() {
   try {
-    // Step 1: Check if user is logged in
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
+    // Step 1: Ensure we have a logged-in user AND a backing DB user
+    const { session, dbUser } = await getOrCreateDbUserForSession();
+
+    if (!session || !dbUser) {
       return NextResponse.json(
         { error: 'You must be logged in to view pets' },
         { status: 401 }
@@ -104,43 +129,42 @@ export async function GET() {
     }
 
     // Step 2: Fetch all pets for this user WITH their last activity
-    // We use 'include' to join the CareLogs table
     const pets = await prisma.recipient.findMany({
       where: {
-        ownerId: session.user.id
+        ownerId: dbUser.id, // ✅ query by DB user id
       },
       include: {
         careLogs: {
-          take: 1,                // Limit to only 1 record (the most recent)
+          take: 1, // Limit to only 1 record (the most recent)
           orderBy: {
-            createdAt: 'desc'     // Sort by newest first
+            createdAt: 'desc', // Sort by newest first
           },
           include: {
-            user: {               // Join User table to get the caregiver's name
+            user: {
+              // Join User table to get the caregiver's name
               select: {
                 id: true,
-                name: true
-              }
-            }
-          }
-        }
+                name: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'         // Sort pets by when they were added
-      }
+        createdAt: 'desc', // Sort pets by when they were added
+      },
     });
 
-    console.log(`✅ Found ${pets.length} pets for user:`, session.user.email);
+    console.log(`✅ Found ${pets.length} pets for user:`, session.user?.email);
 
     // Step 3: Return the pets
     return NextResponse.json(
-      { 
+      {
         pets,
-        count: pets.length
+        count: pets.length,
       },
       { status: 200 }
     );
-    
   } catch (error) {
     console.error('❌ Error in GET /api/pets:', error);
     return NextResponse.json(
