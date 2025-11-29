@@ -10,11 +10,28 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    setIsGoogleLoading(true);
+
+    try {
+      await signIn('google', {
+        callbackUrl: '/dashboard',
+      });
+      // NextAuth will handle the redirect; no manual router.push needed here.
+    } catch (err) {
+      console.error('Google sign-in error:', err);
+      setError('Unable to sign in with Google right now. Please try again.');
+      setIsGoogleLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsEmailLoading(true);
     setError(null);
 
     try {
@@ -34,7 +51,7 @@ export default function LoginPage() {
       console.error('Login error:', err);
       setError('An unexpected error occurred');
     } finally {
-      setLoading(false);
+      setIsEmailLoading(false);
     }
   };
 
@@ -50,6 +67,31 @@ export default function LoginPage() {
             <p className="mm-muted mt-3">
               Log in to view your household&apos;s care activity.
             </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={isGoogleLoading || isEmailLoading}
+            className="
+              w-full mb-4 rounded-full
+              border border-[#E5D9C6] bg-white
+              text-[11px] font-bold uppercase tracking-[0.16em]
+              py-2.5
+              hover:bg-[#FAF7F2]
+              disabled:opacity-60 disabled:cursor-not-allowed
+              transition-colors
+            "
+          >
+            {isGoogleLoading ? 'Signing in…' : 'Continue with Google'}
+          </button>
+
+          <div className="flex items-center my-4">
+            <div className="flex-1 h-px bg-[#E5D9C6]" />
+            <span className="mx-3 text-[11px] uppercase tracking-[0.16em] text-[#8A7A62]">
+              Or sign in with email
+            </span>
+            <div className="flex-1 h-px bg-[#E5D9C6]" />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -92,7 +134,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={isEmailLoading || isGoogleLoading}
               className="
                 w-full mt-2 rounded-full
                 bg-[#3E5C2E] text-white
@@ -103,7 +145,7 @@ export default function LoginPage() {
                 transition-colors
               "
             >
-              {loading ? 'Signing in…' : 'Sign in'}
+              {isEmailLoading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
 
