@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/pets - Get all pets for the logged-in user
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Step 1: Check if user is logged in
     const session = await getServerSession(authOptions);

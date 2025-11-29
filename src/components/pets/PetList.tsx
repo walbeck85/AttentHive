@@ -32,8 +32,9 @@ export default function PetList({ refreshTrigger }: { refreshTrigger?: number })
         if (!response.ok) throw new Error(data.error || 'Failed to load pets');
         setPets(data.pets);
       } catch (err) {
-        setError('Failed to connect to server');
-      } finally {
+  console.error('Error fetching pets:', err);
+  setError('Failed to connect to server');
+} finally {
         setLoading(false);
       }
     };
