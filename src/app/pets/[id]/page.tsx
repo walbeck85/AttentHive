@@ -129,8 +129,6 @@ export default function PetDetailsPage() {
     );
   }
 
-  const lastLog = pet.careLogs[0];
-
   return (
     <div className="mm-page">
       <main className="mm-shell space-y-6">
