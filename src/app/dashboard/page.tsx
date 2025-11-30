@@ -54,11 +54,9 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex flex-col items-start gap-1 text-xs sm:items-end">
-                <p className="mm-muted">
-                  Signed in as{' '}
-                  <span className="font-semibold text-mm-ink">
-                    {session.user?.email}
-                  </span>
+                <p className="text-sm text-muted-foreground">
+                  {/* Prefer the user's name, but fall back to email so this never looks empty */}
+                  Welcome, {session?.user?.name ?? session?.user?.email ?? "there"}
                 </p>
                 <p className="text-[11px] uppercase tracking-wide text-[#A08C72]">
                   Household dashboard
