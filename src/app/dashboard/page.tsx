@@ -1,81 +1,87 @@
-'use client';
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import PetList from "@/components/pets/PetList";
+import AddPetForm from "@/components/pets/AddPetForm";
 
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import AddPetForm from '@/components/pets/AddPetForm';
-import PetList from '@/components/pets/PetList';
+// Server-rendered dashboard. This page always runs on the server, so it can
+// talk directly to Prisma and NextAuth without shipping any of that to the client.
+export default async function DashboardPage() {
+  const session = await getServerSession(authOptions);
 
-export default function DashboardPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  // If someone lands here without a valid session, push them through the auth flow.
+  if (!session || !session.user || !session.user.id) {
+    redirect("/api/auth/signin");
+  }
 
-  const handlePetAdded = () => {
-    setRefreshTrigger((prev) => prev + 1);
-  };
+  const sessionUser = session.user;
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    }
-  }, [status, router]);
-
-  if (status === 'loading') {
-    return (
-      <div className="mm-page">
-        <main className="mm-shell flex items-center justify-center">
-          <p className="mm-muted">Loading…</p>
-        </main>
-      </div>
+  // For consistency with the /api/pets route, we resolve a *database* user
+  // based on email. This avoids the "session.id !== prisma.id" mismatch that
+  // you’re currently seeing with pets being created but not showing up.
+  if (!sessionUser.email) {
+    // If this ever fires, something is badly wrong with auth config and we
+    // want it to crash loudly instead of silently hiding pets.
+    throw new Error(
+      "Authenticated user is missing an email; cannot resolve DB user."
     );
   }
 
-  if (!session) {
-    return null;
-  }
+  const dbUser = await prisma.user.upsert({
+    where: { email: sessionUser.email },
+    update: {},
+    create: {
+      email: sessionUser.email,
+      name: sessionUser.name ?? "",
+      // This placeholder value is never used for login; it just satisfies the
+      // non-null constraint on passwordHash for OAuth users.
+      passwordHash: "google-oauth",
+    },
+  });
+
+  // Now we query pets by the *database* user id, which is the same id that
+  // /api/pets uses as ownerId when creating new recipients.
+  const pets = await prisma.recipient.findMany({
+    where: {
+      ownerId: dbUser.id,
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  });
 
   return (
-    <div className="mm-page">
-      <main className="mm-shell">
-        {/* Hero header */}
-        <section className="mm-section mb-6">
-          <div className="rounded-lg border border-[#E5D9C6] bg-[#FDF7EE] px-4 py-4 sm:px-6 sm:py-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="mm-kicker text-[11px] tracking-[0.22em] text-[#8B7A65]">
-                  Dashboard
-                </p>
-                <h1 className="mm-h1 mt-1">Manage your home</h1>
-                <p className="mm-muted mt-1 text-sm max-w-xl">
-                  Keep track of pets, plants, family, and housemates you&apos;re
-                  caring for in one place.
-                </p>
-              </div>
+    <main className="mx-auto max-w-5xl py-10 px-4">
+      <section className="mb-8 rounded-lg border border-neutral-200 bg-amber-50 p-6">
+        <p className="mb-2 text-xs tracking-[0.2em] text-neutral-500">
+          DASHBOARD
+        </p>
+        <h1 className="mb-3 text-3xl font-semibold">Manage your home</h1>
+        <p className="mb-4 text-sm text-neutral-700">
+          Keep track of pets, plants, family, and housemates you&apos;re caring
+          for in one place.
+        </p>
+        <p className="text-sm text-neutral-700">
+          {/* Prefer the user’s name, but fall back to email so this never looks broken
+              if their profile is half-filled. */}
+          Welcome, {sessionUser.name ?? sessionUser.email ?? "friend"}
+        </p>
+      </section>
 
-              <div className="flex flex-col items-start gap-1 text-xs sm:items-end">
-                <p className="text-sm text-muted-foreground">
-                  {/* Prefer the user's name, but fall back to email so this never looks empty */}
-                  Welcome, {session?.user?.name ?? session?.user?.email ?? "there"}
-                </p>
-                <p className="text-[11px] uppercase tracking-wide text-[#A08C72]">
-                  Household dashboard
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+      <section className="mb-8">
+        <AddPetForm />
+      </section>
 
-        {/* Add Pet panel */}
-        <section className="mm-section mb-8">
-          <AddPetForm onPetAdded={handlePetAdded} />
-        </section>
-
-        {/* Pet grid / list */}
-        <section className="mm-section">
-          <PetList refreshTrigger={refreshTrigger} />
-        </section>
-      </main>
-    </div>
+      <section>
+        <h2 className="mb-2 text-xl font-semibold">
+          Manage your home ({pets.length})
+        </h2>
+        <p className="mb-4 text-sm text-neutral-600">
+          Log care for each member of your household.
+        </p>
+        <PetList pets={pets} />
+      </section>
+    </main>
   );
 }

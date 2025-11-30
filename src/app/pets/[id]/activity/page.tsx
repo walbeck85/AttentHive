@@ -1,4 +1,5 @@
 'use client';
+// Imports ------------------------------------------------------
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -6,7 +7,7 @@ import { useRouter, useParams } from 'next/navigation';
 // Types --------------------------------------------------------
 
 type ActivityType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
-
+// CareLog represents a single activity entry for a pet
 type CareLog = {
   id: string;
   activityType: ActivityType;
@@ -19,7 +20,7 @@ type CareLog = {
 };
 
 // Helper functions ---------------------------------------------
-
+// Formats a date string into a human-readable format
 function formatDateTime(dateString: string): string {
   const date = new Date(dateString);
   return new Intl.DateTimeFormat('en-US', {
@@ -30,7 +31,7 @@ function formatDateTime(dateString: string): string {
     hour12: true,
   }).format(date);
 }
-
+// Labels for activity types
 const ACTIVITY_LABELS: Record<ActivityType, string> = {
   FEED: 'Feed',
   WALK: 'Walk',
@@ -44,7 +45,7 @@ export default function ActivityLogPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const petId = params?.id;
-
+// State variables for logs, pet name, loading status, error message, and filter
   const [logs, setLogs] = useState<CareLog[]>([]);
   const [petName, setPetName] = useState<string>('Pet');
   const [loading, setLoading] = useState(true);
@@ -59,14 +60,14 @@ export default function ActivityLogPage() {
       try {
         setLoading(true);
         setError(null);
-
+        // Fetch care logs from API
         const response = await fetch(`/api/pets/${petId}/care-logs`);
         const data = await response.json();
 
         if (!response.ok) {
           throw new Error(data.error || 'Failed to fetch logs');
         }
-
+        // Update state with fetched logs and pet name
         setLogs(data.logs);
         setPetName(data.petName);
       } catch (err) {
@@ -96,7 +97,7 @@ export default function ActivityLogPage() {
       </div>
     );
   }
-
+  // Error state
   if (error) {
     return (
       <div className="min-h-screen bg-[var(--mm-bg)] flex flex-col items-center justify-center gap-4">
@@ -129,7 +130,7 @@ export default function ActivityLogPage() {
           >
             ← Back
           </button>
-
+          
           <div className="mt-4 mm-card px-5 py-4 flex items-center justify-between">
             <div>
               <h1 className="mm-h2">{petName}</h1>

@@ -1,9 +1,11 @@
 // src/app/pets/[id]/page.tsx
 'use client';
-
+// Imports ------------------------------------------------------
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Dog, Cat } from 'lucide-react';
+
+// Types --------------------------------------------------------
 
 type ActionType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
 
@@ -27,7 +29,7 @@ type PetData = {
 };
 
 // helpers ------------------------------------------------------
-
+// Calculates age in years from birth date
 function calculateAge(birthDate: string): number {
   const birth = new Date(birthDate);
   const today = new Date();
@@ -36,7 +38,7 @@ function calculateAge(birthDate: string): number {
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
   return age;
 }
-
+// Formats a date string into a human-readable format
 function formatDateTime(dateString: string): string {
   const date = new Date(dateString);
   return new Intl.DateTimeFormat('en-US', {
@@ -47,7 +49,7 @@ function formatDateTime(dateString: string): string {
     hour12: true,
   }).format(date);
 }
-
+// Returns label for activity type
 function getActivityLabel(type: ActionType): string {
   switch (type) {
     case 'FEED':
@@ -64,7 +66,7 @@ function getActivityLabel(type: ActionType): string {
 }
 
 // page --------------------------------------------------------
-
+// Pet details page component
 export default function PetDetailsPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -73,7 +75,7 @@ export default function PetDetailsPage() {
   const [pet, setPet] = useState<PetData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+// Fetch pet details on mount
   useEffect(() => {
     if (!petId) return;
 
@@ -110,7 +112,7 @@ export default function PetDetailsPage() {
       </div>
     );
   }
-
+// Error state
   if (error || !pet) {
     return (
       <div className="min-h-screen bg-[var(--mm-bg)] flex flex-col items-center justify-center gap-4">
@@ -128,7 +130,7 @@ export default function PetDetailsPage() {
       </div>
     );
   }
-
+// Main pet details UI
   return (
     <div className="mm-page">
       <main className="mm-shell space-y-6">
