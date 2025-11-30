@@ -18,6 +18,10 @@ model User {
   name          String
   passwordHash  String
   
+  // Contact details for profile editing; keeping these optional so existing users don't suddenly fail migrations
+  phone         String?
+  address       String?
+  
   // Relationships
   ownedPets     Recipient[]   @relation("PetOwner")  // Pets this user owns
   careCircles   CareCircle[]                         // Pets this user can access
