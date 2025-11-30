@@ -1,12 +1,12 @@
 'use client';
-
+// Imports ------------------------------------------------------
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
+// Types --------------------------------------------------------
 type AddPetFormProps = {
   onPetAdded?: () => void;
 };
-
+// Form state representation
 type FormState = {
   name: string;
   type: 'DOG' | 'CAT';
@@ -16,9 +16,9 @@ type FormState = {
   weight: string;
   weightUnit: 'lbs' | 'kg';
 };
-
+// Field-specific error messages
 type FieldErrors = Partial<Record<keyof FormState, string>>;
-
+//  Component --------------------------------------------------
 export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,9 +35,9 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
     weight: '',
     weightUnit: 'lbs',
   });
-
+// Field Errors
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-
+// Resets form to initial state
   const resetForm = () => {
     setFormData({
       name: '',
@@ -51,10 +51,10 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
     setFieldErrors({});
     setError(null);
   };
-
+// Validates form data and returns errors
   const validate = (data: FormState): FieldErrors => {
     const errors: FieldErrors = {};
-
+// Name, breed, birthDate, and weight are required
     if (!data.name.trim()) errors.name = 'Name is required.';
     if (!data.breed.trim()) errors.breed = 'Breed is required.';
     if (!data.birthDate) errors.birthDate = 'Birth date is required.';
@@ -72,7 +72,7 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
     // so no extra validation needed beyond presence.
     return errors;
   };
-
+// Handles form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -85,7 +85,7 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
       setIsSubmitting(false);
       return;
     }
-
+// Submit to API
     try {
       const numericWeight = parseFloat(formData.weight);
       const weightInLbs =
@@ -103,18 +103,22 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
           weight: weightInLbs,
         }),
       });
-
+// Parse response
       const data = await res.json();
 
       if (!res.ok) {
         throw new Error(data.error || 'Failed to add pet');
       }
 
+      // At this point the server accepted the payload, so I reset UI state first and then ask Next to re-run the dashboard query
       resetForm();
       setIsExpanded(false);
+      // Using router.refresh to keep the server-rendered dashboard in sync, while onPetAdded stays as a hook for any future client-only reactions
       router.refresh();
       if (onPetAdded) onPetAdded();
     } catch (err) {
+      // Logging the raw error here so future-me has something concrete to inspect when the UI only shows a generic failure message
+      console.error("Error while adding pet", err);
       setError(err instanceof Error ? err.message : 'Failed to add pet');
     } finally {
       setIsSubmitting(false);

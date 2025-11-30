@@ -3,17 +3,17 @@ import "./globals.css";
 import { Nunito } from "next/font/google";
 import Providers from "./providers";
 import NavBar from "@/components/NavBar";
-
+// Font setup ---------------------------------------------------
 const nunito = Nunito({
   subsets: ["latin"],
   variable: "--font-nunito",
 });
-
+// Metadata -----------------------------------------------------
 export const metadata = {
   title: "Mimamori",
   description: "Care coordination for pets, people, and plants",
 };
-
+// Layout -------------------------------------------------------
 export default function RootLayout({
   children,
 }: {

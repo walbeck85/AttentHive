@@ -213,3 +213,11 @@ When testing routes that require authentication:
 
 For quick testing during development, use the browser console with fetch().
 
+## Database Migration Issues
+
+When adding required fields to models with existing data:
+- Either delete test data first, OR
+- Use `npx prisma migrate reset` in development to start fresh
+- In production, you'd need to handle this differently (add as optional, 
+  backfill data, then make required)
+

@@ -1,12 +1,13 @@
 'use client';
-
+// Imports ------------------------------------------------------
 import { Utensils, Footprints, Pill, AlertTriangle } from 'lucide-react';
-
+// Types --------------------------------------------------------
 type ActionType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
-
+// Component Props ----------------------------------------------
 type Props = {
   onAction: (action: ActionType) => void;
 };
+// Component -----------------------------------------------------
 
 export default function QuickActions({ onAction }: Props) {
   return (
@@ -35,7 +36,7 @@ export default function QuickActions({ onAction }: Props) {
     </div>
   );
 }
-
+// Action Button Component --------------------------------------
 function ActionBtn({ 
   icon, onClick, danger, title 
 }: { 
