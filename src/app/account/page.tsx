@@ -1,3 +1,5 @@
+// src/app/account/page.tsx
+
 // Server-side imports - this is a Server Component (no 'use client')
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
@@ -9,10 +11,10 @@ import UserProfileForm from "@/components/UserProfileForm";
 // Prevents breaking changes if Prisma schema differs between dev/CI/prod environments
 type AccountUser = {
   id: string;
-  name: string;
+  name: string | null;
   email: string;
-  phone?: string | null; // Optional fields use union with null for database compatibility
-  address?: string | null;
+  phone: string | null;
+  address: string | null;
 };
 
 // Server Component: runs on server only, can directly access database and session
@@ -21,34 +23,42 @@ export default async function AccountPage() {
   // Fetch session server-side - more secure than client-side session access
   const session = await getServerSession(authOptions);
 
-  // Auth guard: redirect unauthorized users before rendering anything
-  // Using redirect() instead of returning null ensures proper HTTP status codes (307)
-  // Checking all three values (!session, !user, !id) handles edge cases safely
-  if (!session || !session.user || !session.user.id) {
-    redirect("/api/auth/signin");
+  // If there is no authenticated user, send them to login and return to /account afterwards
+  if (!session || !session.user?.email) {
+    redirect("/login?callbackUrl=/account");
   }
 
-  // Extract user from session for cleaner reference below
-  const sessionUser = session.user;
+  const { email, name } = session.user;
 
-  // Query database for full user details - session only contains minimal info (id, name, email)
-  // Session tokens are kept small for performance, so we fetch full profile from DB
-  // findUnique is more efficient than findFirst when querying by unique field (id)
-  const dbUserRaw = await prisma.user.findUnique({
-    where: { id: sessionUser.id },
+  // Use email as the source of truth for matching users.
+  // This keeps us aligned with other routes (like /api/care-logs) which
+  // also "get or create" the user by email for both credentials and Google logins.
+  const dbUserRaw = await prisma.user.upsert({
+    where: { email: email! },
+    update: {},
+    create: {
+      email: email!,
+      name: name ?? "",
+      // Satisfies Prisma schema; not actually used for OAuth logins
+      passwordHash: "google-oauth",
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      address: true,
+    },
   });
 
-  // Fail fast if session exists but user doesn't - indicates data inconsistency
-  // This should never happen in production, but throwing an error surfaces bugs early
-  // Better to crash and fix the root cause than silently fail
-  if (!dbUserRaw) {
-    throw new Error("Authenticated user record not found in database.");
-  }
-
-  // Type assertion through custom AccountUser type provides stability across environments
-  // Without this, minor Prisma schema changes (e.g., adding a field) could break TypeScript compilation
-  // The 'as unknown as' pattern is a safe escape hatch when you control both types
-  const dbUser = dbUserRaw as unknown as AccountUser;
+  // Normalize into a stable shape for the form component
+  const dbUser: AccountUser = {
+    id: dbUserRaw.id,
+    name: dbUserRaw.name,
+    email: dbUserRaw.email,
+    phone: dbUserRaw.phone,
+    address: dbUserRaw.address,
+  };
 
   return (
     <main className="mx-auto max-w-2xl py-8 px-4">
