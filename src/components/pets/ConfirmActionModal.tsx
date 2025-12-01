@@ -1,176 +1,91 @@
+// src/components/pets/ConfirmActionModal.tsx
 'use client';
 
-import React, { useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React from 'react';
 
-// Supported quick action types (mirrors PetCard / QuickActions)
-export type ActionType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
-
-export type ConfirmActionModalProps = {
-  isOpen: boolean;
-  petName: string;
-  actionType: ActionType;
+type ConfirmActionModalProps = {
+  open: boolean;
+  title: string;
+  body: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
 };
 
-// Display metadata for each action (text, emoji, brand color)
-const ACTION_DISPLAY: Record<
-  ActionType,
-  { text: string; emoji: string; color: string }
-> = {
-  FEED: {
-    text: 'a meal',
-    emoji: '🍽️',
-    color: '#D17D45', // warm orange
-  },
-  WALK: {
-    text: 'a walk',
-    emoji: '🚶‍♀️',
-    color: '#3E5C2E', // green
-  },
-  MEDICATE: {
-    text: 'medication',
-    emoji: '💊',
-    color: '#2563EB', // blue
-  },
-  ACCIDENT: {
-    text: 'an accident',
-    emoji: '⚠️',
-    color: '#C62828', // red
-  },
-};
-
+/**
+ * Full-screen confirmation modal for quick actions.
+ * Uses inline styles for the overlay + card so it cannot be
+ * accidentally affected by Tailwind or global CSS.
+ */
 export default function ConfirmActionModal({
-  isOpen,
-  petName,
-  actionType,
+  open,
+  title,
+  body,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
   onConfirm,
   onCancel,
 }: ConfirmActionModalProps) {
-  // Lock body scroll while modal is open
-  useEffect(() => {
-    if (!isOpen) return;
+  if (!open) return null;
 
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.body.style.overflow = originalOverflow || '';
-    };
-  }, [isOpen]);
-
-  // Don't render anything if modal is closed
-  if (!isOpen) return null;
-
-  const portalContainer =
-    typeof document !== 'undefined' ? document.body : null;
-  if (!portalContainer) return null;
-
-  const action = ACTION_DISPLAY[actionType];
-
-  return createPortal(
+  return (
     <div
       role="dialog"
       aria-modal="true"
-      // Use inline styles to guarantee full-screen overlay + centering
+      aria-labelledby="confirm-dialog-title"
+      // Full-screen dimmed overlay
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
+        backgroundColor: 'rgba(0, 0, 0, 0.35)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1.5rem',
       }}
-      className="font-sans"
+      onClick={onCancel} // click on backdrop closes
     >
-      {/* Backdrop */}
-      <button
-        type="button"
-        aria-label="Close"
-        onClick={onCancel}
-        className="absolute inset-0 bg-black/50"
-      />
-
-      {/* Modal content */}
+      {/* Modal card */}
       <div
-        onClick={(e) => e.stopPropagation()}
-        className="
-          relative w-full max-w-md
-          mm-card
-          px-6 py-6
-        "
+        onClick={(event) => event.stopPropagation()} // don't close when clicking inside
+        style={{
+          maxWidth: '420px',
+          width: '90%',
+          borderRadius: '0.75rem',
+          backgroundColor: '#FFF9F0', // distinct from page background
+          border: '1px solid #D1C3A5',
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.35)',
+          padding: '1.5rem 1.75rem',
+        }}
       >
-        {/* Close icon */}
-        <button
-          type="button"
-          onClick={onCancel}
-          aria-label="Cancel"
-          className="
-            absolute right-4 top-4
-            text-xs font-bold tracking-[0.16em]
-            uppercase text-[#7A6A56]
-            hover:text-[#382110]
-          "
+        <h2
+          id="confirm-dialog-title"
+          className="mb-2 text-base font-semibold text-[#382110] text-center"
         >
-          ✕
-        </button>
+          {title}
+        </h2>
 
-        {/* Header */}
-        <div className="flex flex-col items-center text-center gap-3 mb-5 mt-1">
-          <div className="text-4xl">{action.emoji}</div>
-          <h2 className="text-xl font-extrabold tracking-[0.08em] uppercase text-[#382110]">
-            Confirm action
-          </h2>
-        </div>
+        <p className="mb-4 text-sm text-[#7A6A56] text-center">{body}</p>
 
-        {/* Body copy */}
-        <p className="text-sm text-center text-[#7A6A56] mb-7">
-          Log{' '}
-          <span className="font-bold" style={{ color: action.color }}>
-            {action.text}
-          </span>{' '}
-          for{' '}
-          <span className="font-bold text-[#382110]">
-            {petName}
-          </span>
-          ?
-        </p>
-
-        {/* Buttons */}
-        <div className="flex gap-3">
+        <div className="mt-2 flex justify-center gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="
-              flex-1 px-4 py-2 rounded-full
-              text-xs font-bold uppercase tracking-[0.16em]
-              border border-[#E5D9C6]
-              text-[#7A6A56]
-              hover:bg-[#F5F3EA]
-              transition-colors
-            "
+            className="mm-chip"
           >
-            Cancel
+            {cancelLabel}
           </button>
+
           <button
             type="button"
             onClick={onConfirm}
-            className="
-              flex-1 px-4 py-2 rounded-full
-              text-xs font-bold uppercase tracking-[0.16em]
-              text-white
-              shadow-sm
-              transition-colors
-            "
-            style={{ backgroundColor: action.color }}
+            className="mm-chip mm-chip--solid-primary"
           >
-            Confirm
+            {confirmLabel}
           </button>
         </div>
       </div>
-    </div>,
-    portalContainer
+    </div>
   );
 }
