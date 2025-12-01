@@ -1,92 +1,84 @@
-import { NextResponse } from "next/server";
+// src/app/api/user/profile/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { z } from "zod";
 
-// Keeping this tight so we only accept the fields we actually plan to store
-const profileUpdateSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-  phone: z.string().min(3).max(50).optional(),
-  address: z.string().min(3).max(255).optional(),
-  email: z.string().email().optional(),
-});
+// This type keeps the payload intentionally small and focused on fields
+// users are allowed to edit from the profile page.
+type ProfilePayload = {
+  name?: string;
+  phone?: string;
+  address?: string;
+  email?: string;
+};
 
-// Basic shared guard so I do not copy-paste session lookups everywhere
-async function requireSessionUser() {
+// GET /api/user/profile
+// Used by the account page to load the current user's profile data.
+export async function GET() {
   const session = await getServerSession(authOptions);
 
-  // Being strict here so we fail fast if NextAuth's typing ever drifts
-  if (!session || !session.user || !session.user.id) {
-    throw new Error("User must be authenticated with a valid ID.");
+  // If there is no valid session, we fail fast so we don't expose anything.
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  return session.user;
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      address: true,
+      // Note: we intentionally do NOT select `emailVerified` here because
+      // the current Prisma User model does not define that column.
+    },
+  });
+
+  if (!user) {
+    // This should not normally happen, but it guards against weird state.
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ user });
 }
 
-export async function GET() {
+// PATCH /api/user/profile
+// Handles profile updates from the account page form.
+// We use PATCH instead of PUT because users are only editing a subset
+// of fields, not replacing the whole resource.
+export async function PATCH(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+
+  // Again, fail fast if we don't have a logged-in user.
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  let body: ProfilePayload;
   try {
-    const user = await requireSessionUser();
-
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      // Selecting only what the profile UI actually needs to keep the payload lean
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        address: true,
-      },
-    });
-
-    if (!dbUser) {
-      return NextResponse.json(
-        { error: "User not found." },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(dbUser);
-    } catch (error) {
-    console.error("Error loading user profile", error);
-    // Returning a generic message here; details can live in logs instead
+    body = (await request.json()) as ProfilePayload;
+  } catch {
+    // If the body is not valid JSON, we return a 400 rather than crashing.
     return NextResponse.json(
-      { error: "Unable to load profile." },
-      { status: 401 }
+      { error: "Invalid JSON payload" },
+      { status: 400 }
     );
   }
-}
 
-export async function PATCH(request: Request) {
   try {
-    const user = await requireSessionUser();
-    const body = await request.json();
-
-    // Let Zod be the bad cop so we keep all validation rules in one place
-    const parsed = profileUpdateSchema.parse(body);
-
-    // Fetch current user so we can detect email changes
-    const existingUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: { email: true },
-    });
-
-    if (!existingUser) {
-      return NextResponse.json(
-        { error: "User not found." },
-        { status: 404 }
-      );
-    }
-
     const updatedUser = await prisma.user.update({
-      where: { id: user.id },
+      where: { email: session.user.email },
+      // Prisma ignores `undefined` values, so we can safely pass individual
+      // fields here for a true partial update, including email.
       data: {
-        // Only apply values that were actually sent, so we do not blow away existing data
-        ...(parsed.name !== undefined && { name: parsed.name }),
-        ...(parsed.phone !== undefined && { phone: parsed.phone }),
-        ...(parsed.address !== undefined && { address: parsed.address }),
-        ...(parsed.email !== undefined && { email: parsed.email }),
+        name: body.name,
+        phone: body.phone,
+        address: body.address,
+        email: body.email,
       },
       select: {
         id: true,
@@ -97,19 +89,15 @@ export async function PATCH(request: Request) {
       },
     });
 
-    // In the future we can plug in an email verification flow here; for now we just expose the new state
-    return NextResponse.json(updatedUser);
+    // Returning the updated user lets the client update its local UI
+    // without needing an extra GET request.
+    return NextResponse.json({ user: updatedUser });
   } catch (error) {
-    // If Zod throws, we surface a 400 so the UI knows it was a bad payload, not a server crash
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid profile data.", details: error.flatten() },
-        { status: 400 }
-      );
-    }
+    // Centralized logging so we can diagnose issues in development / Vercel logs.
+    console.error("Error updating profile", error);
 
     return NextResponse.json(
-      { error: "Unable to update profile." },
+      { error: "Unable to save profile" },
       { status: 500 }
     );
   }

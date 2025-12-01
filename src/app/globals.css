@@ -231,4 +231,26 @@
   .mm-chip--solid-green:hover {
     background-color: #2F4A24;
   }
+
+    /* Header nav pills: Dashboard / My Profile / Logout */
+    .nav-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.25rem 0.9rem;
+      border-radius: 9999px;
+      border: 1.5px solid #382110; /* matches var(--mm-ink) */
+      background-color: #ffffff;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #382110;
+      text-decoration: none;
+    }
+
+    .nav-pill:hover {
+      background-color: #f4ede4;
+      text-decoration: none;
+    }
 }

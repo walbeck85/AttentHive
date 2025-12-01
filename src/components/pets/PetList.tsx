@@ -29,7 +29,9 @@ export default function PetList({ pets, currentUserName }: PetListProps) {
     type: pet.type,
     breed: pet.breed,
     gender: pet.gender,
-    birthDate: pet.birthDate,
+    // PetData.birthDate is a string, but Prisma gives us a Date.
+    // Converting to ISO keeps it unambiguous and easy to parse in the card.
+    birthDate: pet.birthDate.toISOString(),
     weight: pet.weight,
     specialNeeds: pet.specialNeeds ?? null,
     ownerId: pet.ownerId,
@@ -46,6 +48,9 @@ export default function PetList({ pets, currentUserName }: PetListProps) {
           key={pet.id}
           pet={pet}
           currentUserName={currentUserName}
+          // onQuickAction is required in PetCard's Props type.
+          // Right now the card handles the logging itself, so we pass a no-op to satisfy TS.
+          onQuickAction={() => {}}
         />
       ))}
     </div>
