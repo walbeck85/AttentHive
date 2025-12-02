@@ -34,6 +34,7 @@ model Recipient {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   gender       Gender
+  imageUrl     String?      // Keeping this nullable so existing recipients don't break while we roll out photo uploads gradually.
   careCircles  CareCircle[]
   careLogs     CareLog[]
   owner        User         @relation("PetOwner", fields: [ownerId], references: [id], onDelete: Cascade)
