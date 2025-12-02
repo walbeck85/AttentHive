@@ -11,7 +11,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "check": "npm run lint && npm run typecheck && npm run test",
-    "seed": "prisma db seed"
+    "seed": "prisma db seed",
+    "prisma:healthcheck": "node scripts/prisma-healthcheck.cjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

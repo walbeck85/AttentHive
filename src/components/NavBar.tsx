@@ -34,6 +34,10 @@ export default function NavBar() {
               Dashboard
             </Link>
 
+            <Link href="/care-circle" className="nav-pill">
+              Care Circle
+            </Link>
+
             <Link href="/account" className="nav-pill">
               My Profile
             </Link>
