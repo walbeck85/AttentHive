@@ -253,4 +253,17 @@
       background-color: #f4ede4;
       text-decoration: none;
     }
+
+  /* Avatar system -------------------------------------------------- */
+  /* Constrain XL avatars so pet photos don't dominate the layout.
+     We still rely on object-cover and oval masking from the shared
+     .mm-avatar styles; this only sets an explicit box size. */
+  /* XL avatar for the upload preview */
+.mm-avatar--xl {
+  width: 200px;   /* previously 100% */
+  height: 200px;  /* now square and constrained */
+  border-radius: 9999px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
 }

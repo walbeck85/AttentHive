@@ -37,6 +37,7 @@ export default function PetList({ pets, currentUserName }: PetListProps) {
     ownerId: pet.ownerId,
     createdAt: pet.createdAt,
     updatedAt: pet.updatedAt,
+    imageUrl: pet.imageUrl ?? null,
     // The dashboard query is not loading logs yet; starting with an empty array avoids null checks everywhere else.
     careLogs: [],
   }));
