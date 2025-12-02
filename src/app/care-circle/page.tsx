@@ -1,9 +1,89 @@
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+// Server action to remove a caregiver's access for a specific pet.
+// This mirrors the authorization checks in the /api/care-circles/members DELETE route
+// so that only the pet owner can revoke access.
+export async function removeCaregiverMembership(formData: FormData) {
+  "use server";
+
+  const session = await getServerSession(authOptions);
+
+  // If there is no authenticated user, quietly bail out.
+  // The page-level loader already redirects unauthenticated users.
+  if (!session || !session.user?.email) {
+    return;
+  }
+
+  const { email, name } = session.user;
+
+  // Resolve or create the backing DB user, consistent with dashboard/account logic.
+  const dbUser = await prisma.user.upsert({
+    where: { email: email! },
+    update: {},
+    create: {
+      email: email!,
+      name: name ?? "",
+      // Satisfies schema; not used for OAuth logins
+      passwordHash: "google-oauth",
+    },
+  });
+
+  const membershipId = formData.get("membershipId");
+  const recipientId = formData.get("recipientId");
+
+  if (typeof membershipId !== "string" || membershipId.length === 0) {
+    return;
+  }
+
+  try {
+    const membership = await prisma.careCircle.findUnique({
+      where: { id: membershipId },
+      include: {
+        recipient: {
+          select: {
+            ownerId: true,
+          },
+        },
+      },
+    });
+
+    if (!membership) {
+      return;
+    }
+
+    // Only the owner of the recipient can revoke access.
+    if (membership.recipient.ownerId !== dbUser.id) {
+      return;
+    }
+
+    // Extra guardrail: do not allow removing the OWNER record.
+    if (membership.role === "OWNER") {
+      return;
+    }
+
+    await prisma.careCircle.delete({
+      where: { id: membershipId },
+    });
+
+    // Refresh this page so the UI reflects the updated membership list.
+    revalidatePath("/care-circle");
+
+    // Also refresh the pet details page if we know which pet this membership belonged to.
+    if (typeof recipientId === "string" && recipientId.length > 0) {
+      revalidatePath(`/pets/${recipientId}`);
+    }
+  } catch (error) {
+    // For now, fail silently on this path; the primary, more explicit
+    // error handling lives in the API route used by the pet details page.
+    console.error("Error in removeCaregiverMembership action:", error);
+  }
+}
 
 export default async function CareCirclePage() {
   const session = await getServerSession(authOptions);
@@ -49,11 +129,18 @@ export default async function CareCirclePage() {
     orderBy: { grantedAt: "asc" },
   });
 
+  type CaregiverPet = {
+    membershipId: string;
+    id: string;
+    name: string;
+    type: string;
+  };
+
   type CaregiverGroup = {
     caregiverId: string;
     caregiverName: string | null;
     caregiverEmail: string;
-    pets: { id: string; name: string; type: string }[];
+    pets: CaregiverPet[];
   };
 
   const caregiversMap = new Map<string, CaregiverGroup>();
@@ -73,6 +160,7 @@ export default async function CareCirclePage() {
     }
 
     group.pets.push({
+      membershipId: membership.id,
       id: membership.recipient.id,
       name: membership.recipient.name,
       type: membership.recipient.type,
@@ -166,13 +254,21 @@ export default async function CareCirclePage() {
 
                 <div className="flex flex-wrap gap-2">
                   {person.pets.map((pet) => (
-                    <Link
-                      key={pet.id}
-                      href={`/pets/${pet.id}`}
-                      className="nav-pill text-xs"
-                    >
-                      View {pet.name}
-                    </Link>
+                    <div key={pet.membershipId} className="flex items-center gap-2">
+                      <Link href={`/pets/${pet.id}`} className="nav-pill text-xs">
+                        View {pet.name}
+                      </Link>
+                      <form action={removeCaregiverMembership}>
+                        <input type="hidden" name="membershipId" value={pet.membershipId} />
+                        <input type="hidden" name="recipientId" value={pet.id} />
+                        <button
+                          type="submit"
+                          className="nav-pill text-[0.7rem] border border-red-200 bg-white text-red-700 hover:bg-red-50"
+                        >
+                          Remove
+                        </button>
+                      </form>
+                    </div>
                   ))}
                 </div>
               </li>

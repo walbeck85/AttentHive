@@ -2,7 +2,8 @@
 // Simple Prisma connectivity healthcheck using CommonJS.
 // This bypasses all the ts-node / ESM headaches.
 
-const { PrismaClient } = require('@prisma/client');
+/* eslint-disable @typescript-eslint/no-require-imports */
+const { PrismaClient } = require("@prisma/client");
 
 async function main() {
   const prisma = new PrismaClient();

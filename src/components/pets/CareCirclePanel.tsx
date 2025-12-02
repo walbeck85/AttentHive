@@ -12,7 +12,7 @@ type CareCircleMember = {
 type CareCircleMembersApiResponse = {
   members?: {
     id: string;
-    role: CareCircleMember['role'];
+    role: CareCircleMember["role"];
     user?: {
       name: string | null;
       email: string;
@@ -34,6 +34,7 @@ type CareCirclePanelProps = {
  * - Shows an invite form if the viewer is the owner
  * - Handles invites via /api/care-circles/invite
  * - Refreshes the member list from /api/care-circles/members after a successful invite
+ * - Allows owners to remove existing caregivers/viewers via /api/care-circles/members (DELETE)
  */
 export default function CareCirclePanel({
   recipientId,
@@ -43,6 +44,7 @@ export default function CareCirclePanel({
   const [members, setMembers] = useState<CareCircleMember[]>(initialMembers);
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -91,7 +93,8 @@ export default function CareCirclePanel({
         throw new Error("Invite was sent but failed to refresh members list.");
       }
 
-      const data = (await membersResponse.json()) as CareCircleMembersApiResponse;
+      const data =
+        (await membersResponse.json()) as CareCircleMembersApiResponse;
 
       // The members API returns CareCircle rows with an attached user object.
       // Normalize into the shape this component expects.
@@ -116,6 +119,46 @@ export default function CareCirclePanel({
       setSuccessMessage(null);
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  // Owner-only action: remove an existing caregiver/viewer from this pet.
+  async function handleRemove(memberId: string) {
+    // Clear previous status so feedback always reflects the latest action.
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setRemovingId(memberId);
+
+    try {
+      const response = await fetch("/api/care-circles/members", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          membershipId: memberId,
+          recipientId,
+        }),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        const message =
+          body?.error ?? "Failed to remove caregiver from care circle.";
+        throw new Error(message);
+      }
+
+      // Update the local list so the UI reflects the removal immediately.
+      setMembers((prev) => prev.filter((member) => member.id !== memberId));
+      setSuccessMessage("Caregiver removed successfully.");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while removing the caregiver.";
+      setErrorMessage(message);
+    } finally {
+      setRemovingId(null);
     }
   }
 
@@ -146,9 +189,21 @@ export default function CareCirclePanel({
                   {member.userEmail}
                 </div>
               </div>
-              <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs uppercase tracking-wide text-neutral-700">
-                {member.role.toLowerCase()}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs uppercase tracking-wide text-neutral-700">
+                  {member.role.toLowerCase()}
+                </span>
+                {isOwner && member.role !== "OWNER" && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(member.id)}
+                    disabled={removingId === member.id}
+                    className="text-xs text-red-600 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {removingId === member.id ? "Removing..." : "Remove"}
+                  </button>
+                )}
+              </div>
             </li>
           ))}
         </ul>
