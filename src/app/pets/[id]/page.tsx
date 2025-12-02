@@ -125,7 +125,8 @@ export default function PetDetailsPage() {
           );
 
           if (membersRes.ok) {
-            const membersData = (await membersRes.json()) as CareCircleMembersApiResponse;
+            const membersData =
+              (await membersRes.json()) as CareCircleMembersApiResponse;
 
             const mappedMembers: CareCircleMember[] = (membersData.members ?? []).map(
               (membership) => ({
@@ -140,9 +141,26 @@ export default function PetDetailsPage() {
             if (typeof membersData.isOwner === 'boolean') {
               setIsOwner(membersData.isOwner);
             }
-          } else if (membersRes.status !== 401) {
-            // If this fails for any reason other than unauthenticated, log it for debugging.
-            console.error('Failed to fetch care circle members for pet');
+          } else if (membersRes.status === 401) {
+            // Not logged in – nothing to show, but we also don't want to block the page.
+            setCareCircleMembers([]);
+          } else if (membersRes.status === 404) {
+            // API may signal "no care circle yet" as 404. Treat as empty state.
+            setCareCircleMembers([]);
+            setIsOwner(false);
+          } else {
+            // Soft-fail for any other server issue; log as a warning with status/body for debugging.
+            let errorBody: string | null = null;
+            try {
+              errorBody = await membersRes.text();
+            } catch {
+              // ignore parse errors
+            }
+            console.warn(
+              'Care circle members request failed',
+              membersRes.status,
+              errorBody,
+            );
           }
         } catch (careCircleError) {
           console.error('Error fetching care circle data:', careCircleError);
@@ -292,7 +310,7 @@ export default function PetDetailsPage() {
           </div>
         </section>
         {/* Shared access / CareCircle */}
-        <section className="mm-section">
+        <section id="care-circle" className="mm-section">
           <CareCirclePanel
             recipientId={pet.id}
             isOwner={isOwner}
