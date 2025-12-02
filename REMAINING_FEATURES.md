@@ -46,6 +46,15 @@ These complete the core product vision.
   - Account → “Shared Pets”
   - Dashboard → mix owned + shared pets
 
+### CareCircle invitations (respondToInvitation)
+
+- [ ] Add `CareCircleStatus` enum to Prisma:
+  - INVITED, ACTIVE, DECLINED, REMOVED
+- [ ] Extend `CareCircle` model with `status` field
+- [ ] Implement `respondToInvitation(careCircleId, action)` in `src/lib/carecircle.ts`
+- [ ] Add Account page UI for pending invitations (accept/decline)
+- [ ] Add tests for invitation accept/decline flows
+
 - [ ] 2. Role-Based Permissions (Owner / Caregiver / Viewer)
 
   Define what each role can do:
@@ -248,6 +257,14 @@ These complete the core product vision.
   - Logging via something like Pino
   - Remote error monitoring (Sentry)
   - Database slow-query alerts (via Supabase logs)
+
+- [ ] 23. Full CareCircle Invitation Lifecycle (Nice-to-Have Enhancement)
+  To support a true invitation experience:
+  - Add `CareCircleStatus` enum values: INVITED, ACTIVE, DECLINED, REMOVED.
+  - Update the invite endpoint to create `INVITED` records instead of immediate access.
+  - Add UI for invited users:
+    - “You’ve been invited to care for <pet> — Accept / Decline”
+  - Update all queries to treat only `ACTIVE` memberships as valid access.
 
 ⸻
 
