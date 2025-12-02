@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Dog, Cat } from 'lucide-react';
+import CareCirclePanel from '@/components/pets/CareCirclePanel';
 
 // Types --------------------------------------------------------
 
@@ -17,6 +18,25 @@ type CareLog = {
   user: { name: string | null };
 };
 
+type CareCircleMember = {
+  id: string;
+  userName: string | null;
+  userEmail: string;
+  role: 'OWNER' | 'CAREGIVER' | 'VIEWER';
+};
+
+type CareCircleMembersApiResponse = {
+  members?: {
+    id: string;
+    role: CareCircleMember['role'];
+    user?: {
+      name: string | null;
+      email: string;
+    } | null;
+  }[];
+  isOwner?: boolean;
+};
+
 type PetData = {
   id: string;
   name: string;
@@ -26,6 +46,7 @@ type PetData = {
   birthDate: string;
   weight: number;
   careLogs: CareLog[];
+  ownerId?: string;
 };
 
 // helpers ------------------------------------------------------
@@ -75,6 +96,8 @@ export default function PetDetailsPage() {
   const [pet, setPet] = useState<PetData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [careCircleMembers, setCareCircleMembers] = useState<CareCircleMember[]>([]);
+  const [isOwner, setIsOwner] = useState(false);
 // Fetch pet details on mount
   useEffect(() => {
     if (!petId) return;
@@ -92,6 +115,38 @@ export default function PetDetailsPage() {
         }
 
         setPet(data.pet);
+
+        // After loading the pet, fetch care circle membership + ownership info.
+        try {
+          const membersRes = await fetch(
+            `/api/care-circles/members?recipientId=${encodeURIComponent(
+              petId,
+            )}`,
+          );
+
+          if (membersRes.ok) {
+            const membersData = (await membersRes.json()) as CareCircleMembersApiResponse;
+
+            const mappedMembers: CareCircleMember[] = (membersData.members ?? []).map(
+              (membership) => ({
+                id: membership.id,
+                role: membership.role,
+                userName: membership.user?.name ?? null,
+                userEmail: membership.user?.email ?? '',
+              }),
+            );
+
+            setCareCircleMembers(mappedMembers);
+            if (typeof membersData.isOwner === 'boolean') {
+              setIsOwner(membersData.isOwner);
+            }
+          } else if (membersRes.status !== 401) {
+            // If this fails for any reason other than unauthenticated, log it for debugging.
+            console.error('Failed to fetch care circle members for pet');
+          }
+        } catch (careCircleError) {
+          console.error('Error fetching care circle data:', careCircleError);
+        }
       } catch (err) {
         console.error(err);
         setError(
@@ -235,6 +290,14 @@ export default function PetDetailsPage() {
               </ul>
             )}
           </div>
+        </section>
+        {/* Shared access / CareCircle */}
+        <section className="mm-section">
+          <CareCirclePanel
+            recipientId={pet.id}
+            isOwner={isOwner}
+            initialMembers={careCircleMembers}
+          />
         </section>
       </main>
     </div>

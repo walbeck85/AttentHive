@@ -1,49 +1,61 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { getCareCircleMembersForPet } from '@/lib/carecircle';
+// src/app/api/care-circles/members/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 
-// GET /api/care-circles/members?recipientId=...
-// Returns the care circle members for a given pet.
-//
-// For v1 we only require that the caller is authenticated; if we decide we need
-// stricter privacy later, we can enforce "must be owner or member" in one place.
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { getCareCircleMembersForPet } from "@/lib/carecircle";
+
 export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
+  // Ensure the caller is authenticated
+  const session = await getServerSession(authOptions);
 
-    if (!session || !session.user?.email) {
-      return NextResponse.json(
-        { error: 'You must be logged in to view shared access' },
-        { status: 401 },
-      );
-    }
-
-    const { searchParams } = new URL(request.url);
-    const recipientId = searchParams.get('recipientId');
-
-    if (!recipientId) {
-      return NextResponse.json(
-        { error: 'recipientId query parameter is required' },
-        { status: 400 },
-      );
-    }
-
-    const members = await getCareCircleMembersForPet(recipientId);
-
+  if (!session || !session.user?.email) {
     return NextResponse.json(
-      {
-        members,
-        count: members.length,
-      },
-      { status: 200 },
-    );
-  } catch (error) {
-    console.error('❌ Error in GET /api/care-circles/members:', error);
-
-    return NextResponse.json(
-      { error: 'Failed to fetch care circle members' },
-      { status: 500 },
+      { error: "You must be logged in to view care circle members" },
+      { status: 401 }
     );
   }
+
+  const { searchParams } = new URL(request.url);
+  const recipientId = searchParams.get("recipientId");
+
+  if (!recipientId) {
+    return NextResponse.json(
+      { error: "recipientId query parameter is required" },
+      { status: 400 }
+    );
+  }
+
+  // Resolve a backing DB user for this session, same pattern as /api/pets and /account
+  const dbUser = await prisma.user.upsert({
+    where: { email: session.user.email },
+    update: {},
+    create: {
+      email: session.user.email,
+      name: session.user.name ?? "",
+      // Satisfies the non-null constraint on passwordHash; not used for OAuth login
+      passwordHash: "google-oauth",
+    },
+  });
+
+  // Look up the recipient so we can determine ownership
+  const recipient = await prisma.recipient.findUnique({
+    where: { id: recipientId },
+    select: { ownerId: true },
+  });
+
+  const isOwner = recipient?.ownerId === dbUser.id;
+
+  // Fetch CareCircle members for this recipient
+  const members = await getCareCircleMembersForPet(recipientId);
+
+  return NextResponse.json(
+    {
+      members,
+      count: members.length,
+      isOwner,
+    },
+    { status: 200 }
+  );
 }

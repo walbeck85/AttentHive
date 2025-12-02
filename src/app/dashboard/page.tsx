@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getSharedPetsForUser } from "@/lib/carecircle";
 import PetList from "@/components/pets/PetList";
 import AddPetForm from "@/components/pets/AddPetForm";
 
@@ -42,7 +43,7 @@ export default async function DashboardPage() {
 
   // Now we query pets by the *database* user id, which is the same id that
   // /api/pets uses as ownerId when creating new recipients.
-  const pets = await prisma.recipient.findMany({
+  const ownedPets = await prisma.recipient.findMany({
     where: {
       ownerId: dbUser.id,
     },
@@ -50,6 +51,19 @@ export default async function DashboardPage() {
       createdAt: "asc",
     },
   });
+
+  // Fetch pets shared with this user via CareCircle
+  const sharedMemberships = await getSharedPetsForUser(dbUser.id);
+
+  const ownedPetsWithFlag = ownedPets.map((pet) => ({
+    ...pet,
+    _accessType: "owner" as const,
+  }));
+
+  const sharedPetsWithFlag = sharedMemberships.map((membership) => ({
+    ...membership.recipient,
+    _accessType: "shared" as const,
+  }));
 
   return (
     <main className="mx-auto max-w-5xl py-10 px-4">
@@ -73,14 +87,26 @@ export default async function DashboardPage() {
         <AddPetForm />
       </section>
 
-      <section>
+      {/* Owned pets */}
+      <section className="mb-8">
         <h2 className="mb-2 text-xl font-semibold">
-          Manage your home ({pets.length})
+          Pets you own ({ownedPetsWithFlag.length})
         </h2>
         <p className="mb-4 text-sm text-neutral-600">
-          Log care for each member of your household.
+          Pets you created and fully manage.
         </p>
-        <PetList pets={pets} />
+        <PetList pets={ownedPetsWithFlag} />
+      </section>
+
+      {/* Shared pets */}
+      <section>
+        <h2 className="mb-2 text-xl font-semibold">
+          Pets you care for ({sharedPetsWithFlag.length})
+        </h2>
+        <p className="mb-4 text-sm text-neutral-600">
+          Pets shared with you as a caregiver.
+        </p>
+        <PetList pets={sharedPetsWithFlag} />
       </section>
     </main>
   );

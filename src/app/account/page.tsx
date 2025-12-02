@@ -5,7 +5,9 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getSharedPetsForUser } from "@/lib/carecircle";
 import UserProfileForm from "@/components/UserProfileForm";
+import PetList from "@/components/pets/PetList";
 
 // Custom type decouples page from Prisma's generated types
 // Prevents breaking changes if Prisma schema differs between dev/CI/prod environments
@@ -60,6 +62,14 @@ export default async function AccountPage() {
     address: dbUserRaw.address,
   };
 
+  // Fetch pets shared with this user via CareCircle
+  const sharedMemberships = await getSharedPetsForUser(dbUser.id);
+
+  const sharedPets = sharedMemberships.map((membership) => ({
+    ...membership.recipient,
+    _accessType: "shared" as const,
+  }));
+
   return (
     <main className="mx-auto max-w-2xl py-8 px-4">
       <h1 className="mb-4 text-3xl font-semibold">My profile</h1>
@@ -78,6 +88,13 @@ export default async function AccountPage() {
         initialPhone={dbUser.phone ?? ""}
         initialAddress={dbUser.address ?? ""}
       />
+      <section className="mt-12">
+        <h2 className="mb-2 text-xl font-semibold">Shared pets ({sharedPets.length})</h2>
+        <p className="mb-4 text-sm text-neutral-600">
+          Pets you have access to because someone shared them with you.
+        </p>
+        <PetList pets={sharedPets} />
+      </section>
     </main>
   );
 }
