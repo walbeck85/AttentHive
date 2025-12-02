@@ -59,3 +59,104 @@ export async function GET(request: NextRequest) {
     { status: 200 }
   );
 }
+
+export async function DELETE(request: NextRequest) {
+  // Auth gate: only logged-in users can attempt to remove care circle members.
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user?.email) {
+    return NextResponse.json(
+      { error: "You must be logged in to modify care circle members" },
+      { status: 401 }
+    );
+  }
+
+  // Resolve or create the backing User record for this session.
+  const dbUser = await prisma.user.upsert({
+    where: { email: session.user.email },
+    update: {},
+    create: {
+      email: session.user.email,
+      name: session.user.name ?? "",
+      // Satisfies the non-null constraint on passwordHash; not used for OAuth login
+      passwordHash: "google-oauth",
+    },
+  });
+
+  let body: { membershipId?: string; recipientId?: string } = {};
+
+  try {
+    body = (await request.json()) as {
+      membershipId?: string;
+      recipientId?: string;
+    };
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid JSON body in request" },
+      { status: 400 }
+    );
+  }
+
+  const { membershipId } = body;
+
+  if (!membershipId) {
+    return NextResponse.json(
+      { error: "membershipId is required to remove a care circle member" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    // Look up the care circle membership and its recipient to verify ownership.
+    const membership = await prisma.careCircle.findUnique({
+      where: { id: membershipId },
+      include: {
+        recipient: {
+          select: {
+            ownerId: true,
+          },
+        },
+      },
+    });
+
+    if (!membership) {
+      return NextResponse.json(
+        { error: "Care circle membership not found" },
+        { status: 404 }
+      );
+    }
+
+    // Only the owner of the recipient can remove caregivers/viewers.
+    if (membership.recipient.ownerId !== dbUser.id) {
+      return NextResponse.json(
+        { error: "You do not have permission to modify this care circle" },
+        { status: 403 }
+      );
+    }
+
+    // Extra guardrail: do not allow removing the OWNER record.
+    if (membership.role === "OWNER") {
+      return NextResponse.json(
+        { error: "Owners cannot be removed from their own care circle" },
+        { status: 400 }
+      );
+    }
+
+    await prisma.careCircle.delete({
+      where: { id: membershipId },
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error removing care circle member:", error);
+    return NextResponse.json(
+      { error: "Failed to remove care circle member" },
+      { status: 500 }
+    );
+  }
+}
