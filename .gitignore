@@ -34,7 +34,7 @@ yarn-error.log*
 next-env.d.ts
 
 # Prisma
-/prisma/migrations/
+# /prisma/migrations/
 
 # Documentation
 Day_1.md
