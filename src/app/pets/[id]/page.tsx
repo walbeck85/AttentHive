@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Dog, Cat } from 'lucide-react';
 import CareCirclePanel from '@/components/pets/CareCirclePanel';
+import PetAvatar from '@/components/pets/PetAvatar';
+import PetPhotoUpload from '@/components/pets/PetPhotoUpload';
 
 // Types --------------------------------------------------------
 
@@ -47,6 +49,7 @@ type PetData = {
   weight: number;
   careLogs: CareLog[];
   ownerId?: string;
+  imageUrl?: string | null; // Let the detail view show an image when we have one, without forcing it for legacy rows.
 };
 
 // helpers ------------------------------------------------------
@@ -98,7 +101,7 @@ export default function PetDetailsPage() {
   const [error, setError] = useState<string | null>(null);
   const [careCircleMembers, setCareCircleMembers] = useState<CareCircleMember[]>([]);
   const [isOwner, setIsOwner] = useState(false);
-// Fetch pet details on mount
+  // Fetch pet details on mount
   useEffect(() => {
     if (!petId) return;
 
@@ -185,7 +188,7 @@ export default function PetDetailsPage() {
       </div>
     );
   }
-// Error state
+  // Error state
   if (error || !pet) {
     return (
       <div className="min-h-screen bg-[var(--mm-bg)] flex flex-col items-center justify-center gap-4">
@@ -203,7 +206,7 @@ export default function PetDetailsPage() {
       </div>
     );
   }
-// Main pet details UI
+  // Main pet details UI
   return (
     <div className="mm-page">
       <main className="mm-shell space-y-6">
@@ -219,18 +222,24 @@ export default function PetDetailsPage() {
 
           <div className="mt-4 mm-card px-5 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D17D45] bg-[#FAF3E7]">
-                {pet.type === 'DOG' ? (
-                  <Dog className="h-5 w-5 text-[#D17D45]" />
-                ) : (
-                  <Cat className="h-5 w-5 text-[#D17D45]" />
-                )}
+              {/* Bounding the avatar in a fixed-size wrapper keeps large photos from taking over the layout while still reusing shared avatar styles. */}
+              <div className="h-24 w-24 shrink-0 rounded-full overflow-hidden">
+                <PetAvatar
+                  name={pet.name}
+                  imageUrl={pet.imageUrl ?? null}
+                  size="lg"
+                />
               </div>
 
               <div>
                 <h1 className="mm-h2">{pet.name}</h1>
-                <p className="text-sm font-medium uppercase tracking-wide text-[#A08C72]">
-                  {pet.breed}
+                <p className="flex items-center gap-1 text-sm font-medium uppercase tracking-wide text-[#A08C72]">
+                  {pet.type === 'DOG' ? (
+                    <Dog className="h-4 w-4 text-[#D17D45]" />
+                  ) : (
+                    <Cat className="h-4 w-4 text-[#D17D45]" />
+                  )}
+                  <span>{pet.breed}</span>
                 </p>
               </div>
             </div>
@@ -241,6 +250,23 @@ export default function PetDetailsPage() {
               </div>
               <div>{pet.gender === 'MALE' ? 'Male' : 'Female'}</div>
             </div>
+          </div>
+        </section>
+
+        {/* Photo upload */}
+        <section className="mm-section">
+          <div className="mm-card px-5 py-4">
+            <h2 className="mm-h3 mb-3">Photo</h2>
+            <PetPhotoUpload
+              recipientId={pet.id}
+              name={pet.name}
+              initialImageUrl={pet.imageUrl ?? null}
+              onUploaded={(imageUrl) => {
+                // Keeping local state in sync with the upload response so the page updates immediately
+                // instead of waiting for a full refetch.
+                setPet((prev) => (prev ? { ...prev, imageUrl } : prev));
+              }}
+            />
           </div>
         </section>
 

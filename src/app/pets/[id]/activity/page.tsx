@@ -1,8 +1,10 @@
+// src/app/pets/[id]/activity/page.tsx
 'use client';
 // Imports ------------------------------------------------------
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import PetAvatar from '@/components/pets/PetAvatar';
 
 // Types --------------------------------------------------------
 
@@ -140,9 +142,15 @@ export default function ActivityLogPage() {
           </button>
 
           <div className="mt-4 mm-card px-5 py-4 flex items-center justify-between">
-            <div>
-              <h1 className="mm-h2">{petName}</h1>
-              <p className="mm-muted-sm">Activity log</p>
+            <div className="flex items-center gap-3">
+              {/* Even without an image URL, showing initials keeps this page visually consistent with the rest of the app. */}
+              <div className="h-10 w-10 shrink-0 rounded-full overflow-hidden">
+                <PetAvatar name={petName} size="md" />
+              </div>
+              <div>
+                <h1 className="mm-h2">{petName}</h1>
+                <p className="mm-muted-sm">Activity log</p>
+              </div>
             </div>
           </div>
         </section>

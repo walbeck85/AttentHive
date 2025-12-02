@@ -1,7 +1,7 @@
 // src/app/api/pets/[id]/photo/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -13,22 +13,28 @@ export const runtime = 'nodejs';
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
-// Create a server-side Supabase client wired to the service role key.
-// If this throws, it means our deployment config is broken, not the user request.
-const supabase = (() => {
+type RouteContext = { params: Promise<{ id: string }> };
+
+// We resolve the Supabase client lazily so a missing env var does not crash the build.
+// Instead, we can return a controlled 500 and log loudly.
+function getSupabaseServerClient(): SupabaseClient | null {
   const url = process.env.SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !serviceRoleKey) {
-    throw new Error('Supabase environment variables are not configured for server uploads.');
+    // If this ever logs in production, it means env is misconfigured, not that a user did anything wrong.
+    console.error(
+      'Supabase server client missing configuration. Check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.'
+    );
+    return null;
   }
 
   return createClient(url, serviceRoleKey);
-})();
+}
 
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: RouteContext
 ) {
   // Next 16 passes dynamic route params as a Promise, so we resolve them up front.
   const { id } = await context.params;
@@ -97,6 +103,16 @@ export async function POST(
       return NextResponse.json(
         { error: 'File is too large. Maximum size is 5 MB.' },
         { status: 400 }
+      );
+    }
+
+    const supabase = getSupabaseServerClient();
+
+    if (!supabase) {
+      // If env is broken, we surface a controlled failure instead of letting the whole app crash.
+      return NextResponse.json(
+        { error: 'Storage is not configured on the server.' },
+        { status: 500 }
       );
     }
 

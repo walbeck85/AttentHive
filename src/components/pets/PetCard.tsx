@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Dog, Cat } from 'lucide-react';
 import ConfirmActionModal from './ConfirmActionModal';
+import PetAvatar from './PetAvatar';
 
 // Types --------------------------------------------------------
 type ActionType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
@@ -28,6 +29,7 @@ export type PetData = {
   birthDate: string;
   weight: number;
   careLogs: CareLog[];
+  imageUrl?: string | null; // Let the card render photos when available without forcing every caller to provide one.
 };
 
 // Component Props ----------------------------------------------
@@ -172,20 +174,27 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
         {/* HEADER */}
         <header className="flex items-center justify-between border-b border-[#E5D9C6] bg-[#FDF7EE] px-5 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#D17D45] bg-[#FAF3E7]">
-              {pet.type === 'DOG' ? (
-                <Dog className="h-5 w-5 text-[#D17D45]" />
-              ) : (
-                <Cat className="h-5 w-5 text-[#D17D45]" />
-              )}
+            {/* Bounding the avatar keeps high‑resolution photos from stretching the card layout while still reusing shared avatar logic. */}
+            <div className="h-10 w-10 shrink-0 rounded-full overflow-hidden">
+              <PetAvatar
+                name={pet.name}
+                imageUrl={pet.imageUrl ?? null}
+                size="md"
+              />
             </div>
 
             <div>
               <h3 className="font-serif text-lg font-bold text-[#382110] leading-tight">
                 {pet.name}
               </h3>
-              <p className="text-sm font-medium uppercase tracking-wide text-[#A08C72]">
-                {pet.breed}
+              <p className="flex items-center gap-1 text-sm font-medium uppercase tracking-wide text-[#A08C72]">
+                {/* Keeping the species icon around so the card still telegraphs dog vs cat at a glance. */}
+                {pet.type === 'DOG' ? (
+                  <Dog className="h-4 w-4 text-[#D17D45]" />
+                ) : (
+                  <Cat className="h-4 w-4 text-[#D17D45]" />
+                )}
+                <span>{pet.breed}</span>
               </p>
             </div>
           </div>
