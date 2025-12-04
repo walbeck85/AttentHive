@@ -10,48 +10,41 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // Brand-aware semantic colors for Mimamori, derived from the Option 3 style guide.
+      // These are intentionally flat HEX values (no CSS variables yet) so we keep the
+      // system simple while we rebuild the UI.
       colors: {
-        // Existing shadcn-style tokens
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        card: {
-          DEFAULT: "var(--card)",
-          foreground: "var(--card-foreground)",
-        },
-        muted: {
-          DEFAULT: "var(--muted)",
-          foreground: "var(--muted-foreground)",
-        },
-        border: "var(--border)",
-        input: "var(--input)",
-        ring: "var(--ring)",
-        primary: {
-          DEFAULT: "var(--primary)",
-          foreground: "var(--primary-foreground)",
-        },
-        destructive: {
-          DEFAULT: "var(--destructive)",
-          foreground: "var(--destructive-foreground)",
-        },
+        // App background + card canvas
+        "mima-bg": "#FCFCFC", // Soft White
 
-        // 🔽 Add these: actual Mimamori brand colors
-        "mm-bg": "#F5F3EA",      // matches --mm-bg
-        "mm-card": "#FFF9F0",    // matches --mm-card
-        "mm-border": "#E5D9C6",  // matches --mm-border
-        "mm-ink": "#382110",     // matches --mm-ink
-        "mm-muted": "#7A6A56",   // matches --mm-muted
+        // Primary CTAs, key actions, and highlights
+        "mima-primary": "#FF9165", // Vibrant Orange
 
-        // Brand green + hover
-        "mm-green": "#3E5C2E",
-        "mm-green-dark": "#2F4A24",
+        // Secondary emphasis surfaces (chips, badges, subtle banners)
+        "mima-secondary": "#FFEFB5", // Lemon Yellow
+
+        // Positive / success states
+        "mima-success": "#50DBAE", // Spring Green
+
+        // Default text and headings
+        "mima-text": "#1A2340", // Deep Navy
+
+        // Neutral borders, dividers, and subtle outlines
+        "mima-border": "#E0E0E0", // Cool Gray
       },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-      },
+
+      // Keep Nunito wired into Tailwind's `font-sans` utility so existing components
+      // can continue to rely on it while we progressively align headings/body sizes
+      // to the style guide.
       fontFamily: {
-        sans: ["var(--font-nunito)", "sans-serif"],
+        sans: [
+          "var(--font-nunito)",
+          "system-ui",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "sans-serif",
+        ],
       },
     },
   },

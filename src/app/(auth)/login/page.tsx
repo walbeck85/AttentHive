@@ -75,16 +75,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="mm-page">
-      <main className="mm-shell max-w-2xl mx-auto py-10">
-        <section className="mm-card px-6 py-8 md:px-8 md:py-9">
+    <div className="min-h-screen bg-mm-bg flex items-center justify-center px-4">
+      <main className="w-full max-w-md">
+        <section className="bg-white border border-mm-border rounded-2xl shadow-sm px-6 py-8 md:px-8 md:py-9">
           {/* Header section with brand messaging */}
-          <div className="text-center mb-8">
-            <p className="mm-kicker mb-2">Welcome back</p>
-            <h1 className="mm-h2 tracking-[0.18em] uppercase text-[#382110]">
+          <div className="text-center mb-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mm-muted mb-2">
+              Welcome back
+            </p>
+            <h1 className="text-2xl font-extrabold tracking-[0.08em] text-mm-ink">
               Sign in to Mimamori
             </h1>
-            <p className="mm-muted mt-3">
+            <p className="mt-3 text-sm text-mm-muted">
               Log in to view your household&apos;s care activity.
             </p>
           </div>
@@ -94,15 +96,7 @@ export default function LoginPage() {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={isGoogleLoading || isEmailLoading} // Prevent both methods running simultaneously
-            className="
-              w-full mb-4 rounded-full
-              border border-[#E5D9C6] bg-white
-              text-[11px] font-bold uppercase tracking-[0.16em]
-              py-2.5
-              hover:bg-[#FAF7F2]
-              disabled:opacity-60 disabled:cursor-not-allowed
-              transition-colors
-            "
+            className="w-full mb-4 inline-flex items-center justify-center rounded-full border border-mm-border bg-white px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.16em] text-mm-ink hover:bg-mm-card disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {/* Conditional text shows loading state for better UX */}
             {isGoogleLoading ? 'Signing in…' : 'Continue with Google'}
@@ -110,15 +104,15 @@ export default function LoginPage() {
 
           {/* Visual divider between OAuth and email/password options */}
           <div className="flex items-center my-4">
-            <div className="flex-1 h-px bg-[#E5D9C6]" />
-            <span className="mx-3 text-[11px] uppercase tracking-[0.16em] text-[#8A7A62]">
+            <div className="flex-1 h-px bg-mm-border" />
+            <span className="mx-3 text-[11px] uppercase tracking-[0.16em] text-mm-muted">
               Or sign in with email
             </span>
-            <div className="flex-1 h-px bg-[#E5D9C6]" />
+            <div className="flex-1 h-px bg-mm-border" />
           </div>
 
           {/* Email/password form - controlled inputs for validation */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Conditionally render error banner when auth fails */}
             {error && (
               <div className="p-3 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm text-center">
@@ -127,32 +121,28 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label className="mm-label mb-1 block">Email</label>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-mm-muted">
+                Email
+              </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)} // Update state on each keystroke
-                className="
-                  w-full rounded-md border border-[#E5D9C6] bg-white
-                  px-3 py-2 text-sm text-[#382110]
-                  focus:outline-none focus:ring-2 focus:ring-[#3E5C2E] focus:border-[#3E5C2E]
-                "
+                className="w-full rounded-md border border-mm-border bg-white px-3 py-2 text-sm text-mm-ink focus:outline-none focus:ring-2 focus:ring-mm-green focus:border-mm-green"
                 placeholder="you@example.com"
                 required // HTML5 validation for basic email format
               />
             </div>
 
             <div>
-              <label className="mm-label mb-1 block">Password</label>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-mm-muted">
+                Password
+              </label>
               <input
                 type="password" // Masks input for security
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="
-                  w-full rounded-md border border-[#E5D9C6] bg-white
-                  px-3 py-2 text-sm text-[#382110]
-                  focus:outline-none focus:ring-2 focus:ring-[#3E5C2E] focus:border-[#3E5C2E]
-                "
+                className="w-full rounded-md border border-mm-border bg-white px-3 py-2 text-sm text-mm-ink focus:outline-none focus:ring-2 focus:ring-mm-green focus:border-mm-green"
                 required
               />
             </div>
@@ -160,15 +150,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isEmailLoading || isGoogleLoading} // Prevent concurrent auth attempts
-              className="
-                w-full mt-2 rounded-full
-                bg-[#3E5C2E] text-white
-                text-[11px] font-bold uppercase tracking-[0.16em]
-                py-2.5
-                hover:bg-[#2f4a24]
-                disabled:opacity-60 disabled:cursor-not-allowed
-                transition-colors
-              "
+              className="w-full mt-2 inline-flex items-center justify-center rounded-full bg-mm-green px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white hover:bg-mm-green-dark disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
               {/* Dynamic button text for loading feedback */}
               {isEmailLoading ? 'Signing in…' : 'Sign in'}
@@ -176,11 +158,11 @@ export default function LoginPage() {
           </form>
 
           {/* Link to signup page for new users */}
-          <p className="mm-muted-sm text-center mt-5">
+          <p className="mt-5 text-center text-sm text-mm-muted">
             New to Mimamori?{' '}
             <Link
               href="/signup"
-              className="font-semibold text-[#382110] underline underline-offset-2"
+              className="font-semibold text-mm-ink underline underline-offset-2"
             >
               Create an account
             </Link>

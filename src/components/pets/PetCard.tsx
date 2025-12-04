@@ -4,7 +4,6 @@
 // Imports ------------------------------------------------------
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Dog, Cat } from 'lucide-react';
 import ConfirmActionModal from './ConfirmActionModal';
 import PetAvatar from './PetAvatar';
 
@@ -187,24 +186,12 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
               <h3 className="font-serif text-lg font-bold text-[#382110] leading-tight">
                 {pet.name}
               </h3>
-              <p className="flex items-center gap-1 text-sm font-medium uppercase tracking-wide text-[#A08C72]">
-                {/* Keeping the species icon around so the card still telegraphs dog vs cat at a glance. */}
-                {pet.type === 'DOG' ? (
-                  <Dog className="h-4 w-4 text-[#D17D45]" />
-                ) : (
-                  <Cat className="h-4 w-4 text-[#D17D45]" />
-                )}
+              <p className="text-sm font-medium uppercase tracking-wide text-[#A08C72]">
                 <span>{pet.breed}</span>
               </p>
             </div>
           </div>
 
-          <div className="text-right text-sm text-[#A08C72]">
-            <div>
-              {calculateAge(pet.birthDate)} yrs • {pet.weight} lbs
-            </div>
-            <div>{pet.gender === 'MALE' ? 'Male' : 'Female'}</div>
-          </div>
         </header>
 
         {/* BODY */}

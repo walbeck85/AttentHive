@@ -1,7 +1,8 @@
-"use client";
+// src/components/pets/PetList.tsx
+'use client';
 
-import { Recipient } from "@prisma/client";
-import PetCard, { PetData } from "./PetCard";
+import type { Recipient } from '@prisma/client';
+import PetCard, { PetData } from './PetCard';
 
 type PetListProps = {
   // The dashboard hands us raw Prisma Recipient records; we keep this type tight so any
@@ -33,12 +34,9 @@ export default function PetList({ pets, currentUserName }: PetListProps) {
     // Converting to ISO keeps it unambiguous and easy to parse in the card.
     birthDate: pet.birthDate.toISOString(),
     weight: pet.weight,
-    specialNeeds: pet.specialNeeds ?? null,
-    ownerId: pet.ownerId,
-    createdAt: pet.createdAt,
-    updatedAt: pet.updatedAt,
     imageUrl: pet.imageUrl ?? null,
-    // The dashboard query is not loading logs yet; starting with an empty array avoids null checks everywhere else.
+    // The dashboard query is not loading logs yet; starting with an empty array
+    // avoids null checks everywhere else.
     careLogs: [],
   }));
 
