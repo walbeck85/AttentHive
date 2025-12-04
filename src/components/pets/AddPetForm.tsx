@@ -2,6 +2,7 @@
 // Imports ------------------------------------------------------
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import BreedSelect from './BreedSelect';
 // Types --------------------------------------------------------
 type AddPetFormProps = {
   onPetAdded?: () => void;
@@ -240,12 +241,12 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
             <label className="mb-1 block text-[11px] font-semibold tracking-[0.12em] text-[#A08C72] uppercase">
               Breed
             </label>
-            <input
-              type="text"
+            {/* Using the shared BreedSelect so dogs and cats get type-specific, searchable lists without changing the backend schema or validation rules. */}
+            <BreedSelect
+              petType={formData.type}
               value={formData.breed}
-              onChange={(e) => updateField('breed', e.target.value)}
-              className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
-              placeholder="e.g. Corgi"
+              onChange={(next) => updateField('breed', next)}
+              required
             />
             {fieldErrors.breed && (
               <p className="mt-1 text-[11px] text-red-600">{fieldErrors.breed}</p>
