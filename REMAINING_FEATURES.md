@@ -32,7 +32,7 @@ Below is the definitive list, grouped by Core, High Priority, Polish, Future Enh
 
 These complete the core product vision.
 
-- [ ] 1. CareCircle (Shared Pet Access) — Not Implemented
+- [x] 1. CareCircle (Shared Pet Access) — Implemented
 
   Database table exists, but no UI or API to support:
   - Invite a user to a CareCircle
@@ -97,7 +97,7 @@ These complete the core product vision.
   - Gender display in PetCard
   - Gender field shown on pet detail
 
-- [ ] 6. Pet Photos / Avatars
+- [ ] 6. Pet Photos / Avatars - In progress
 
   You have no image upload yet.
 

@@ -66,8 +66,9 @@ export default function PetAvatar({
       }}
     >
       {imageUrl ? (
-        // Using plain <img> here to avoid extra Next/Image constraints; this is
-        // small and cached, and the parent div clamps the size.
+        // Using a plain img here because this avatar can come from user-uploaded or external URLs,
+        // and we don't need Next's optimization pipeline for these small, frequently-changing assets.
+        /* eslint-disable-next-line @next/next/no-img-element */
         <img
           src={imageUrl}
           alt={name ? `${name} photo` : 'Pet photo'}
