@@ -8,6 +8,7 @@ import { Dog, Cat } from 'lucide-react';
 import CareCirclePanel from '@/components/pets/CareCirclePanel';
 import PetAvatar from '@/components/pets/PetAvatar';
 import PetPhotoUpload from '@/components/pets/PetPhotoUpload';
+import BreedSelect from '@/components/pets/BreedSelect';
 
 // Types --------------------------------------------------------
 
@@ -527,13 +528,12 @@ export default function PetDetailsPage() {
                     {/* Breed */}
                     <div>
                       <label className="mb-1 block">Breed</label>
-                      <input
-                        type="text"
+                      {/* Reuse the shared BreedSelect so edit mode gets the same type-specific, searchable list as the create form without changing backend constraints. */}
+                      <BreedSelect
+                        petType={editForm.type}
                         value={editForm.breed}
-                        onChange={(e) =>
-                          updateEditField('breed', e.target.value)
-                        }
-                        className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+                        onChange={(next) => updateEditField('breed', next)}
+                        required
                       />
                       {editFieldErrors.breed && (
                         <p className="mt-1 text-[11px] text-red-600">
