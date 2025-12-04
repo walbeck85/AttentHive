@@ -3,16 +3,19 @@ import "./globals.css";
 import { Nunito } from "next/font/google";
 import Providers from "./providers";
 import NavBar from "@/components/NavBar";
+
 // Font setup ---------------------------------------------------
 const nunito = Nunito({
   subsets: ["latin"],
   variable: "--font-nunito",
 });
+
 // Metadata -----------------------------------------------------
 export const metadata = {
   title: "Mimamori",
   description: "Care coordination for pets, people, and plants",
 };
+
 // Layout -------------------------------------------------------
 export default function RootLayout({
   children,
@@ -21,13 +24,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${nunito.variable} font-sans bg-mm-cream min-h-screen`}>
+      {/* Body background and text color are controlled in globals.css via CSS variables */}
+      <body className={`${nunito.variable} font-sans min-h-screen`}>
         <Providers>
           {/* Sticky global nav */}
           <NavBar />
 
-          {/* Page content */}
-          <main className="mx-auto max-w-6xl px-4 py-10">{children}</main>
+          {/* Page content – individual pages use .mm-page / .mm-shell for layout */}
+          <main>{children}</main>
         </Providers>
       </body>
     </html>

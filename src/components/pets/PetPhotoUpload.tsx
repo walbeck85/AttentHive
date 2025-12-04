@@ -116,14 +116,19 @@ export default function PetPhotoUpload({
 
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-start">
-      {/* Left: bounded preview so large photos don't dominate the page. */}
+      {/* Left: tightly bounded preview so this never turns into a hero banner. */}
       <div className="flex flex-col items-center gap-2 md:items-start">
         <div className="overflow-hidden rounded-3xl border border-[#E5D9C6] bg-[#FAF3E7]">
-          <div className="relative w-40 aspect-[4/5] md:w-48">
+          {/* 
+            Hard-bounding the thumbnail:
+            - Fixed aspect ratio so we always crop, never stretch
+            - Narrow width so it feels like a card thumbnail, not the main event
+          */}
+          <div className="relative w-32 aspect-[4/5] md:w-40 lg:w-44">
             {imageUrl ? (
-              // Using object-cover inside a fixed aspect ratio so tall phone photos
-              // are cropped nicely instead of stretching the layout and the preview
-              // stays a small, consistent size in the detail view.
+            // Preview uses a local object URL from the file input, which is a better fit for a plain img
+            // than wiring this through Next's Image component. Keeping this simple avoids over-optimizing the upload flow.
+            /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={imageUrl}
                 alt={`${name} photo`}

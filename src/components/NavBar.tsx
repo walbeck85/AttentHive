@@ -1,26 +1,21 @@
 // src/components/NavBar.tsx
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
+import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
 
 export default function NavBar() {
   const { data: session } = useSession();
 
   const handleLogoutClick = () => {
     // Client-side sign out; NextAuth will clear the session and bounce to /login
-    signOut({ callbackUrl: '/login' });
+    signOut({ callbackUrl: "/login" });
   };
 
   return (
-    <nav
-      className="sticky top-0 z-50 border-b"
-      style={{ backgroundColor: 'var(--mm-green)' }}
-    >
+    <nav className="sticky top-0 z-50 border-b border-[var(--mm-border)] bg-[var(--mm-green)]">
       <div className="mm-page flex items-center justify-between py-3">
-        <span className="mm-nav-brand text-xs sm:text-sm">
-          MIMAMORI
-        </span>
+        <span className="mm-nav-brand text-xs sm:text-sm">MIMAMORI</span>
 
         <div className="flex items-center gap-2 sm:gap-3">
           {session?.user && (

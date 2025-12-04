@@ -91,13 +91,15 @@ export async function DELETE(request: NextRequest) {
       recipientId?: string;
     };
   } catch {
-    return NextResponse.json(
-      { error: "Invalid JSON body in request" },
-      { status: 400 }
-    );
+    // If there is no JSON body or it is invalid, we fall back to an empty object
+    // and allow membershipId to be provided via the query string instead.
+    body = {};
   }
 
-  const { membershipId } = body;
+  const { searchParams } = new URL(request.url);
+  const membershipIdFromQuery = searchParams.get("membershipId") ?? undefined;
+
+  const membershipId = body.membershipId ?? membershipIdFromQuery;
 
   if (!membershipId) {
     return NextResponse.json(
@@ -123,6 +125,15 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json(
         { error: "Care circle membership not found" },
         { status: 404 }
+      );
+    }
+
+    // Optional safety: if a recipientId was provided in the request body,
+    // ensure it matches the membership's recipient to avoid accidental mismatches.
+    if (body.recipientId && membership.recipientId !== body.recipientId) {
+      return NextResponse.json(
+        { error: "membershipId does not belong to the specified recipientId" },
+        { status: 400 }
       );
     }
 

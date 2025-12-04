@@ -15,6 +15,20 @@ const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 type RouteContext = { params: Promise<{ id: string }> };
 
+// Small helper to create JSON responses without relying on NextResponse.json,
+// which can behave differently in Jest / non-Next environments.
+// We still return a NextResponse so the rest of the app and tests can treat it
+// like any other Response and call .status / .json() on it.
+function jsonResponse(body: unknown, init?: ResponseInit): NextResponse {
+  return new NextResponse(JSON.stringify(body), {
+    ...init,
+    headers: {
+      'content-type': 'application/json',
+      ...(init?.headers ?? {}),
+    },
+  });
+}
+
 // We resolve the Supabase client lazily so a missing env var does not crash the build.
 // Instead, we can return a controlled 500 and log loudly.
 function getSupabaseServerClient(): SupabaseClient | null {
@@ -44,7 +58,7 @@ export async function POST(
 
     if (!session || !session.user?.email) {
       // If we don’t have a real session, we fail fast rather than leaking any details about pets.
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Resolve the current user record so we can enforce true ownership, not just "logged in".
@@ -54,7 +68,7 @@ export async function POST(
 
     if (!dbUser) {
       // If this hits, auth and DB are out of sync, which is a setup problem not a user mistake.
-      return NextResponse.json(
+      return jsonResponse(
         { error: 'Authenticated user record not found in database.' },
         { status: 403 }
       );
@@ -70,7 +84,7 @@ export async function POST(
 
     if (!recipient) {
       // From the caller’s perspective, this is just "not found" to avoid hinting at other users’ data.
-      return NextResponse.json(
+      return jsonResponse(
         { error: 'Pet not found or you do not have permission to modify it.' },
         { status: 404 }
       );
@@ -81,7 +95,7 @@ export async function POST(
 
     if (!(file instanceof File)) {
       // Being strict about the field name here keeps the client contract crystal clear.
-      return NextResponse.json(
+      return jsonResponse(
         { error: 'A file field named "file" is required.' },
         { status: 400 }
       );
@@ -89,7 +103,7 @@ export async function POST(
 
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
       // Limiting MIME types up front keeps the bucket from turning into a general-purpose dump.
-      return NextResponse.json(
+      return jsonResponse(
         {
           error:
             'Unsupported file type. Please upload a JPEG, PNG, or WebP image.',
@@ -100,7 +114,7 @@ export async function POST(
 
     if (file.size > MAX_FILE_SIZE_BYTES) {
       // Hard-capping file size avoids the slow creep of huge images clogging storage and bandwidth.
-      return NextResponse.json(
+      return jsonResponse(
         { error: 'File is too large. Maximum size is 5 MB.' },
         { status: 400 }
       );
@@ -110,7 +124,7 @@ export async function POST(
 
     if (!supabase) {
       // If env is broken, we surface a controlled failure instead of letting the whole app crash.
-      return NextResponse.json(
+      return jsonResponse(
         { error: 'Storage is not configured on the server.' },
         { status: 500 }
       );
@@ -134,7 +148,7 @@ export async function POST(
     if (error || !data) {
       // If storage fails, we bail before touching the DB so state never drifts out of sync.
       console.error('Supabase upload error:', error);
-      return NextResponse.json(
+      return jsonResponse(
         { error: 'Failed to upload image to storage.' },
         { status: 500 }
       );
@@ -152,7 +166,7 @@ export async function POST(
       },
     });
 
-    return NextResponse.json(
+    return jsonResponse(
       {
         imageUrl: updatedRecipient.imageUrl,
       },
@@ -161,7 +175,7 @@ export async function POST(
   } catch (error) {
     // This is our last safety net so callers see a clean error instead of a generic 500 page.
     console.error('Error in pet photo upload route:', error);
-    return NextResponse.json(
+    return jsonResponse(
       { error: 'Unexpected error while uploading image.' },
       { status: 500 }
     );
