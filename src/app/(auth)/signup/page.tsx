@@ -99,7 +99,7 @@ export default function SignupPage() {
           {/* Header with messaging tailored for new users */}
           <div className="text-center mb-8">
             <p className="mm-kicker mb-2">Get started</p>
-            <h1 className="mm-h2 tracking-[0.18em] uppercase text-[#382110]">
+            <h1 className="mm-h1 text-[#382110]">
               Create your Mimamori account
             </h1>
             <p className="mm-muted mt-3">
