@@ -3,12 +3,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import PetPhotoProfileCard from '@/components/pets/PetPhotoProfileCard';
 import PetDetailShell from '@/components/pets/PetDetailShell';
 import PetDetailHeaderSection from '@/components/pets/PetDetailHeaderSection';
 import PetDetailActivitySection from '@/components/pets/PetDetailActivitySection';
 import PetDetailCareCircleSection from '@/components/pets/PetDetailCareCircleSection';
-import { type PetCharacteristicId } from '@/lib/petCharacteristics';
+import PetDetailProfileSection from '@/components/pets/PetDetailProfileSection';
 import {
   Box,
   Typography,
@@ -37,7 +36,7 @@ export type EditFormState = {
   gender: 'MALE' | 'FEMALE';
   birthDate: string;
   weight: string;
-  characteristics: PetCharacteristicId[];
+  characteristics: string[];
 };
 
 export type EditFieldErrors = Partial<Record<keyof EditFormState, string>>;
@@ -84,12 +83,6 @@ export default function PetDetailPage({
   );
   const [isOwner, setIsOwner] = useState<boolean>(Boolean(isOwnerProp));
 
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [editForm, setEditForm] = useState<EditFormState | null>(null);
-  const [editFieldErrors, setEditFieldErrors] = useState<EditFieldErrors>({});
-  const [editError, setEditError] = useState<string | null>(null);
-
   useEffect(() => {
     // Whenever the server sends updated pet data, we trust that as the source of truth.
     setPet(petProp ?? null);
@@ -106,130 +99,6 @@ export default function PetDetailPage({
   useEffect(() => {
     setIsOwner(Boolean(isOwnerProp));
   }, [isOwnerProp]);
-
-  const handleStartEditProfile = () => {
-    if (!pet) return;
-
-    const birthDate = pet.birthDate ? pet.birthDate.slice(0, 10) : '';
-
-    setEditForm({
-      name: pet.name,
-      type: (pet.type as 'DOG' | 'CAT') ?? 'DOG',
-      breed: pet.breed,
-      gender: (pet.gender as 'MALE' | 'FEMALE') ?? 'MALE',
-      birthDate,
-      weight: pet.weight.toString(),
-      characteristics: Array.isArray(pet.characteristics)
-        ? pet.characteristics
-        : [],
-    });
-    setEditFieldErrors({});
-    setEditError(null);
-    setIsEditingProfile(true);
-  };
-
-  const handleCancelEditProfile = () => {
-    setIsEditingProfile(false);
-    setEditForm(null);
-    setEditFieldErrors({});
-    setEditError(null);
-  };
-
-  const updateEditField = <K extends keyof EditFormState>(
-    key: K,
-    value: EditFormState[K],
-  ) => {
-    setEditForm((prev) => (prev ? { ...prev, [key]: value } : prev));
-    setEditFieldErrors((prev) => {
-      const next = { ...prev };
-      delete next[key];
-      return next;
-    });
-  };
-
-  const handleToggleCharacteristic = (id: PetCharacteristicId) => {
-    setEditForm((prev) => {
-      if (!prev) return prev;
-      const isSelected = prev.characteristics.includes(id);
-      return {
-        ...prev,
-        characteristics: isSelected
-          ? prev.characteristics.filter((existing) => existing !== id)
-          : [...prev.characteristics, id],
-      };
-    });
-  };
-
-  const handleProfileSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pet || !editForm) return;
-
-    setIsSavingProfile(true);
-    setEditError(null);
-
-    const errors = validateEditForm(editForm);
-    if (Object.keys(errors).length > 0) {
-      setEditFieldErrors(errors);
-      setIsSavingProfile(false);
-      return;
-    }
-
-    const numericWeight = parseFloat(editForm.weight);
-
-    try {
-      const res = await fetch(`/api/pets/${pet.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: editForm.name.trim(),
-          type: editForm.type,
-          breed: editForm.breed.trim(),
-          gender: editForm.gender,
-          birthDate: editForm.birthDate,
-          weight: numericWeight,
-          characteristics: editForm.characteristics,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        const fieldErrors: EditFieldErrors = {};
-        if (Array.isArray(data.validationErrors)) {
-          for (const issue of data.validationErrors) {
-            if (issue && issue.field && issue.message) {
-              const field = issue.field as keyof EditFormState;
-              if (field in editForm) {
-                fieldErrors[field] = issue.message as string;
-              }
-            }
-          }
-        }
-        if (Object.keys(fieldErrors).length > 0) {
-          setEditFieldErrors(fieldErrors);
-        }
-
-        throw new Error(data.error || 'Failed to update pet');
-      }
-
-      setPet((prev) => {
-        if (!prev) return data.pet;
-        return { ...prev, ...data.pet };
-      });
-
-      setIsEditingProfile(false);
-      setEditForm(null);
-      setEditFieldErrors({});
-      setEditError(null);
-    } catch (err) {
-      console.error('Error updating pet profile', err);
-      setEditError(
-        err instanceof Error ? err.message : 'Failed to update pet',
-      );
-    } finally {
-      setIsSavingProfile(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -304,21 +173,9 @@ export default function PetDetailPage({
         onBack={() => router.back()}
       />
 
-      <PetPhotoProfileCard
+      <PetDetailProfileSection
         pet={pet}
-        isEditingProfile={isEditingProfile}
-        isSavingProfile={isSavingProfile}
-        editForm={editForm}
-        editFieldErrors={editFieldErrors}
-        editError={editError}
-        onStartEditProfile={handleStartEditProfile}
-        onCancelEditProfile={handleCancelEditProfile}
-        onProfileSave={handleProfileSave}
-        onUpdateEditField={updateEditField}
-        onToggleCharacteristic={handleToggleCharacteristic}
-        onPhotoUploaded={(imageUrl) =>
-          setPet((prev) => (prev ? { ...prev, imageUrl } : prev))
-        }
+        setPet={setPet}
       />
 
       <PetDetailActivitySection careLogs={pet.careLogs} />
