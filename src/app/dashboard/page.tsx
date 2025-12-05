@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { getSharedPetsForUser } from "@/lib/carecircle";
 import PetList from "@/components/pets/PetList";
 import AddPetForm from "@/components/pets/AddPetForm";
+// MUI layout shell for the dashboard – this keeps spacing, max-width, and card
+// geometry aligned with the global theme instead of hand-tuned Tailwind margins.
+import { Box, Container, Paper, Stack, Typography } from "@mui/material";
 
 // Server-rendered dashboard. This page always runs on the server, so it can
 // talk directly to Prisma and NextAuth without shipping any of that to the client.
@@ -66,65 +69,224 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <main className="bg-mm-bg text-mm-ink">
-      <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-10">
-        {/* Overview card */}
-        <section className="rounded-xl border border-mm-border bg-mm-surface px-5 py-6 shadow-sm">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-mm-muted">
-            Dashboard
-          </p>
-          <h1 className="mb-3 text-2xl font-semibold tracking-tight sm:text-3xl">
-            Manage your home
-          </h1>
-          <p className="mb-3 text-sm text-mm-muted">
-            Keep track of pets, plants, family, and housemates you&apos;re caring for in one place.
-          </p>
-          <p className="text-sm text-mm-muted">
-            {/* Prefer the user&apos;s name, but fall back to email so this never looks broken
-                if their profile is half-filled. */}
-            Welcome, {sessionUser.name ?? sessionUser.email ?? "friend"}
-          </p>
-        </section>
+    // Main background still respects the existing mm tokens, but we lean on MUI
+    // for min-height and typography color so the dashboard feels native to the theme.
+    <Box
+      component="main"
+      className="bg-mm-bg text-mm-ink"
+      sx={{
+        bgcolor: "background.default",
+        color: "text.primary",
+        minHeight: "100vh",
+      }}
+    >
+      {/* Container keeps the dashboard readable on large screens and gives us
+          a single place to tweak horizontal padding later instead of hunting
+          down individual divs. */}
+      <Container
+        maxWidth="lg"
+        sx={{
+          py: { xs: 4, md: 6 },
+        }}
+      >
+        {/* Stack handles vertical spacing between sections so we are not
+            micro-managing margin utilities on every card. */}
+        <Stack spacing={3.5}>
+          {/* Overview card */}
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+              px: { xs: 2.5, md: 3 },
+              py: { xs: 3, md: 3.5 },
+            }}
+          >
+            <Typography
+              variant="overline"
+              sx={{
+                mb: 1,
+                fontWeight: 600,
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                color: "text.secondary",
+                fontSize: 11,
+              }}
+            >
+              Dashboard
+            </Typography>
 
-        {/* Add pet card */}
-        <section className="rounded-xl border border-mm-border bg-mm-surface px-5 py-6 shadow-sm">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-mm-muted">
-            Add new pet
-          </h2>
-          <p className="mb-4 text-sm text-mm-muted">
-            Create a profile for another member of your household.
-          </p>
-          <AddPetForm />
-        </section>
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{
+                mb: 1.5,
+                fontWeight: 600,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Manage your home
+            </Typography>
 
-        {/* Owned pets */}
-        <section className="rounded-xl border border-mm-border bg-mm-surface px-5 py-6 shadow-sm">
-          <h2 className="mb-1 text-lg font-semibold tracking-tight sm:text-xl">
-            Pets you own
-            <span className="ml-2 align-middle text-xs font-medium text-mm-muted">
-              ({ownedPetsWithFlag.length})
-            </span>
-          </h2>
-          <p className="mb-4 text-sm text-mm-muted">
-            Pets you created and fully manage.
-          </p>
-          <PetList pets={ownedPetsWithFlag} />
-        </section>
+            <Typography
+              variant="body2"
+              sx={{ mb: 1.5 }}
+              color="text.secondary"
+            >
+              Keep track of pets, plants, family, and housemates you&apos;re caring
+              for in one place.
+            </Typography>
 
-        {/* Shared pets */}
-        <section className="mb-8 rounded-xl border border-mm-border bg-mm-surface px-5 py-6 shadow-sm">
-          <h2 className="mb-1 text-lg font-semibold tracking-tight sm:text-xl">
-            Pets you care for
-            <span className="ml-2 align-middle text-xs font-medium text-mm-muted">
-              ({sharedPetsWithFlag.length})
-            </span>
-          </h2>
-          <p className="mb-4 text-sm text-mm-muted">
-            Pets shared with you as a caregiver.
-          </p>
-          <PetList pets={sharedPetsWithFlag} />
-        </section>
-      </div>
-    </main>
+            <Typography variant="body2" color="text.secondary">
+              {/* Prefer the user&apos;s name, but fall back to email so this never looks broken
+                  if their profile is half-filled. */}
+              Welcome, {sessionUser.name ?? sessionUser.email ?? "friend"}
+            </Typography>
+          </Paper>
+
+          {/* Add pet card */}
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+              px: { xs: 2.5, md: 3 },
+              py: { xs: 3, md: 3.5 },
+            }}
+          >
+            <Typography
+              variant="overline"
+              component="h2"
+              sx={{
+                mb: 1,
+                fontWeight: 600,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: "text.secondary",
+                fontSize: 12,
+              }}
+            >
+              Add new pet
+            </Typography>
+
+            <Typography
+              variant="body2"
+              sx={{ mb: 2 }}
+              color="text.secondary"
+            >
+              Create a profile for another member of your household.
+            </Typography>
+
+            {/* Keeping AddPetForm as-is so all existing validation, routing, and
+                success handling continues to behave the same; we’re only changing
+                the shell it lives inside. */}
+            <AddPetForm />
+          </Paper>
+
+          {/* Owned pets */}
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+              px: { xs: 2.5, md: 3 },
+              py: { xs: 3, md: 3.5 },
+            }}
+          >
+            <Typography
+              variant="h6"
+              component="h2"
+              sx={{
+                mb: 0.75,
+                fontWeight: 600,
+                letterSpacing: "-0.01em",
+                display: "flex",
+                alignItems: "baseline",
+                gap: 0.75,
+              }}
+            >
+              Pets you own
+              <Typography
+                component="span"
+                variant="body2"
+                sx={{
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: "text.secondary",
+                }}
+              >
+                ({ownedPetsWithFlag.length})
+              </Typography>
+            </Typography>
+
+            <Typography
+              variant="body2"
+              sx={{ mb: 2 }}
+              color="text.secondary"
+            >
+              Pets you created and fully manage.
+            </Typography>
+
+            <PetList pets={ownedPetsWithFlag} />
+          </Paper>
+
+          {/* Shared pets */}
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+              px: { xs: 2.5, md: 3 },
+              py: { xs: 3, md: 3.5 },
+              mb: 2,
+            }}
+          >
+            <Typography
+              variant="h6"
+              component="h2"
+              sx={{
+                mb: 0.75,
+                fontWeight: 600,
+                letterSpacing: "-0.01em",
+                display: "flex",
+                alignItems: "baseline",
+                gap: 0.75,
+              }}
+            >
+              Pets you care for
+              <Typography
+                component="span"
+                variant="body2"
+                sx={{
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: "text.secondary",
+                }}
+              >
+                ({sharedPetsWithFlag.length})
+              </Typography>
+            </Typography>
+
+            <Typography
+              variant="body2"
+              sx={{ mb: 2 }}
+              color="text.secondary"
+            >
+              Pets shared with you as a caregiver.
+            </Typography>
+
+            <PetList pets={sharedPetsWithFlag} />
+          </Paper>
+        </Stack>
+      </Container>
+    </Box>
   );
 }
