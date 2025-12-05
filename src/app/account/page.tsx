@@ -1,100 +1,207 @@
 // src/app/account/page.tsx
 
-// Server-side imports - this is a Server Component (no 'use client')
-import { getServerSession } from "next-auth";
+// Coordinator-only page: wires the loader to sectional UI and owns
+// top-level layout decisions. All real UI and state live in sections
+// so we can evolve them independently.
 import { redirect } from "next/navigation";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { getSharedPetsForUser } from "@/lib/carecircle";
+import {
+  Box,
+  Container,
+  Paper,
+  Stack,
+  Typography,
+  Divider,
+} from "@mui/material";
+
 import UserProfileForm from "@/components/UserProfileForm";
 import PetList from "@/components/pets/PetList";
 
-// Custom type decouples page from Prisma's generated types
-// Prevents breaking changes if Prisma schema differs between dev/CI/prod environments
-type AccountUser = {
-  id: string;
-  name: string | null;
-  email: string;
-  phone: string | null;
-  address: string | null;
-};
+import {
+  loadAccountPageData,
+  type AccountPageData,
+} from "./loader";
 
-// Server Component: runs on server only, can directly access database and session
-// Benefits: no client JS bundle, instant data fetch, SEO-friendly
+// Server Component entry point.
+// Intentionally boring: fetch data once, handle auth, compose sections.
 export default async function AccountPage() {
-  // Fetch session server-side - more secure than client-side session access
-  const session = await getServerSession(authOptions);
+  const data = await loadAccountPageData();
 
-  // If there is no authenticated user, send them to login and return to /account afterwards
-  if (!session || !session.user?.email) {
+  // The loader returning null is our signal that the user is not authenticated;
+  // we centralize the actual redirect here so routing logic stays obvious.
+  if (!data) {
     redirect("/login?callbackUrl=/account");
   }
 
-  const { email, name } = session.user;
-
-  // Use email as the source of truth for matching users.
-  // This keeps us aligned with other routes (like /api/care-logs) which
-  // also "get or create" the user by email for both credentials and Google logins.
-  const dbUserRaw = await prisma.user.upsert({
-    where: { email: email! },
-    update: {},
-    create: {
-      email: email!,
-      name: name ?? "",
-      // Satisfies Prisma schema; not actually used for OAuth logins
-      passwordHash: "google-oauth",
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      address: true,
-    },
-  });
-
-  // Normalize into a stable shape for the form component
-  const dbUser: AccountUser = {
-    id: dbUserRaw.id,
-    name: dbUserRaw.name,
-    email: dbUserRaw.email,
-    phone: dbUserRaw.phone,
-    address: dbUserRaw.address,
-  };
-
-  // Fetch pets shared with this user via CareCircle
-  const sharedMemberships = await getSharedPetsForUser(dbUser.id);
-
-  const sharedPets = sharedMemberships.map((membership) => ({
-    ...membership.recipient,
-    _accessType: "shared" as const,
-  }));
+  const { user, sharedPets } = data;
 
   return (
-    <main className="mx-auto max-w-2xl py-8 px-4">
-      <h1 className="mb-4 text-3xl font-semibold">My profile</h1>
-      <p className="mb-8 text-sm text-muted-foreground">
-        {/* User-centric copy emphasizes control and transparency */}
-        Review and update your contact details so this account stays current and actually usable.
-      </p>
-      {/*
-        Client Component for interactivity (form handling)
-        Pass server-fetched data as props - avoids client-side loading state
-        Nullish coalescing (??) provides fallback for null/undefined database values
-      */}
-      <UserProfileForm
-        initialName={dbUser.name ?? ""}
-        initialEmail={dbUser.email ?? ""}
-        initialPhone={dbUser.phone ?? ""}
-        initialAddress={dbUser.address ?? ""}
-      />
-      <section className="mt-12">
-        <h2 className="mb-2 text-xl font-semibold">Shared pets ({sharedPets.length})</h2>
-        <p className="mb-4 text-sm text-neutral-600">
-          Pets you have access to because someone shared them with you.
-        </p>
-        <PetList pets={sharedPets} />
-      </section>
-    </main>
+    // Using the same Container/Stack pattern as the dashboard and Care Circle
+    // so spacing, max-width, and typography all feel like one coherent app.
+    <Container maxWidth="md" sx={{ py: { xs: 3, md: 4 } }}>
+      <Stack spacing={{ xs: 3, md: 4 }}>
+        <AccountHeaderSection user={user} />
+        <AccountProfileSection user={user} />
+        <AccountSharedPetsSection
+          sharedPets={sharedPets}
+          currentUserName={user.name}
+        />
+      </Stack>
+    </Container>
+  );
+}
+
+// SECTION: Top-of-page hero + context
+function AccountHeaderSection({
+  user,
+}: {
+  user: AccountPageData["user"];
+}) {
+  return (
+    <Box>
+      <Typography
+        variant="overline"
+        sx={{
+          color: "text.secondary",
+          letterSpacing: 1.2,
+        }}
+      >
+        ACCOUNT
+      </Typography>
+
+      <Typography
+        variant="h4"
+        component="h1"
+        sx={{ mt: 0.5 }}
+      >
+        My profile
+      </Typography>
+
+      {/* This copy keeps the focus on "why" the page exists: you’re here
+          to keep contact info accurate so shared-care actually works. */}
+      <Typography
+        variant="body1"
+        sx={{ mt: 1.5, maxWidth: 600 }}
+      >
+        Review and update your contact details so this account stays
+        current and actually usable for the people you share care with.
+      </Typography>
+
+      {/* Small hint that we know who you are without over-optimizing
+          the layout around it. */}
+      <Typography
+        variant="body2"
+        sx={{ mt: 1, color: "text.secondary" }}
+      >
+        Signed in as {user.name ?? user.email}
+      </Typography>
+    </Box>
+  );
+}
+
+// SECTION: Profile card (name, email, phone, address)
+function AccountProfileSection({
+  user,
+}: {
+  user: AccountPageData["user"];
+}) {
+  return (
+    // Paper gives us a standard "card" surface that matches the dashboard
+    // shell without reinventing spacing tokens by hand.
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 2.5, md: 3 },
+        borderRadius: 16,
+        border: "1px solid",
+        borderColor: "divider",
+        bgcolor: "background.paper",
+      }}
+    >
+      <Stack spacing={2.5}>
+        <Box>
+          <Typography
+            variant="h6"
+            component="h2"
+          >
+            Contact details
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ mt: 0.5, color: "text.secondary" }}
+          >
+            This is the information we surface in shared-care contexts so
+            people know how to reach you if something comes up.
+          </Typography>
+        </Box>
+
+        <Divider />
+
+        {/* Keep the form as a dedicated client component so all fetch logic,
+            optimistic states, and local validation stay encapsulated. */}
+        <UserProfileForm
+          initialName={user.name ?? ""}
+          initialEmail={user.email}
+          initialPhone={user.phone ?? ""}
+          initialAddress={user.address ?? ""}
+          // We are intentionally not threading through any "email verified"
+          // state yet because the current Prisma model does not track it.
+          // The copy inside the form already explains that gap.
+        />
+      </Stack>
+    </Paper>
+  );
+}
+
+// SECTION: Shared pets list
+function AccountSharedPetsSection({
+  sharedPets,
+  currentUserName,
+}: {
+  sharedPets: AccountPageData["sharedPets"];
+  currentUserName: string | null;
+}) {
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 2.5, md: 3 },
+        borderRadius: 16,
+        border: "1px solid",
+        borderColor: "divider",
+        bgcolor: "background.paper",
+      }}
+    >
+      <Stack spacing={2}>
+        <Box>
+          <Typography
+            variant="h6"
+            component="h2"
+          >
+            Shared pets ({sharedPets.length})
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ mt: 0.5, color: "text.secondary" }}
+          >
+            Pets you have access to because someone shared them with you.
+            You can still view details and log care, but ownership lives
+            with the person who created the pet.
+          </Typography>
+        </Box>
+
+        <Divider />
+
+        {/* Reuse the existing PetList so card geometry, quick actions, and
+            layout stay aligned with the dashboard. The shared/owned access
+            flag is on the data itself, not the list API, so we don&apos;t
+            have to fork this component just for the account page. */}
+        <Box sx={{ mt: 0.5 }}>
+          <PetList
+            pets={sharedPets}
+            currentUserName={currentUserName}
+          />
+        </Box>
+      </Stack>
+    </Paper>
   );
 }
