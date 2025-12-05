@@ -4,14 +4,13 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CareCirclePanel from '@/components/pets/CareCirclePanel';
-import PetActivityList from '@/components/pets/PetActivityList';
-import PetHeaderCard from '@/components/pets/PetHeaderCard';
 import PetPhotoProfileCard from '@/components/pets/PetPhotoProfileCard';
 import PetDetailShell from '@/components/pets/PetDetailShell';
+import PetDetailHeaderSection from '@/components/pets/PetDetailHeaderSection';
+import PetDetailActivitySection from '@/components/pets/PetDetailActivitySection';
 import { type PetCharacteristicId } from '@/lib/petCharacteristics';
 import {
   Box,
-  Paper,
   Typography,
   Button,
 } from '@mui/material';
@@ -300,25 +299,10 @@ export default function PetDetailPage({
 
   return (
     <PetDetailShell>
-      <Box component="section" className="mm-section">
-        <Button
-          type="button"
-          onClick={() => router.back()}
-          variant="text"
-          size="small"
-          sx={{
-            px: 1.5,
-            py: 0.5,
-            borderRadius: 999,
-            textTransform: 'none',
-            fontSize: 13,
-          }}
-        >
-          ← Back
-        </Button>
-
-        <PetHeaderCard pet={pet} />
-      </Box>
+      <PetDetailHeaderSection
+        pet={pet}
+        onBack={() => router.back()}
+      />
 
       <PetPhotoProfileCard
         pet={pet}
@@ -337,28 +321,7 @@ export default function PetDetailPage({
         }
       />
 
-      <Box component="section" className="mm-section">
-        <Paper
-          elevation={0}
-          className="mm-card"
-          sx={{
-            px: { xs: 2.5, md: 3 },
-            py: 2.5,
-            borderRadius: (theme) => {
-              const radius = theme.shape.borderRadius;
-              // I normalize the border radius into a number so we can safely scale it without fighting TS.
-              return (typeof radius === 'number'
-                ? radius
-                : parseFloat(radius as string)) * 2;
-            },
-            border: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-          }}
-        >
-          <PetActivityList careLogs={pet.careLogs} />
-        </Paper>
-      </Box>
+      <PetDetailActivitySection careLogs={pet.careLogs} />
 
       <Box component="section" id="care-circle" className="mm-section">
         <CareCirclePanel
