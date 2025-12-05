@@ -13,19 +13,11 @@ import {
   Typography,
   Button,
 } from '@mui/material';
+import { type PetCharacteristicId } from '@/lib/petCharacteristics';
 import type { CareCircleMember, PetData } from './petDetailTypes'; // The detail page now consumes a fully-shaped view model instead of raw Prisma data.
 
 // Re-exporting these so other components can keep importing view types from here if needed.
 export type { CareCircleMember, CareLog, PetData } from './petDetailTypes';
-
-// Props are now based on the view models defined in petDetailTypes.
-// This keeps the UI focused on rendering instead of reshaping server data.
-type PetDetailPageProps = {
-  pet: PetData;
-  careCircleMembers: CareCircleMember[];
-  // This flags whether the current user owns the pet so we can gate owner-only actions.
-  isOwner?: boolean;
-};
 
 // Edit form state is intentionally string-based so the inputs
 // stay in sync with what the user is typing.
@@ -36,34 +28,19 @@ export type EditFormState = {
   gender: 'MALE' | 'FEMALE';
   birthDate: string;
   weight: string;
-  characteristics: string[];
+  characteristics: PetCharacteristicId[];
 };
 
 export type EditFieldErrors = Partial<Record<keyof EditFormState, string>>;
 
-function validateEditForm(data: EditFormState): EditFieldErrors {
-  const errors: EditFieldErrors = {};
-
-  if (!data.name.trim()) {
-    errors.name = 'Name is required.';
-  }
-  if (!data.breed.trim()) {
-    errors.breed = 'Breed is required.';
-  }
-  if (!data.birthDate) {
-    errors.birthDate = 'Birth date is required.';
-  }
-  if (!data.weight.trim()) {
-    errors.weight = 'Weight is required.';
-  } else {
-    const val = parseFloat(data.weight);
-    if (Number.isNaN(val) || val <= 0) {
-      errors.weight = 'Enter a valid weight greater than 0.';
-    }
-  }
-
-  return errors;
-}
+// Props are now based on the view models defined in petDetailTypes.
+// This keeps the UI focused on rendering instead of reshaping server data.
+type PetDetailPageProps = {
+  pet: PetData;
+  careCircleMembers: CareCircleMember[];
+  // This flags whether the current user owns the pet so we can gate owner-only actions.
+  isOwner?: boolean;
+};
 
 // page --------------------------------------------------------
 export default function PetDetailPage({
