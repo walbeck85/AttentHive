@@ -5,7 +5,7 @@ import PetHeaderCard from '@/components/pets/PetHeaderCard';
 import type { PetData } from '@/components/pets/petDetailTypes';
 
 type PetDetailHeaderSectionProps = {
-  pet: PetData | null;
+  pet: PetData;
   onBack: () => void;
 };
 
@@ -30,9 +30,6 @@ export default function PetDetailHeaderSection({
           fontSize: 13,
         }}
       >
-        
-        
-        
         ← Back
       </Button>
 
