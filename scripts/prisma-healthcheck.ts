@@ -1,4 +1,9 @@
 // scripts/prisma-healthcheck.ts
+
+// Used for app-level healthchecks:
+// - Verifies that our src/lib/prisma client works.
+// - Confirms core tables exist and are queryable.
+
 import { prisma } from '../src/lib/prisma';
 
 async function main() {

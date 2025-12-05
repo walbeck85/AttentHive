@@ -18,6 +18,10 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.6",
+    "@mui/material": "^7.3.6",
     "@prisma/client": "^6.19.0",
     "@supabase/supabase-js": "^2.86.0",
     "bcrypt": "^6.0.0",

@@ -2,6 +2,10 @@
 // Simple Prisma connectivity healthcheck using CommonJS.
 // This bypasses all the ts-node / ESM headaches.
 
+// Used for CI / deployment healthchecks:
+// - Verifies raw DB connectivity using @prisma/client directly.
+// - Does NOT depend on app code (src/lib/prisma).
+
 /* eslint-disable @typescript-eslint/no-require-imports */
 const { PrismaClient } = require("@prisma/client");
 
