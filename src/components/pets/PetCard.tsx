@@ -6,6 +6,10 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import ConfirmActionModal from './ConfirmActionModal';
 import PetAvatar from './PetAvatar';
+import {
+  PET_CHARACTERISTICS,
+  type PetCharacteristicId,
+} from '@/lib/petCharacteristics';
 
 // Types --------------------------------------------------------
 type ActionType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
@@ -29,6 +33,9 @@ export type PetData = {
   weight: number;
   careLogs: CareLog[];
   imageUrl?: string | null; // Let the card render photos when available without forcing every caller to provide one.
+  // Optional behavior/needs badges surfaced on the card so handlers
+  // can see safety/accessibility context at a glance.
+  characteristics?: PetCharacteristicId[];
 };
 
 // Component Props ----------------------------------------------
@@ -103,6 +110,41 @@ const ACTION_LABELS: Record<ActionType, string> = {
   ACCIDENT: 'Accident',
 };
 
+// Helper: look up a human-readable label for a characteristic ID.
+// This keeps rendering logic simple and resilient to future list changes.
+function getCharacteristicLabel(id: PetCharacteristicId | string): string {
+  const match = PET_CHARACTERISTICS.find((c) => c.id === id);
+  return match?.label ?? id;
+}
+
+// Helper: map each characteristic to a distinct visual style so the most
+// important safety flags stand out without overwhelming the card.
+function getCharacteristicClasses(id: PetCharacteristicId | string): string {
+  switch (id) {
+    case 'AGGRESSIVE':
+      // High-alert flag: strong red pill.
+      return 'border-[#FCA5A5] bg-[#FEE2E2] text-[#991B1B]';
+    case 'REACTIVE':
+      // Medium-alert flag: warm amber pill.
+      return 'border-[#FCD34D] bg-[#FEF3C7] text-[#92400E]';
+    case 'MOBILITY_ISSUES':
+      // Accessibility-related: calming teal pill.
+      return 'border-[#6EE7B7] bg-[#ECFDF5] text-[#065F46]';
+    case 'BLIND':
+      // Sensory note: cool indigo pill.
+      return 'border-[#A5B4FC] bg-[#EEF2FF] text-[#3730A3]';
+    case 'DEAF':
+      // Sensory note: soft blue pill.
+      return 'border-[#BFDBFE] bg-[#EFF6FF] text-[#1D4ED8]';
+    case 'SHY':
+      // Temperament note: gentle mauve pill.
+      return 'border-[#FBCFE8] bg-[#FDF2F8] text-[#9D174D]';
+    default:
+      // Fallback for any future flags we add.
+      return 'border-[#E5E7EB] bg-[#F9FAFB] text-[#374151]';
+  }
+}
+
 // Component -----------------------------------------------------
 // Renders a card displaying pet information and quick actions
 export default function PetCard({ pet, currentUserName, onQuickAction }: Props) {
@@ -171,27 +213,46 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
     <>
       <article className="mm-card group">
         {/* HEADER */}
-        <header className="flex items-center justify-between border-b border-[#E5D9C6] bg-[#FDF7EE] px-5 py-4">
-          <div className="flex items-center gap-3">
-            {/* Bounding the avatar keeps high‑resolution photos from stretching the card layout while still reusing shared avatar logic. */}
-            <div className="h-10 w-10 shrink-0 rounded-full overflow-hidden">
-              <PetAvatar
-                name={pet.name}
-                imageUrl={pet.imageUrl ?? null}
-                size="md"
-              />
-            </div>
+        <header className="border-b border-[#E5D9C6] bg-[#FDF7EE] px-5 py-4">
+          <div className="flex flex-col gap-3">
+            {/* Characteristics badges – surfaced at the very top of the card so safety / behavior flags
+                are visible before anything else. */}
+            {pet.characteristics && pet.characteristics.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {pet.characteristics.map((id) => (
+                  <span
+                    key={id}
+                    className={[
+                      'inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em]',
+                      getCharacteristicClasses(id),
+                    ].join(' ')}
+                  >
+                    {getCharacteristicLabel(id)}
+                  </span>
+                ))}
+              </div>
+            )}
 
-            <div>
-              <h3 className="font-serif text-lg font-bold text-[#382110] leading-tight">
-                {pet.name}
-              </h3>
-              <p className="text-sm font-medium uppercase tracking-wide text-[#A08C72]">
-                <span>{pet.breed}</span>
-              </p>
+            <div className="flex items-center gap-3">
+              {/* Bounding the avatar keeps high‑resolution photos from stretching the card layout while still reusing shared avatar logic. */}
+              <div className="h-10 w-10 shrink-0 rounded-full overflow-hidden">
+                <PetAvatar
+                  name={pet.name}
+                  imageUrl={pet.imageUrl ?? null}
+                  size="md"
+                />
+              </div>
+
+              <div>
+                <h3 className="font-serif text-lg font-bold text-[#382110] leading-tight">
+                  {pet.name}
+                </h3>
+                <p className="text-sm font-medium uppercase tracking-wide text-[#A08C72]">
+                  <span>{pet.breed}</span>
+                </p>
+              </div>
             </div>
           </div>
-
         </header>
 
         {/* BODY */}

@@ -3,6 +3,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z, type ZodIssue } from 'zod';
+import {
+  PET_CHARACTERISTIC_IDS,
+  type PetCharacteristicId,
+} from '@/lib/petCharacteristics';
 
 // Validation schema for creating a pet
 const createPetSchema = z.object({
@@ -10,13 +14,37 @@ const createPetSchema = z.object({
   type: z.enum(['DOG', 'CAT'] as const),
   breed: z.string().min(1, 'Breed is required').max(100, 'Breed too long'),
   gender: z.enum(['MALE', 'FEMALE'] as const),
-  birthDate: z.string().refine((date) => {
-    const birthDate = new Date(date);
-    const today = new Date();
-    return birthDate <= today;
-  }, 'Birth date cannot be in the future'),
+  birthDate: z
+    .string()
+    .refine((date) => {
+      const birthDate = new Date(date);
+      const today = new Date();
+      return birthDate <= today;
+    }, 'Birth date cannot be in the future'),
   weight: z.number().positive('Weight must be positive'),
+  // Client may send an array of strings for characteristic flags.
+  // We keep this loose here and enforce the canonical values via
+  // `sanitizeCharacteristics` so the schema stays simple.
+  characteristics: z.array(z.string()).optional(),
 });
+
+// Helper: normalize and validate any incoming characteristics array against
+// the canonical list. This keeps the DB clean even if the client payload
+// drifts or a malicious caller sends arbitrary strings.
+function sanitizeCharacteristics(input: unknown): PetCharacteristicId[] {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  // Filter to known IDs and de-duplicate so we never store junk or repeats.
+  return Array.from(
+    new Set(
+      input.filter((id): id is PetCharacteristicId =>
+        PET_CHARACTERISTIC_IDS.includes(id as PetCharacteristicId),
+      ),
+    ),
+  );
+}
 
 // Helper: ensure there is a Prisma User row for the current session user.
 // This is important for OAuth (Google) users who may not have been created
@@ -84,14 +112,24 @@ export async function POST(request: NextRequest) {
     // Step 4: Data is valid! Save to database
     const petData = validationResult.data;
 
+    // Separate out characteristics so we can normalize them before persisting.
+    const {
+      birthDate,
+      characteristics: rawCharacteristics,
+      ...rest
+    } = petData;
+
+    const characteristics = sanitizeCharacteristics(rawCharacteristics);
+
     const newPet = await prisma.recipient.create({
       data: {
-        name: petData.name,
-        type: petData.type,
-        breed: petData.breed,
-        gender: petData.gender,
-        birthDate: new Date(petData.birthDate),
-        weight: petData.weight,
+        ...rest,
+        gender: rest.gender,
+        type: rest.type,
+        breed: rest.breed,
+        birthDate: new Date(birthDate),
+        weight: rest.weight,
+        characteristics,
         ownerId: dbUser.id, // ✅ use real DB user id, not session.user.id
       },
     });

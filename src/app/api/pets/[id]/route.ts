@@ -3,6 +3,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z, type ZodIssue } from 'zod';
+import {
+  PET_CHARACTERISTIC_IDS,
+  type PetCharacteristicId,
+} from '@/lib/petCharacteristics';
 
 // Helper: create a JSON Response without relying on Response.json,
 // which can be missing or behave differently in some Jest environments.
@@ -18,18 +22,42 @@ function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
   });
 }
 
+// Helper: normalize and validate any incoming characteristics array against
+// the canonical list. This keeps the DB clean even if the client payload
+// drifts or a malicious caller sends arbitrary strings.
+function sanitizeCharacteristics(input: unknown): PetCharacteristicId[] {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  // Filter to known IDs and de-duplicate so we never store junk or repeats.
+  return Array.from(
+    new Set(
+      input.filter((id): id is PetCharacteristicId =>
+        PET_CHARACTERISTIC_IDS.includes(id as PetCharacteristicId),
+      ),
+    ),
+  );
+}
+
 // Validation schema for creating a pet
 const createPetSchema = z.object({
   name: z.string().min(1, 'Name is required').max(50, 'Name too long'),
   type: z.enum(['DOG', 'CAT'] as const),
   breed: z.string().min(1, 'Breed is required').max(100, 'Breed too long'),
   gender: z.enum(['MALE', 'FEMALE'] as const),
-  birthDate: z.string().refine((date) => {
-    const birthDate = new Date(date);
-    const today = new Date();
-    return birthDate <= today;
-  }, 'Birth date cannot be in the future'),
+  birthDate: z
+    .string()
+    .refine((date) => {
+      const birthDate = new Date(date);
+      const today = new Date();
+      return birthDate <= today;
+    }, 'Birth date cannot be in the future'),
   weight: z.number().positive('Weight must be positive'),
+  // Client may send an array of strings for characteristic flags.
+  // We keep this loose here and enforce the canonical values via
+  // `sanitizeCharacteristics` so the schema stays simple.
+  characteristics: z.array(z.string()).optional(),
 });
 
 // Validation schema for updating a pet (all fields optional)
@@ -57,7 +85,13 @@ const updatePetSchema = z.object({
   // For updates we use a slightly clearer message that will surface directly
   // in error responses when this is the only invalid field. The tests and UI
   // rely on this exact copy when a negative weight is submitted.
-  weight: z.number().positive('Weight must be a positive number').optional(),
+  weight: z
+    .number()
+    .positive('Weight must be a positive number')
+    .optional(),
+  // Optional multi-select flags; if present we sanitize and persist them,
+  // and if omitted we leave existing values untouched.
+  characteristics: z.array(z.string()).optional(),
 });
 
 // Helper: ensure there is a Prisma User row for the current session user.
@@ -126,14 +160,24 @@ export async function POST(request: NextRequest) {
     // Step 4: Data is valid! Save to database
     const petData = validationResult.data;
 
+    // Separate out characteristics so we can normalize them before persisting.
+    const {
+      birthDate,
+      characteristics: rawCharacteristics,
+      ...rest
+    } = petData;
+
+    const characteristics = sanitizeCharacteristics(rawCharacteristics);
+
     const newPet = await prisma.recipient.create({
       data: {
-        name: petData.name,
-        type: petData.type,
-        breed: petData.breed,
-        gender: petData.gender,
-        birthDate: new Date(petData.birthDate),
-        weight: petData.weight,
+        ...rest,
+        gender: rest.gender,
+        type: rest.type,
+        breed: rest.breed,
+        birthDate: new Date(birthDate),
+        weight: rest.weight,
+        characteristics,
         ownerId: dbUser.id, // use real DB user id, not session.user.id
       },
     });
@@ -309,16 +353,28 @@ export async function PATCH(
 
     const updateData = validationResult.data;
 
+    // Separate out birthDate and characteristics so we can normalize before persisting.
+    const {
+      birthDate,
+      characteristics: rawCharacteristics,
+      ...rest
+    } = updateData;
+
+    const characteristics =
+      rawCharacteristics !== undefined
+        ? sanitizeCharacteristics(rawCharacteristics)
+        : undefined;
+
     // Step 4: Apply the update
     const updatedPet = await prisma.recipient.update({
       where: { id: petId },
       data: {
-        ...updateData,
+        ...rest,
         // If birthDate is present, coerce it to a Date instance so Prisma
         // receives the right type instead of a plain string.
-        ...(updateData.birthDate
-          ? { birthDate: new Date(updateData.birthDate) }
-          : {}),
+        ...(birthDate ? { birthDate: new Date(birthDate) } : {}),
+        // Only update characteristics when the client actually sent them.
+        ...(characteristics !== undefined ? { characteristics } : {}),
       },
     });
 
