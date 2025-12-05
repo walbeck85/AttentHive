@@ -1,12 +1,15 @@
-// src/app/providers.tsx
 "use client";
-// Imports ------------------------------------------------------
+
+import React from "react";
 import { SessionProvider } from "next-auth/react";
-// Provider component -------------------------------------------
-export default function Providers({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return <SessionProvider>{children}</SessionProvider>;
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import theme from "@/theme";
+
+export default function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <SessionProvider>{children}</SessionProvider>
+    </ThemeProvider>
+  );
 }

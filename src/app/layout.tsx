@@ -31,7 +31,7 @@ export default function RootLayout({
           <NavBar />
 
           {/* Page content – individual pages use .mm-page / .mm-shell for layout */}
-          <main>{children}</main>
+          <main className="mm-page">{children}</main>
         </Providers>
       </body>
     </html>
