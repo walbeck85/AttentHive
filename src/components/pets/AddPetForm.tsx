@@ -3,6 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import BreedSelect from './BreedSelect';
+import {
+  PET_CHARACTERISTICS,
+  type PetCharacteristicId,
+} from '@/lib/petCharacteristics';
 // Types --------------------------------------------------------
 type AddPetFormProps = {
   onPetAdded?: () => void;
@@ -16,6 +20,9 @@ type FormState = {
   birthDate: string;
   weight: string;
   weightUnit: 'lbs' | 'kg';
+  // Multi-select flags that surface as badges on the pet card.
+  // Kept in sync with the canonical list so the payload stays predictable.
+  characteristics: PetCharacteristicId[];
 };
 // Field-specific error messages
 type FieldErrors = Partial<Record<keyof FormState, string>>;
@@ -35,6 +42,8 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
     birthDate: '',
     weight: '',
     weightUnit: 'lbs',
+    // Start with no flags selected; this mirrors the DB default of [].
+    characteristics: [],
   });
 // Field Errors
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -48,6 +57,7 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
       birthDate: '',
       weight: '',
       weightUnit: 'lbs',
+      characteristics: [],
     });
     setFieldErrors({});
     setError(null);
@@ -102,6 +112,9 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
           gender: formData.gender,
           birthDate: formData.birthDate,
           weight: weightInLbs,
+          // Pass through the selected characteristic IDs so the API
+          // can validate and persist them to the Recipient record.
+          characteristics: formData.characteristics,
         }),
       });
 // Parse response
@@ -135,6 +148,30 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
     setFieldErrors((prev) => {
       const next = { ...prev };
       delete next[key];
+      return next;
+    });
+  };
+
+  // Helper: toggle a single characteristic flag on or off while keeping
+  // the rest of the form state untouched.
+  const toggleCharacteristic = (id: PetCharacteristicId) => {
+    setFormData((prev) => {
+      const current = prev.characteristics;
+      const next = current.includes(id)
+        ? current.filter((c) => c !== id)
+        : [...current, id];
+  
+      return {
+        ...prev,
+        characteristics: next,
+      };
+    });
+  
+    // If we ever add validation for characteristics, this keeps things
+    // consistent with the rest of the field-level error handling.
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete (next as Record<string, string | undefined>).characteristics;
       return next;
     });
   };
@@ -321,6 +358,36 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
                 {fieldErrors.weight}
               </p>
             )}
+          </div>
+
+          {/* Characteristics */}
+          <div className="md:col-span-2">
+            <label className="mb-1 block text-[11px] font-semibold tracking-[0.12em] text-[#A08C72] uppercase">
+              Characteristics
+            </label>
+            <p className="mb-2 text-[12px] text-[#7A6A56]">
+              Add any safety or accessibility notes that should be visible on the pet card.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {PET_CHARACTERISTICS.map((option) => {
+                const isSelected = formData.characteristics.includes(option.id);
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => toggleCharacteristic(option.id)}
+                    className={[
+                      'inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                      isSelected
+                        ? 'bg-[#FCEBE8] border-[#F5C6BE] text-[#8A3B32]'
+                        : 'bg-white border-[#E1D6C5] text-[#7A6A56] hover:bg-[#F7EFE3]',
+                    ].join(' ')}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 

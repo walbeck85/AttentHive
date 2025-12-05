@@ -30,6 +30,9 @@ model Recipient {
   birthDate    DateTime
   weight       Float
   specialNeeds String?
+  // Behavior / needs flags surfaced as badges on the recipient card.
+  // String[] keeps this flexible so we can evolve the canonical list without further schema changes.
+  characteristics String[]    @default([])
   ownerId      String
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt

@@ -3,6 +3,7 @@
 
 import type { Recipient } from '@prisma/client';
 import PetCard, { PetData } from './PetCard';
+import type { PetCharacteristicId } from '@/lib/petCharacteristics';
 
 type PetListProps = {
   // The dashboard hands us raw Prisma Recipient records; we keep this type tight so any
@@ -35,6 +36,9 @@ export default function PetList({ pets, currentUserName }: PetListProps) {
     birthDate: pet.birthDate.toISOString(),
     weight: pet.weight,
     imageUrl: pet.imageUrl ?? null,
+    // Surface any stored behavior/needs flags so the card can render
+    // badges without needing to know about Prisma's Recipient shape.
+    characteristics: (pet.characteristics ?? []) as PetCharacteristicId[],
     // The dashboard query is not loading logs yet; starting with an empty array
     // avoids null checks everywhere else.
     careLogs: [],

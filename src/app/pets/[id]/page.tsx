@@ -4,11 +4,14 @@
 // Imports ------------------------------------------------------
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Dog, Cat } from 'lucide-react';
 import CareCirclePanel from '@/components/pets/CareCirclePanel';
 import PetAvatar from '@/components/pets/PetAvatar';
 import PetPhotoUpload from '@/components/pets/PetPhotoUpload';
 import BreedSelect from '@/components/pets/BreedSelect';
+import {
+  PET_CHARACTERISTICS,
+  type PetCharacteristicId,
+} from '@/lib/petCharacteristics';
 
 // Types --------------------------------------------------------
 
@@ -52,6 +55,7 @@ type PetData = {
   careLogs: CareLog[];
   ownerId?: string;
   imageUrl?: string | null; // Let the detail view show an image when we have one, without forcing it for legacy rows.
+  characteristics?: PetCharacteristicId[]; // Optional so legacy rows or older API responses don’t break this page.
 };
 
 // Edit form state is intentionally string-based so the inputs
@@ -63,6 +67,7 @@ type EditFormState = {
   gender: 'MALE' | 'FEMALE';
   birthDate: string;
   weight: string;
+  characteristics: PetCharacteristicId[];
 };
 
 type EditFieldErrors = Partial<Record<keyof EditFormState, string>>;
@@ -103,6 +108,32 @@ function getActivityLabel(type: ActionType): string {
       return 'Accident';
     default:
       return 'Log';
+  }
+}
+
+// Characteristics helpers: reuse the shared metadata so dashboard cards and detail
+// views stay visually and semantically in sync when we tweak the list or copy.
+function getCharacteristicLabel(id: PetCharacteristicId): string {
+  const meta = PET_CHARACTERISTICS.find((item) => item.id === id);
+  return meta ? meta.label : id.toLowerCase().replace(/_/g, ' ');
+}
+
+function getCharacteristicClasses(id: PetCharacteristicId): string {
+  switch (id) {
+    case 'AGGRESSIVE':
+      return 'border-[#F97373] bg-[#FEF2F2] text-[#B91C1C]';
+    case 'REACTIVE':
+      return 'border-[#FB923C] bg-[#FFF7ED] text-[#C05621]';
+    case 'SHY':
+      return 'border-[#A78BFA] bg-[#F5F3FF] text-[#5B21B6]';
+    case 'MOBILITY_ISSUES':
+      return 'border-[#2DD4BF] bg-[#ECFEFF] text-[#0F766E]';
+    case 'BLIND':
+      return 'border-[#9CA3AF] bg-[#F3F4F6] text-[#374151]';
+    case 'DEAF':
+      return 'border-[#38BDF8] bg-[#EFF6FF] text-[#1D4ED8]';
+    default:
+      return 'border-[#D0C1AC] bg-[#FDF7EE] text-[#6A5740]';
   }
 }
 
@@ -250,6 +281,11 @@ export default function PetDetailsPage() {
       gender: (pet.gender as 'MALE' | 'FEMALE') ?? 'MALE',
       birthDate,
       weight: pet.weight.toString(),
+      // Seed the edit form with any existing flags so the toggles reflect
+      // the current DB state instead of always starting blank.
+      characteristics: Array.isArray(pet.characteristics)
+        ? pet.characteristics
+        : [],
     });
     setEditFieldErrors({});
     setEditError(null);
@@ -273,6 +309,19 @@ export default function PetDetailsPage() {
       const next = { ...prev };
       delete next[key];
       return next;
+    });
+  };
+
+  const handleToggleCharacteristic = (id: PetCharacteristicId) => {
+    setEditForm((prev) => {
+      if (!prev) return prev;
+      const isSelected = prev.characteristics.includes(id);
+      return {
+        ...prev,
+        characteristics: isSelected
+          ? prev.characteristics.filter((existing) => existing !== id)
+          : [...prev.characteristics, id],
+      };
     });
   };
 
@@ -306,6 +355,9 @@ export default function PetDetailsPage() {
           // We send weight as a number here to match the Zod schema and
           // keep server/client in lockstep.
           weight: numericWeight,
+          // Persist any selected behavioral / accessibility flags so the card
+          // badges and detail view stay in sync after a save.
+          characteristics: editForm.characteristics,
         }),
       });
 
@@ -396,26 +448,41 @@ export default function PetDetailsPage() {
           </button>
 
           <div className="mt-4 mm-card px-5 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3">
-              {/* Bounding the avatar in a fixed-size wrapper keeps large photos from taking over the layout while still reusing shared avatar styles. */}
-              <div className="h-20 w-20 md:h-24 md:w-24 shrink-0 rounded-full overflow-hidden border border-[#E5D9C6]/80 bg-[#FDF7EE]">
-                <PetAvatar
-                  name={pet.name}
-                  imageUrl={pet.imageUrl ?? null}
-                  size="lg"
-                />
-              </div>
+            <div className="flex flex-col gap-3">
+              {/* Characteristics row: lives above the core identity so high-signal flags are visible immediately to anyone viewing the profile. */}
+              {Array.isArray(pet.characteristics) &&
+                pet.characteristics.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {pet.characteristics.map((id) => (
+                      <span
+                        key={id}
+                        className={[
+                          'inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em]',
+                          getCharacteristicClasses(id),
+                        ].join(' ')}
+                      >
+                        {getCharacteristicLabel(id)}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
-              <div>
-                <h1 className="mm-h2">{pet.name}</h1>
-                <p className="flex items-center gap-1 text-sm font-medium uppercase tracking-wide text-[#A08C72]">
-                  {pet.type === 'DOG' ? (
-                    <Dog className="h-4 w-4 text-[#D17D45]" />
-                  ) : (
-                    <Cat className="h-4 w-4 text-[#D17D45]" />
-                  )}
-                  <span>{pet.breed}</span>
-                </p>
+              <div className="flex items-center gap-3">
+                {/* Bounding the avatar in a fixed-size wrapper keeps large photos from taking over the layout while still reusing shared avatar styles. */}
+                <div className="h-20 w-20 md:h-24 md:w-24 shrink-0 rounded-full overflow-hidden border border-[#E5D9C6]/80 bg-[#FDF7EE]">
+                  <PetAvatar
+                    name={pet.name}
+                    imageUrl={pet.imageUrl ?? null}
+                    size="lg"
+                  />
+                </div>
+
+                <div>
+                  <h1 className="mm-h2">{pet.name}</h1>
+                  <p className="text-sm font-medium uppercase tracking-wide text-[#A08C72]">
+                    {pet.breed}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -595,6 +662,46 @@ export default function PetDetailsPage() {
                           {editFieldErrors.weight}
                         </p>
                       )}
+                    </div>
+
+                    {/* Characteristics */}
+                    <div className="col-span-2">
+                      <label className="mb-2 block">Characteristics</label>
+                      <div className="space-y-2">
+                        {PET_CHARACTERISTICS.map((item) => {
+                          const isSelected =
+                            editForm.characteristics.includes(item.id);
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => handleToggleCharacteristic(item.id)}
+                              className={[
+                                'flex w-full items-center justify-between rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors',
+                                isSelected
+                                  ? 'border-[#3E6B3A] bg-[#E0F2E9] text-[#234434]'
+                                  : 'border-[#D0C1AC] bg-[#FDF7EE] text-[#6A5740] hover:bg-[#F3E6D3]',
+                              ].join(' ')}
+                            >
+                              <span>{getCharacteristicLabel(item.id)}</span>
+                              {/* iOS-style toggle switch */}
+                              <span
+                                className={[
+                                  'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
+                                  isSelected ? 'bg-[#3E6B3A]' : 'bg-[#D1C5B5]',
+                                ].join(' ')}
+                              >
+                                <span
+                                  className={[
+                                    'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                                    isSelected ? 'translate-x-4' : 'translate-x-0.5',
+                                  ].join(' ')}
+                                />
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
 
