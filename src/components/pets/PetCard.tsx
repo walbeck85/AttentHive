@@ -2,7 +2,7 @@
 'use client';
 
 // Imports ------------------------------------------------------
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import ConfirmActionModal from './ConfirmActionModal';
 import PetAvatar from './PetAvatar';
@@ -10,6 +10,19 @@ import {
   PET_CHARACTERISTICS,
   type PetCharacteristicId,
 } from '@/lib/petCharacteristics';
+
+// MUI imports --------------------------------------------------
+// I’m using MUI here for the structural shell (Card, Box, Stack, Typography)
+// so dashboard cards can share theme-based spacing/shape, while keeping
+// existing Tailwind tokens like mm-card/mm-chip as visual scaffolding for now.
+import {
+  Box,
+  Card,
+  CardContent,
+  CardActions,
+  Stack,
+  Typography,
+} from '@mui/material';
 
 // Types --------------------------------------------------------
 type ActionType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
@@ -154,6 +167,14 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
+  // We gate time-based formatting behind a "mounted" flag so the server and
+  // client don't disagree about relative times and trigger hydration warnings.
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
   // Centralized handler that *actually* logs the activity
   const persistQuickAction = async (action: ActionType) => {
     try {
@@ -211,14 +232,36 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
   // Render the pet card + modal
   return (
     <>
-      <article className="mm-card group">
+      {/* Card wraps the entire pet block so we can lean on theme radius, background,
+          and spacing instead of hand-tuning each dashboard card. */}
+      <Card
+        component="article"
+        className="mm-card group"
+        sx={(theme) => ({
+          borderRadius: theme.shape.borderRadius,
+          bgcolor: 'background.paper',
+          display: 'flex',
+          flexDirection: 'column',
+        })}
+      >
         {/* HEADER */}
-        <header className="border-b border-[#E5D9C6] bg-[#FDF7EE] px-5 py-4">
-          <div className="flex flex-col gap-3">
-            {/* Characteristics badges – surfaced at the very top of the card so safety / behavior flags
-                are visible before anything else. */}
+        {/* Using Box + Stack here gives us responsive padding and gap control,
+            while still leaving typography + color close to your existing brand. */}
+        <Box
+          component="header"
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.default',
+            px: 2.5,
+            py: 2,
+          }}
+        >
+          <Stack spacing={2}>
+            {/* Characteristics badges – surfaced at the top so safety / behavior
+                flags are visible before anything else. */}
             {pet.characteristics && pet.characteristics.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <Box className="flex flex-wrap gap-2">
                 {pet.characteristics.map((id) => (
                   <span
                     key={id}
@@ -230,74 +273,175 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
                     {getCharacteristicLabel(id)}
                   </span>
                 ))}
-              </div>
+              </Box>
             )}
 
-            <div className="flex items-center gap-3">
-              {/* Bounding the avatar keeps high‑resolution photos from stretching the card layout while still reusing shared avatar logic. */}
-              <div className="h-10 w-10 shrink-0 rounded-full overflow-hidden">
+            <Stack direction="row" alignItems="center" spacing={2}>
+              {/* Bounding the avatar keeps high-resolution photos from stretching the card layout
+                  while still reusing shared avatar logic. */}
+              <Box
+                sx={{
+                  height: 40,
+                  width: 40,
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                }}
+              >
                 <PetAvatar
                   name={pet.name}
                   imageUrl={pet.imageUrl ?? null}
                   size="md"
                 />
-              </div>
+              </Box>
 
-              <div>
-                <h3 className="font-serif text-lg font-bold text-[#382110] leading-tight">
+              <Box>
+                <Typography
+                  variant="h6"
+                  component="h3"
+                  color="text.primary"
+                  sx={{
+                    fontFamily: 'serif',
+                    fontWeight: 700,
+                    lineHeight: 1.1,
+                  }}
+                >
                   {pet.name}
-                </h3>
-                <p className="text-sm font-medium uppercase tracking-wide text-[#A08C72]">
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    fontWeight: 500,
+                    mt: 0.5,
+                    color: 'text.secondary',
+                  }}
+                >
                   <span>{pet.breed}</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </header>
+                </Typography>
+              </Box>
+            </Stack>
+          </Stack>
+        </Box>
 
         {/* BODY */}
-        <div className="px-5 py-4 text-sm text-[#7A6A56]">
-          <dl className="grid grid-cols-3 gap-y-2 text-xs uppercase tracking-wide text-[#B09A7C]">
-            <div>
-              <dt>Age</dt>
-              <dd className="mt-1 font-medium normal-case text-[#382110]">
+        {/* CardContent gives us consistent internal padding and keeps the card
+            mobile-first without hard-coded widths. */}
+        <CardContent
+          sx={{
+            px: 2.5,
+            py: 2,
+          }}
+        >
+          <Box
+            component="dl"
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+              rowGap: 1,
+              fontSize: 12,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              color: 'text.secondary',
+            }}
+          >
+            <Box component="div">
+              <Typography component="dt" variant="caption">
+                Age
+              </Typography>
+              <Typography
+                component="dd"
+                variant="body2"
+                sx={{ mt: 0.5, fontWeight: 500, textTransform: 'none' }}
+                color="text.primary"
+              >
                 {calculateAge(pet.birthDate)} yrs
-              </dd>
-            </div>
+              </Typography>
+            </Box>
 
-            <div>
-              <dt>Weight</dt>
-              <dd className="mt-1 font-medium normal-case text-[#382110]">
+            <Box component="div">
+              <Typography component="dt" variant="caption">
+                Weight
+              </Typography>
+              <Typography
+                component="dd"
+                variant="body2"
+                sx={{ mt: 0.5, fontWeight: 500, textTransform: 'none' }}
+                color="text.primary"
+              >
                 {pet.weight} lbs
-              </dd>
-            </div>
+              </Typography>
+            </Box>
 
-            <div>
-              <dt>Sex</dt>
-              <dd className="mt-1 font-medium normal-case text-[#382110]">
+            <Box component="div">
+              <Typography component="dt" variant="caption">
+                Sex
+              </Typography>
+              <Typography
+                component="dd"
+                variant="body2"
+                sx={{ mt: 0.5, fontWeight: 500, textTransform: 'none' }}
+                color="text.primary"
+              >
                 {pet.gender === 'MALE' ? 'Male' : 'Female'}
-              </dd>
-            </div>
-          </dl>
+              </Typography>
+            </Box>
+          </Box>
 
           {/* Last log */}
           {lastLog && (
-            <div className="mt-4 border-t border-dotted border-[#E5D9C6] pt-3 text-sm text-[#7A6A56]">
-              <span className="font-semibold">
-                {describeActivity(lastLog, currentUserName)}
-              </span>{' '}
-              <span className="text-[#A08C72]">
-                {formatTimeAgo(lastLog.createdAt)}
-              </span>
-            </div>
+            <Box
+              sx={{
+                mt: 2,
+                pt: 1.5,
+                borderTop: '1px dotted',
+                borderColor: 'divider',
+                color: 'text.secondary',
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 600, display: 'inline' }}
+                color="text.primary"
+              >
+                {describeActivity(lastLog, currentUserName)}{' '}
+              </Typography>
+
+              {/* Time-ago is client-only to avoid SSR/client drift. */}
+              {hasMounted && (
+                <Typography
+                  variant="body2"
+                  component="span"
+                  color="text.secondary"
+                >
+                  {formatTimeAgo(lastLog.createdAt)}
+                </Typography>
+              )}
+            </Box>
           )}
-        </div>
+        </CardContent>
 
         {/* FOOTER */}
-        <footer className="border-t border-[#E5D9C6] bg-[#FCF5EA] px-5 py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {/* CardActions gives us a predictable action strip; Box wraps it as a semantic footer
+            because the CardActions type in this setup doesn't expose a `component` prop. */}
+        <Box component="footer">
+          <CardActions
+            sx={{
+              borderTop: 1,
+              borderColor: 'divider',
+              bgcolor: 'background.default',
+              px: 2.5,
+              py: 2,
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              justifyContent: 'space-between',
+              gap: 1.5,
+            }}
+          >
             {/* Quick actions left */}
-            <div className="flex flex-wrap gap-2">
+            <Box className="flex flex-wrap gap-2">
               <button
                 onClick={() => handleRequestQuickAction('FEED')}
                 className="mm-chip"
@@ -325,10 +469,10 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
               >
                 Oops
               </button>
-            </div>
+            </Box>
 
             {/* Details / History right */}
-            <div className="flex flex-wrap gap-2 sm:justify-end">
+            <Box className="flex flex-wrap gap-2 sm:justify-end">
               <Link
                 href={`/pets/${pet.id}`}
                 className="mm-chip mm-chip--solid-primary"
@@ -342,10 +486,10 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
               >
                 View History
               </Link>
-            </div>
-          </div>
-        </footer>
-      </article>
+            </Box>
+          </CardActions>
+        </Box>
+      </Card>
 
       <ConfirmActionModal
         open={isConfirmOpen}

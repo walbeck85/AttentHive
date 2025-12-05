@@ -12,6 +12,16 @@ import {
   PET_CHARACTERISTICS,
   type PetCharacteristicId,
 } from '@/lib/petCharacteristics';
+import {
+  Box,
+  Container,
+  Stack,
+  Paper,
+  Grid,
+  Typography,
+  Button,
+  Divider,
+} from '@mui/material';
 
 // Types --------------------------------------------------------
 
@@ -406,397 +416,704 @@ export default function PetDetailsPage() {
     }
   };
 
+  // Loading state ------------------------------------------------
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--mm-bg)] flex items-center justify-center">
-        <p className="mm-muted">Loading pet details…</p>
-      </div>
+      <Box
+        component="main"
+        sx={{
+          minHeight: '100vh',
+          bgcolor: 'background.default',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          px: 2,
+        }}
+      >
+        {/* Use MUI typography here so the loading state visually matches the rest of the app shell instead of looking like a separate system page. */}
+        <Typography variant="body2" color="text.secondary" className="mm-muted">
+          Loading pet details…
+        </Typography>
+      </Box>
     );
   }
 
-  // Error state
+  // Error state -------------------------------------------------
   if (error || !pet) {
     return (
-      <div className="min-h-screen bg-[var(--mm-bg)] flex flex-col items-center justify-center gap-4">
-        <p className="text-[#382110] text-lg font-semibold">
+      <Box
+        component="main"
+        sx={{
+          minHeight: '100vh',
+          bgcolor: 'background.default',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2,
+          px: 2,
+        }}
+      >
+        {/* Error state shares the same shell as the happy path so failures feel like a detour, not a totally different app. */}
+        <Typography variant="h6" sx={{ color: '#382110', fontWeight: 600 }}>
           Failed to load pet details
-        </p>
-        {error && <p className="mm-muted text-sm">{error}</p>}
-        <button
+        </Typography>
+        {error && (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            className="mm-muted text-sm"
+            sx={{ textAlign: 'center' }}
+          >
+            {error}
+          </Typography>
+        )}
+        <Button
           type="button"
           onClick={() => router.push('/dashboard')}
-          className="mm-chip mm-chip--solid-primary"
+          variant="contained"
+          size="small"
+          // Keeping the mm-chip color story via theme primary while letting MUI handle padding and radius.
+          sx={{
+            textTransform: 'uppercase',
+            letterSpacing: '0.12em',
+            fontSize: 12,
+            fontWeight: 600,
+          }}
         >
           Back to dashboard
-        </button>
-      </div>
+        </Button>
+      </Box>
     );
   }
 
-  // Main pet details UI
+  // Main pet details UI -----------------------------------------
   return (
-    <div className="mm-page">
-      <main className="mm-shell space-y-6">
-        {/* Back + header */}
-        <section className="mm-section">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="mm-chip"
-          >
-            ← Back
-          </button>
+    <Box
+      component="main"
+      className="mm-page"
+      sx={{
+        bgcolor: 'background.default',
+        color: 'text.primary',
+        minHeight: '100vh',
+        py: { xs: 3, md: 4 },
+      }}
+    >
+      <Container maxWidth="lg" className="mm-shell">
+        {/* Stack gives us vertical rhythm without relying on bespoke mm-shell spacing utilities. */}
+        <Stack spacing={3.5}>
+          {/* Back + header */}
+          <Box component="section" className="mm-section">
+            <Button
+              type="button"
+              onClick={() => router.back()}
+              variant="text"
+              size="small"
+              // Using MUI here keeps the back control consistent with the rest of the app while still feeling lightweight.
+              sx={{
+                px: 1.5,
+                py: 0.5,
+                borderRadius: 999,
+                textTransform: 'none',
+                fontSize: 13,
+              }}
+            >
+              ← Back
+            </Button>
 
-          <div className="mt-4 mm-card px-5 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-col gap-3">
-              {/* Characteristics row: lives above the core identity so high-signal flags are visible immediately to anyone viewing the profile. */}
-              {Array.isArray(pet.characteristics) &&
-                pet.characteristics.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {pet.characteristics.map((id) => (
-                      <span
-                        key={id}
-                        className={[
-                          'inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em]',
-                          getCharacteristicClasses(id),
-                        ].join(' ')}
-                      >
-                        {getCharacteristicLabel(id)}
-                      </span>
-                    ))}
-                  </div>
-                )}
+            <Paper
+              elevation={0}
+              // We keep mm-card for now so the detail card stays visually aligned with legacy cards while MUI handles spacing and theming.
+              className="mm-card"
+              sx={{
+                mt: 2,
+                px: { xs: 2.5, md: 3 },
+                py: 2.5,
+                borderRadius: (theme) => {
+  const radius = theme.shape.borderRadius;
+  return (typeof radius === "number" ? radius : parseFloat(radius as string)) * 2;
+},
+                border: '1px solid',
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                gap: 3,
+                alignItems: { md: 'center' },
+                justifyContent: { md: 'space-between' },
+              }}
+            >
+              <Stack spacing={2.25}>
+                {/* Characteristics row: lives above the core identity so high-signal flags are visible immediately to anyone viewing the profile. */}
+                {Array.isArray(pet.characteristics) &&
+                  pet.characteristics.length > 0 && (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {pet.characteristics.map((id) => (
+                        <Box
+                          key={id}
+                          component="span"
+                          className={[
+                            'inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em]',
+                            getCharacteristicClasses(id),
+                          ].join(' ')}
+                        >
+                          {getCharacteristicLabel(id)}
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
 
-              <div className="flex items-center gap-3">
-                {/* Bounding the avatar in a fixed-size wrapper keeps large photos from taking over the layout while still reusing shared avatar styles. */}
-                <div className="h-20 w-20 md:h-24 md:w-24 shrink-0 rounded-full overflow-hidden border border-[#E5D9C6]/80 bg-[#FDF7EE]">
-                  <PetAvatar
-                    name={pet.name}
-                    imageUrl={pet.imageUrl ?? null}
-                    size="lg"
-                  />
-                </div>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
+                  {/* Bounding the avatar in a fixed-size wrapper keeps large photos from taking over the layout while still reusing shared avatar styles. */}
+                  <Box
+                    sx={{
+                      height: { xs: 80, md: 96 },
+                      width: { xs: 80, md: 96 },
+                      flexShrink: 0,
+                      borderRadius: '999px',
+                      overflow: 'hidden',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      bgcolor: '#FDF7EE',
+                    }}
+                  >
+                    <PetAvatar
+                      name={pet.name}
+                      imageUrl={pet.imageUrl ?? null}
+                      size="lg"
+                    />
+                  </Box>
 
-                <div>
-                  <h1 className="mm-h2">{pet.name}</h1>
-                  <p className="text-sm font-medium uppercase tracking-wide text-[#A08C72]">
-                    {pet.breed}
-                  </p>
-                </div>
-              </div>
-            </div>
+                  <Box>
+                    <Typography component="h1" variant="h5" className="mm-h2">
+                      {pet.name}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        fontWeight: 500,
+                        mt: 0.5,
+                        color: '#A08C72',
+                        fontSize: 12,
+                      }}
+                    >
+                      {pet.breed}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Stack>
 
-            <div className="text-sm text-[#A08C72] md:text-right">
-              <div>
-                {calculateAge(pet.birthDate)} yrs • {pet.weight} lbs
-              </div>
-              <div>{pet.gender === 'MALE' ? 'Male' : 'Female'}</div>
-            </div>
-          </div>
-        </section>
-
-        {/* Photo + profile card */}
-        <section className="mm-section">
-          <div className="mm-card px-5 py-4 grid gap-6 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:items-start">
-            {/* Left: photo + uploader. The actual image is hard-bounded and cropped via PetPhotoUpload so we never end up with a full-width hero photo here. */}
-            <div>
-              <h2 className="mm-h3 mb-3">Photo</h2>
-              <PetPhotoUpload
-                recipientId={pet.id}
-                name={pet.name}
-                initialImageUrl={pet.imageUrl ?? null}
-                onUploaded={(imageUrl) => {
-                  // Keeping local state in sync with the upload response so the page updates immediately
-                  // instead of waiting for a full refetch.
-                  setPet((prev) => (prev ? { ...prev, imageUrl } : prev));
+              <Box
+                sx={{
+                  fontSize: 13,
+                  color: '#A08C72',
+                  textAlign: { xs: 'left', md: 'right' },
                 }}
-              />
-            </div>
+              >
+                <Box>
+                  {calculateAge(pet.birthDate)} yrs • {pet.weight} lbs
+                </Box>
+                <Box>{pet.gender === 'MALE' ? 'Male' : 'Female'}</Box>
+              </Box>
+            </Paper>
+          </Box>
 
-            {/* Right: key profile attributes + inline edit form */}
-            <div className="border-t border-[#E5D9C6]/80 pt-4 md:border-t-0 md:border-l md:pt-0 md:pl-6">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <h2 className="mm-h3">Profile</h2>
-                {!isEditingProfile && (
-                  <button
-                    type="button"
-                    onClick={handleStartEditProfile}
-                    className="rounded-md border border-[#D0C1AC] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#6A5740] hover:bg-[#F3E6D3] transition-colors"
+          {/* Photo + profile card */}
+          <Box component="section" className="mm-section">
+            <Paper
+              elevation={0}
+              className="mm-card"
+              sx={{
+                px: { xs: 2.5, md: 3 },
+                py: 2.5,
+                borderRadius: (theme) => {
+  const radius = theme.shape.borderRadius;
+  return (typeof radius === "number" ? radius : parseFloat(radius as string)) * 2;
+},
+                border: '1px solid',
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+              }}
+            >
+              <Grid
+                container
+                spacing={{ xs: 3, md: 4 }}
+                alignItems="flex-start"
+              >
+                {/* Left: photo + uploader. The actual image is hard-bounded and cropped via PetPhotoUpload so we never end up with a full-width hero photo here. */}
+                <Grid component="div" item xs={12} md={5}>
+                  <Typography
+                    component="h2"
+                    variant="subtitle1"
+                    className="mm-h3"
+                    sx={{ mb: 1.5 }}
                   >
-                    Edit profile
-                  </button>
-                )}
-              </div>
+                    Photo
+                  </Typography>
+                  <PetPhotoUpload
+                    recipientId={pet.id}
+                    name={pet.name}
+                    initialImageUrl={pet.imageUrl ?? null}
+                    onUploaded={(imageUrl) => {
+                      // Keeping local state in sync with the upload response so the page updates immediately
+                      // instead of waiting for a full refetch.
+                      setPet((prev) => (prev ? { ...prev, imageUrl } : prev));
+                    }}
+                  />
+                </Grid>
 
-              {editError && (
-                <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                  {editError}
-                </div>
-              )}
-
-              {isEditingProfile && editForm ? (
-                <form onSubmit={handleProfileSave} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs uppercase tracking-wide text-[#B09A7C]">
-                    {/* Name */}
-                    <div>
-                      <label className="mb-1 block">Name</label>
-                      <input
-                        type="text"
-                        value={editForm.name}
-                        onChange={(e) => updateEditField('name', e.target.value)}
-                        className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
-                      />
-                      {editFieldErrors.name && (
-                        <p className="mt-1 text-[11px] text-red-600">
-                          {editFieldErrors.name}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Type */}
-                    <div>
-                      <label className="mb-1 block">Type</label>
-                      <div className="flex gap-3 text-[13px] text-[#3A2A18]">
-                        <label className="flex cursor-pointer items-center gap-1.5">
-                          <input
-                            type="radio"
-                            name="edit-type"
-                            value="DOG"
-                            checked={editForm.type === 'DOG'}
-                            onChange={(e) =>
-                              updateEditField(
-                                'type',
-                                e.target.value as EditFormState['type'],
-                              )
-                            }
-                            className="text-[#3E6B3A] focus:ring-[#3E6B3A]"
-                          />
-                          <span>Dog</span>
-                        </label>
-                        <label className="flex cursor-pointer items-center gap-1.5">
-                          <input
-                            type="radio"
-                            name="edit-type"
-                            value="CAT"
-                            checked={editForm.type === 'CAT'}
-                            onChange={(e) =>
-                              updateEditField(
-                                'type',
-                                e.target.value as EditFormState['type'],
-                              )
-                            }
-                            className="text-[#3E6B3A] focus:ring-[#3E6B3A]"
-                          />
-                          <span>Cat</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* Breed */}
-                    <div>
-                      <label className="mb-1 block">Breed</label>
-                      {/* Reuse the shared BreedSelect so edit mode gets the same type-specific, searchable list as the create form without changing backend constraints. */}
-                      <BreedSelect
-                        petType={editForm.type}
-                        value={editForm.breed}
-                        onChange={(next) => updateEditField('breed', next)}
-                        required
-                      />
-                      {editFieldErrors.breed && (
-                        <p className="mt-1 text-[11px] text-red-600">
-                          {editFieldErrors.breed}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Gender */}
-                    <div>
-                      <label className="mb-1 block">Sex</label>
-                      <select
-                        value={editForm.gender}
-                        onChange={(e) =>
-                          updateEditField(
-                            'gender',
-                            e.target.value as EditFormState['gender'],
-                          )
-                        }
-                        className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+                {/* Right: key profile attributes + inline edit form */}
+                <Grid item xs={12} md={7}>
+                  <Box
+                    sx={{
+                      borderTop: { xs: '1px solid', md: 'none' },
+                      borderLeft: { xs: 'none', md: '1px solid' },
+                      borderColor: '#E5D9C6',
+                      pt: { xs: 2, md: 0 },
+                      pl: { xs: 0, md: 3 },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        mb: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 1.5,
+                      }}
+                    >
+                      <Typography
+                        component="h2"
+                        variant="subtitle1"
+                        className="mm-h3"
                       >
-                        <option value="MALE">Male</option>
-                        <option value="FEMALE">Female</option>
-                      </select>
-                    </div>
-
-                    {/* Birth date */}
-                    <div>
-                      <label className="mb-1 block">Birth Date</label>
-                      <input
-                        type="date"
-                        value={editForm.birthDate}
-                        onChange={(e) =>
-                          updateEditField('birthDate', e.target.value)
-                        }
-                        className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
-                      />
-                      {editFieldErrors.birthDate && (
-                        <p className="mt-1 text-[11px] text-red-600">
-                          {editFieldErrors.birthDate}
-                        </p>
+                        Profile
+                      </Typography>
+                      {!isEditingProfile && (
+                        <Button
+                          type="button"
+                          onClick={handleStartEditProfile}
+                          variant="outlined"
+                          size="small"
+                          sx={{
+                            borderRadius: 1,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.12em',
+                            fontSize: 11,
+                            fontWeight: 600,
+                            borderColor: '#D0C1AC',
+                            color: '#6A5740',
+                            '&:hover': {
+                              bgcolor: '#F3E6D3',
+                              borderColor: '#D0C1AC',
+                            },
+                          }}
+                        >
+                          Edit profile
+                        </Button>
                       )}
-                    </div>
+                    </Box>
 
-                    {/* Weight (lbs) */}
-                    <div>
-                      <label className="mb-1 block">Weight (lbs)</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={editForm.weight}
-                        onChange={(e) =>
-                          updateEditField('weight', e.target.value)
-                        }
-                        className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
-                      />
-                      {editFieldErrors.weight && (
-                        <p className="mt-1 text-[11px] text-red-600">
-                          {editFieldErrors.weight}
-                        </p>
-                      )}
-                    </div>
+                    {editError && (
+                      <Box
+                        sx={{
+                          mb: 2,
+                          borderRadius: 4,
+                          border: '1px solid',
+                          borderColor: '#fecaca',
+                          bgcolor: '#fee2e2',
+                          px: 1.5,
+                          py: 1,
+                        }}
+                        className="text-xs text-red-700"
+                      >
+                        {editError}
+                      </Box>
+                    )}
 
-                    {/* Characteristics */}
-                    <div className="col-span-2">
-                      <label className="mb-2 block">Characteristics</label>
-                      <div className="space-y-2">
-                        {PET_CHARACTERISTICS.map((item) => {
-                          const isSelected =
-                            editForm.characteristics.includes(item.id);
-                          return (
-                            <button
-                              key={item.id}
-                              type="button"
-                              onClick={() => handleToggleCharacteristic(item.id)}
-                              className={[
-                                'flex w-full items-center justify-between rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors',
-                                isSelected
-                                  ? 'border-[#3E6B3A] bg-[#E0F2E9] text-[#234434]'
-                                  : 'border-[#D0C1AC] bg-[#FDF7EE] text-[#6A5740] hover:bg-[#F3E6D3]',
-                              ].join(' ')}
-                            >
-                              <span>{getCharacteristicLabel(item.id)}</span>
-                              {/* iOS-style toggle switch */}
-                              <span
-                                className={[
-                                  'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
-                                  isSelected ? 'bg-[#3E6B3A]' : 'bg-[#D1C5B5]',
-                                ].join(' ')}
-                              >
-                                <span
-                                  className={[
-                                    'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
-                                    isSelected ? 'translate-x-4' : 'translate-x-0.5',
-                                  ].join(' ')}
+                    {isEditingProfile && editForm ? (
+                      <Box
+                        component="form"
+                        onSubmit={handleProfileSave}
+                        sx={{ mt: 1.5 }}
+                        className="space-y-4"
+                      >
+                        <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs uppercase tracking-wide text-[#B09A7C]">
+                          {/* Name */}
+                          <div>
+                            <label className="mb-1 block">Name</label>
+                            <input
+                              type="text"
+                              value={editForm.name}
+                              onChange={(e) =>
+                                updateEditField('name', e.target.value)
+                              }
+                              className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+                            />
+                            {editFieldErrors.name && (
+                              <p className="mt-1 text-[11px] text-red-600">
+                                {editFieldErrors.name}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Type */}
+                          <div>
+                            <label className="mb-1 block">Type</label>
+                            <div className="flex gap-3 text-[13px] text-[#3A2A18]">
+                              <label className="flex cursor-pointer items-center gap-1.5">
+                                <input
+                                  type="radio"
+                                  name="edit-type"
+                                  value="DOG"
+                                  checked={editForm.type === 'DOG'}
+                                  onChange={(e) =>
+                                    updateEditField(
+                                      'type',
+                                      e.target
+                                        .value as EditFormState['type'],
+                                    )
+                                  }
+                                  className="text-[#3E6B3A] focus:ring-[#3E6B3A]"
                                 />
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
+                                <span>Dog</span>
+                              </label>
+                              <label className="flex cursor-pointer items-center gap-1.5">
+                                <input
+                                  type="radio"
+                                  name="edit-type"
+                                  value="CAT"
+                                  checked={editForm.type === 'CAT'}
+                                  onChange={(e) =>
+                                    updateEditField(
+                                      'type',
+                                      e.target
+                                        .value as EditFormState['type'],
+                                    )
+                                  }
+                                  className="text-[#3E6B3A] focus:ring-[#3E6B3A]"
+                                />
+                                <span>Cat</span>
+                              </label>
+                            </div>
+                          </div>
 
-                  <div className="mt-2 flex justify-end gap-3 border-t border-[#E9DECF] pt-3">
-                    <button
-                      type="button"
-                      onClick={handleCancelEditProfile}
-                      className="rounded-md px-4 py-1.5 text-xs font-medium text-[#6A5740] hover:bg-[#F3E6D3] transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSavingProfile}
-                      className="rounded-md bg-[#3E6B3A] px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-white shadow-sm transition-colors hover:bg-[#355B32] disabled:opacity-50"
-                    >
-                      {isSavingProfile ? 'Saving…' : 'Save changes'}
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <dl className="grid grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-6 text-xs uppercase tracking-wide text-[#B09A7C]">
-                  <div>
-                    <dt>Age</dt>
-                    <dd className="mt-1 font-medium normal-case text-[#382110]">
-                      {calculateAge(pet.birthDate)} yrs
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Weight</dt>
-                    <dd className="mt-1 font-medium normal-case text-[#382110]">
-                      {pet.weight} lbs
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Sex</dt>
-                    <dd className="mt-1 font-medium normal-case text-[#382110]">
-                      {pet.gender === 'MALE' ? 'Male' : 'Female'}
-                    </dd>
-                  </div>
-                </dl>
+                          {/* Breed */}
+                          <div>
+                            <label className="mb-1 block">Breed</label>
+                            {/* Reuse the shared BreedSelect so edit mode gets the same type-specific, searchable list as the create form without changing backend constraints. */}
+                            <BreedSelect
+                              petType={editForm.type}
+                              value={editForm.breed}
+                              onChange={(next) =>
+                                updateEditField('breed', next)
+                              }
+                              required
+                            />
+                            {editFieldErrors.breed && (
+                              <p className="mt-1 text-[11px] text-red-600">
+                                {editFieldErrors.breed}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Gender */}
+                          <div>
+                            <label className="mb-1 block">Sex</label>
+                            <select
+                              value={editForm.gender}
+                              onChange={(e) =>
+                                updateEditField(
+                                  'gender',
+                                  e.target
+                                    .value as EditFormState['gender'],
+                                )
+                              }
+                              className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+                            >
+                              <option value="MALE">Male</option>
+                              <option value="FEMALE">Female</option>
+                            </select>
+                          </div>
+
+                          {/* Birth date */}
+                          <div>
+                            <label className="mb-1 block">Birth Date</label>
+                            <input
+                              type="date"
+                              value={editForm.birthDate}
+                              onChange={(e) =>
+                                updateEditField('birthDate', e.target.value)
+                              }
+                              className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+                            />
+                            {editFieldErrors.birthDate && (
+                              <p className="mt-1 text-[11px] text-red-600">
+                                {editFieldErrors.birthDate}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Weight (lbs) */}
+                          <div>
+                            <label className="mb-1 block">Weight (lbs)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={editForm.weight}
+                              onChange={(e) =>
+                                updateEditField('weight', e.target.value)
+                              }
+                              className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+                            />
+                            {editFieldErrors.weight && (
+                              <p className="mt-1 text-[11px] text-red-600">
+                                {editFieldErrors.weight}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Characteristics */}
+                          <div className="col-span-2">
+                            <label className="mb-2 block">
+                              Characteristics
+                            </label>
+                            <div className="space-y-2">
+                              {PET_CHARACTERISTICS.map((item) => {
+                                const isSelected =
+                                  editForm.characteristics.includes(item.id);
+                                return (
+                                  <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() =>
+                                      handleToggleCharacteristic(item.id)
+                                    }
+                                    className={[
+                                      'flex w-full items-center justify-between rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors',
+                                      isSelected
+                                        ? 'border-[#3E6B3A] bg-[#E0F2E9] text-[#234434]'
+                                        : 'border-[#D0C1AC] bg-[#FDF7EE] text-[#6A5740] hover:bg-[#F3E6D3]',
+                                    ].join(' ')}
+                                  >
+                                    <span>
+                                      {getCharacteristicLabel(item.id)}
+                                    </span>
+                                    {/* iOS-style toggle switch */}
+                                    <span
+                                      className={[
+                                        'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
+                                        isSelected
+                                          ? 'bg-[#3E6B3A]'
+                                          : 'bg-[#D1C5B5]',
+                                      ].join(' ')}
+                                    >
+                                      <span
+                                        className={[
+                                          'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                                          isSelected
+                                            ? 'translate-x-4'
+                                            : 'translate-x-0.5',
+                                        ].join(' ')}
+                                      />
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+
+                        <Divider
+                          sx={{ mt: 2, mb: 1.5, borderColor: '#E9DECF' }}
+                        />
+
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            gap: 1.5,
+                          }}
+                        >
+                          <Button
+                            type="button"
+                            onClick={handleCancelEditProfile}
+                            size="small"
+                            sx={{
+                              textTransform: 'none',
+                              fontSize: 12,
+                              color: '#6A5740',
+                              '&:hover': { bgcolor: '#F3E6D3' },
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="submit"
+                            disabled={isSavingProfile}
+                            variant="contained"
+                            size="small"
+                            sx={{
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.12em',
+                              fontSize: 11,
+                              fontWeight: 600,
+                            }}
+                          >
+                            {isSavingProfile ? 'Saving…' : 'Save changes'}
+                          </Button>
+                        </Box>
+                      </Box>
+                    ) : (
+                      <dl className="grid grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-6 text-xs uppercase tracking-wide text-[#B09A7C]">
+                        <div>
+                          <dt>Age</dt>
+                          <dd className="mt-1 font-medium normal-case text-[#382110]">
+                            {calculateAge(pet.birthDate)} yrs
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Weight</dt>
+                          <dd className="mt-1 font-medium normal-case text-[#382110]">
+                            {pet.weight} lbs
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Sex</dt>
+                          <dd className="mt-1 font-medium normal-case text-[#382110]">
+                            {pet.gender === 'MALE' ? 'Male' : 'Female'}
+                          </dd>
+                        </div>
+                      </dl>
+                    )}
+                  </Box>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Box>
+
+          {/* Recent activity */}
+          <Box component="section" className="mm-section">
+            <Paper
+              elevation={0}
+              className="mm-card"
+              sx={{
+                px: { xs: 2.5, md: 3 },
+                py: 2.5,
+                borderRadius: (theme) => {
+  const radius = theme.shape.borderRadius;
+  return (typeof radius === "number" ? radius : parseFloat(radius as string)) * 2;
+},
+                border: '1px solid',
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+              }}
+            >
+              <Typography
+                component="h2"
+                variant="subtitle1"
+                className="mm-h3"
+                sx={{ mb: 1.5 }}
+              >
+                Recent activity
+              </Typography>
+
+              {pet.careLogs.length === 0 && (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  className="mm-muted-sm"
+                >
+                  No activity logged yet.
+                </Typography>
               )}
-            </div>
-          </div>
-        </section>
 
-        {/* Recent activity */}
-        <section className="mm-section">
-          <div className="mm-card px-5 py-4">
-            <h2 className="mm-h3 mb-3">Recent activity</h2>
+              {pet.careLogs.length > 0 && (
+                <Box
+                  component="ul"
+                  sx={{ listStyle: 'none', p: 0, m: 0 }}
+                  className="space-y-3 text-sm"
+                >
+                  {pet.careLogs.map((log) => (
+                    <Box
+                      key={log.id}
+                      component="li"
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        pb: 1,
+                        borderBottom: '1px solid',
+                        borderColor: '#E5D9C6',
+                        '&:last-of-type': {
+                          borderBottom: 'none',
+                          pb: 0,
+                        },
+                      }}
+                    >
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 600, color: '#382110' }}
+                        >
+                          {getActivityLabel(log.activityType)}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          className="mm-muted-sm"
+                          sx={{ fontSize: 13, mt: 0.25 }}
+                        >
+                          by{' '}
+                          <Box
+                            component="span"
+                            sx={{ color: '#D17D45', fontWeight: 500 }}
+                          >
+                            {log.user?.name || 'Someone'}
+                          </Box>
+                        </Typography>
+                        {log.notes && (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              mt: 0.5,
+                              fontSize: 12,
+                              color: '#7A6A56',
+                            }}
+                          >
+                            {log.notes}
+                          </Typography>
+                        )}
+                      </Box>
+                      <Typography
+                        variant="caption"
+                        className="mm-meta"
+                        sx={{
+                          whiteSpace: 'nowrap',
+                          color: 'text.secondary',
+                        }}
+                      >
+                        {formatDateTime(log.createdAt)}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </Paper>
+          </Box>
 
-            {pet.careLogs.length === 0 && (
-              <p className="mm-muted-sm">No activity logged yet.</p>
-            )}
-
-            {pet.careLogs.length > 0 && (
-              <ul className="space-y-3 text-sm">
-                {pet.careLogs.map((log) => (
-                  <li
-                    key={log.id}
-                    className="flex items-start justify-between border-b border-[#E5D9C6]/60 pb-2 last:border-0 last:pb-0"
-                  >
-                    <div>
-                      <p className="font-semibold text-[#382110]">
-                        {getActivityLabel(log.activityType)}
-                      </p>
-                      <p className="mm-muted-sm">
-                        by{' '}
-                        <span className="text-[#D17D45] font-medium">
-                          {log.user?.name || 'Someone'}
-                        </span>
-                      </p>
-                      {log.notes && (
-                        <p className="mt-1 text-xs text-[#7A6A56]">
-                          {log.notes}
-                        </p>
-                      )}
-                    </div>
-                    <p className="mm-meta">{formatDateTime(log.createdAt)}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </section>
-
-        {/* Shared access / CareCircle */}
-        <section id="care-circle" className="mm-section">
-          <CareCirclePanel
-            recipientId={pet.id}
-            isOwner={isOwner}
-            initialMembers={careCircleMembers}
-          />
-        </section>
-      </main>
-    </div>
+          {/* Shared access / CareCircle */}
+          <Box component="section" id="care-circle" className="mm-section">
+            {/* We keep CareCirclePanel as-is so its internal layout can evolve independently of this page shell. */}
+            <CareCirclePanel
+              recipientId={pet.id}
+              isOwner={isOwner}
+              initialMembers={careCircleMembers}
+            />
+          </Box>
+        </Stack>
+      </Container>
+    </Box>
   );
 }
