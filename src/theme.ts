@@ -6,6 +6,8 @@ import { createTheme } from "@mui/material/styles";
 
 const theme = createTheme({
   palette: {
+    mode: "light", // Explicitly lock this theme to light mode for now
+
     // Brand background tones
     background: {
       default: "#FCFCFC", // Soft white app background
