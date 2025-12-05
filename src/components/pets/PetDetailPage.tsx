@@ -11,8 +11,6 @@ import PetDetailShell from '@/components/pets/PetDetailShell';
 import { type PetCharacteristicId } from '@/lib/petCharacteristics';
 import {
   Box,
-  Container,
-  Stack,
   Paper,
   Typography,
   Button,
