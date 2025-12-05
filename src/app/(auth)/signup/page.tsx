@@ -4,7 +4,13 @@ import { useState, FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 
-import { Button, Stack, TextField, Typography } from "@mui/material";
+import {
+  Button,
+  Divider,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import AuthShell from "@/components/auth/AuthShell";
 
 // Signup stays client-side so I can keep the UX tight: inline validation,
@@ -96,70 +102,105 @@ export default function SignupPage() {
     }
   }
 
+  async function handleGoogleSignUp() {
+    // I’m not trying to synchronize this with the email form state; this path
+    // is its own thing and should feel like a clean slate when users tap it.
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      // For Google-based accounts I let NextAuth own the redirect lifecycle,
+      // since most users already expect the “pop out to Google, come back here”
+      // behavior and it keeps the client code fairly boring.
+      await signIn("google", {
+        callbackUrl,
+      });
+    } catch (err) {
+      console.error("Google signup failed unexpectedly:", err);
+      setError("Something went wrong with Google sign-up. Please try again.");
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <AuthShell
       title="Create your account"
       subtitle="Start coordinating care for your pets, people, and plants."
     >
-      <form onSubmit={handleSubmit} noValidate>
-        <Stack spacing={2.5}>
-          <TextField
-            label="Name"
-            name="name"
-            autoComplete="name"
-            fullWidth
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-
-          <TextField
-            label="Email"
-            type="email"
-            name="email"
-            autoComplete="email"
-            fullWidth
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-
-          <TextField
-            label="Password"
-            type="password"
-            name="password"
-            autoComplete="new-password"
-            fullWidth
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={Boolean(error)}
-            helperText={error ?? " "}
-          />
-
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Creating your account..." : "Sign up"}
-          </Button>
-        </Stack>
-      </form>
-
-      <Typography variant="body2" color="text.secondary">
-        Already have an account?{" "}
+      <Stack spacing={2.5}>
+        {/* Leading with the “Sign up with Google” path keeps the lowest-friction
+            option front and center while still giving people a clear email fallback. */}
         <Button
-          variant="text"
-          size="small"
-          onClick={() =>
-            router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
-          }
+          variant="outlined"
+          fullWidth
+          disabled={isSubmitting}
+          onClick={handleGoogleSignUp}
         >
-          Log in
+          Sign up with Google
         </Button>
-      </Typography>
+
+        <Divider>or</Divider>
+
+        <form onSubmit={handleSubmit} noValidate>
+          <Stack spacing={2.5}>
+            <TextField
+              label="Name"
+              name="name"
+              autoComplete="name"
+              fullWidth
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+
+            <TextField
+              label="Email"
+              type="email"
+              name="email"
+              autoComplete="email"
+              fullWidth
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+
+            <TextField
+              label="Password"
+              type="password"
+              name="password"
+              autoComplete="new-password"
+              fullWidth
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              error={Boolean(error)}
+              helperText={error ?? " "}
+            />
+
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Creating your account..." : "Sign up"}
+            </Button>
+          </Stack>
+        </form>
+
+        <Typography variant="body2" color="text.secondary">
+          Already have an account?{" "}
+          <Button
+            variant="text"
+            size="small"
+            onClick={() =>
+              router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
+            }
+          >
+            Log in
+          </Button>
+        </Typography>
+      </Stack>
     </AuthShell>
   );
 }

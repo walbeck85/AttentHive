@@ -4,7 +4,13 @@ import { useState, FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 
-import { Button, Stack, TextField, Typography } from "@mui/material";
+import {
+  Button,
+  Divider,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import AuthShell from "@/components/auth/AuthShell";
 
 // Login page kept as a client component so I can lean on next-auth's client helpers
@@ -86,65 +92,99 @@ export default function LoginPage() {
     }
   }
 
+  async function handleGoogleSignIn() {
+    // I’m clearing any credential-specific error here so the Google path
+    // doesn’t inherit stale state from a previous bad password attempt.
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      // For OAuth I’m happy to let NextAuth own the redirect, since that’s
+      // already the mental model users expect from “Continue with Google”.
+      await signIn("google", {
+        callbackUrl,
+      });
+    } catch (err) {
+      console.error("Google login failed unexpectedly:", err);
+      setError("Something went wrong with Google sign-in. Please try again.");
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <AuthShell
       title="Welcome back"
       subtitle="Pick up where you left off with your care circle."
     >
-      <form onSubmit={handleSubmit} noValidate>
-        <Stack spacing={2.5}>
-          <TextField
-            label="Email"
-            type="email"
-            name="email"
-            autoComplete="email"
-            fullWidth
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            // Keeping validation feedback tight on the field so users
-            // don't have to hunt around the page to see what's wrong.
-            error={Boolean(error) && !password}
-          />
-
-          <TextField
-            label="Password"
-            type="password"
-            name="password"
-            autoComplete="current-password"
-            fullWidth
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={Boolean(error)}
-            helperText={error ?? " "}
-          />
-
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Signing you in..." : "Log in"}
-          </Button>
-        </Stack>
-      </form>
-
-      <Typography variant="body2" color="text.secondary">
-        Don&apos;t have an account yet?{" "}
+      <Stack spacing={2.5}>
+        {/* Keeping Google as the first option because it's the lowest-friction path,
+            but still pairing it with email so people have a clear fallback. */}
         <Button
-          variant="text"
-          size="small"
-          onClick={() =>
-            router.push(
-              `/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`
-            )
-          }
+          variant="outlined"
+          fullWidth
+          disabled={isSubmitting}
+          onClick={handleGoogleSignIn}
         >
-          Sign up
+          Continue with Google
         </Button>
-      </Typography>
+
+        <Divider>or</Divider>
+
+        <form onSubmit={handleSubmit} noValidate>
+          <Stack spacing={2.5}>
+            <TextField
+              label="Email"
+              type="email"
+              name="email"
+              autoComplete="email"
+              fullWidth
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              // Keeping validation feedback tight on the field so users
+              // don't have to hunt around the page to see what's wrong.
+              error={Boolean(error) && !password}
+            />
+
+            <TextField
+              label="Password"
+              type="password"
+              name="password"
+              autoComplete="current-password"
+              fullWidth
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              error={Boolean(error)}
+              helperText={error ?? " "}
+            />
+
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Signing you in..." : "Log in"}
+            </Button>
+          </Stack>
+        </form>
+
+        <Typography variant="body2" color="text.secondary">
+          Don&apos;t have an account yet?{" "}
+          <Button
+            variant="text"
+            size="small"
+            onClick={() =>
+              router.push(
+                `/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`
+              )
+            }
+          >
+            Sign up
+          </Button>
+        </Typography>
+      </Stack>
     </AuthShell>
   );
 }

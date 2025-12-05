@@ -52,7 +52,7 @@ beforeEach(() => {
 test("shows a validation error when required fields are missing", async () => {
   renderWithProviders(<SignupPage />);
 
-  const submit = screen.getByRole("button", { name: /sign up/i });
+  const submit = screen.getByRole("button", { name: /^sign up$/i });
   fireEvent.click(submit);
 
   await waitFor(() => {
@@ -87,7 +87,7 @@ test("calls signup endpoint and then attempts sign-in on success", async () => {
     target: { value: "super-secret" },
   });
 
-  const submit = screen.getByRole("button", { name: /sign up/i });
+  const submit = screen.getByRole("button", { name: /^sign up$/i });
   fireEvent.click(submit);
 
   // The goal here is to prove the happy path: we hit the signup endpoint first,
