@@ -3,11 +3,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import CareCirclePanel from '@/components/pets/CareCirclePanel';
 import PetPhotoProfileCard from '@/components/pets/PetPhotoProfileCard';
 import PetDetailShell from '@/components/pets/PetDetailShell';
 import PetDetailHeaderSection from '@/components/pets/PetDetailHeaderSection';
 import PetDetailActivitySection from '@/components/pets/PetDetailActivitySection';
+import PetDetailCareCircleSection from '@/components/pets/PetDetailCareCircleSection';
 import { type PetCharacteristicId } from '@/lib/petCharacteristics';
 import {
   Box,
@@ -323,13 +323,11 @@ export default function PetDetailPage({
 
       <PetDetailActivitySection careLogs={pet.careLogs} />
 
-      <Box component="section" id="care-circle" className="mm-section">
-        <CareCirclePanel
-          recipientId={pet.id}
-          isOwner={isOwner}
-          initialMembers={careCircleMembers}
-        />
-      </Box>
+      <PetDetailCareCircleSection
+        recipientId={pet.id}
+        isOwner={isOwner}
+        initialMembers={careCircleMembers}
+      />
     </PetDetailShell>
   );
 }
