@@ -1,10 +1,39 @@
 // src/components/pets/petDetailTypes.ts
+import type { PetCharacteristicId } from '@/lib/petCharacteristics';
+import type { ActionType } from '@/components/pets/petActivityUtils';
 
-// Shared view-level type for Care Circle membership on the pet detail screen.
-// Keeping this in one place helps the server loader and UI stay in sync.
+// Shared view models for the pet detail screen.
+// Keeping these types here lets the server loader and UI evolve together
+// without having to chase Prisma changes in multiple places.
 export type CareCircleMember = {
   id: string;
   userName: string | null;
   userEmail: string;
-  role: "OWNER" | "CAREGIVER" | "VIEWER";
+  role: 'OWNER' | 'CAREGIVER' | 'VIEWER';
+};
+
+// View-friendly version of a care log used across the detail screen.
+// I am normalizing timestamps and enum types here so the UI can stay simple.
+export type CareLog = {
+  id: string;
+  activityType: ActionType;
+  createdAt: string;
+  notes?: string | null;
+  user: { name: string | null };
+};
+
+// Core pet data shape for this screen, decoupled from the raw Prisma model.
+// This gives the client a stable contract even if the schema grows new fields.
+export type PetData = {
+  id: string;
+  name: string;
+  type: string;
+  breed: string;
+  gender: string;
+  birthDate: string;
+  weight: number;
+  careLogs: CareLog[];
+  ownerId?: string;
+  imageUrl?: string | null;
+  characteristics?: PetCharacteristicId[];
 };

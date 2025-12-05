@@ -7,8 +7,8 @@ import CareCirclePanel from '@/components/pets/CareCirclePanel';
 import PetActivityList from '@/components/pets/PetActivityList';
 import PetHeaderCard from '@/components/pets/PetHeaderCard';
 import PetPhotoProfileCard from '@/components/pets/PetPhotoProfileCard';
+import PetDetailShell from '@/components/pets/PetDetailShell';
 import { type PetCharacteristicId } from '@/lib/petCharacteristics';
-import type { ActionType } from '@/components/pets/petActivityUtils';
 import {
   Box,
   Container,
@@ -17,64 +17,18 @@ import {
   Typography,
   Button,
 } from '@mui/material';
-import type { CareCircleMember } from './petDetailTypes'; // Route and UI now share this Care Circle view model.
+import type { CareCircleMember, PetData } from './petDetailTypes'; // The detail page now consumes a fully-shaped view model instead of raw Prisma data.
 
-// Re-exporting so existing imports from PetDetailPage keep working without churn.
-export type { CareCircleMember } from './petDetailTypes';
+// Re-exporting these so other components can keep importing view types from here if needed.
+export type { CareCircleMember, CareLog, PetData } from './petDetailTypes';
 
-// Local view types for the pet detail screen.
-// These are deliberately decoupled from Prisma so the UI doesn't break
-// every time the DB models or enum names shift.
-type PetForDetail = {
-  id: string;
-  name: string;
-  type: string;
-  // The UI may read more fields (birthDate, weight, etc.); we allow them via index signature.
-  [key: string]: unknown;
-};
-
-type CareLogForDetail = {
-  id: string;
-  recipientId: string;
-  createdAt: Date;
-  userId: string;
-  activityType: string; // underlying enum value, but treated as string here
-  notes: string | null;
-  user?: { name: string } | null;
-  [key: string]: unknown;
-};
-
-// Using Prisma model types here keeps this component aligned with the DB schema
-// and lets us avoid any while still getting strong typing for the main records.
+// Props are now based on the view models defined in petDetailTypes.
+// This keeps the UI focused on rendering instead of reshaping server data.
 type PetDetailPageProps = {
-  pet: PetForDetail;
-  careLogs: CareLogForDetail[];
+  pet: PetData;
   careCircleMembers: CareCircleMember[];
-  // This is used later in the parameter destructuring as isOwner: isOwnerProp = false
+  // This flags whether the current user owns the pet so we can gate owner-only actions.
   isOwner?: boolean;
-};
-
-export type CareLog = {
-  id: string;
-  activityType: ActionType;
-  createdAt: string;
-  notes?: string | null;
-  user: { name: string | null };
-};
-
-// Slim view to keep this UI independent from the full Prisma models.
-export type PetData = {
-  id: string;
-  name: string;
-  type: string;
-  breed: string;
-  gender: string;
-  birthDate: string;
-  weight: number;
-  careLogs: CareLog[];
-  ownerId?: string;
-  imageUrl?: string | null;
-  characteristics?: PetCharacteristicId[];
 };
 
 // Edit form state is intentionally string-based so the inputs
@@ -118,24 +72,14 @@ function validateEditForm(data: EditFormState): EditFieldErrors {
 // page --------------------------------------------------------
 export default function PetDetailPage({
   pet: petProp,
-  careLogs: careLogsProp,
   careCircleMembers: careCircleMembersProp,
   isOwner: isOwnerProp = false,
 }: PetDetailPageProps) {
   const router = useRouter();
 
-  const normalizedCareLogs = Array.isArray(careLogsProp) ? careLogsProp : [];
-  const initialPetState = petProp
-    ? ({
-        ...petProp,
-        careLogs:
-          normalizedCareLogs.length > 0
-            ? normalizedCareLogs
-            : petProp.careLogs ?? [],
-      } as PetData)
-    : null;
-
-  const [pet, setPet] = useState<PetData | null>(initialPetState);
+  // Pet state now starts from a normalized view model coming from the server loader.
+  // This keeps all Prisma-specific quirks on the server side.
+  const [pet, setPet] = useState<PetData | null>(petProp ?? null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [careCircleMembers, setCareCircleMembers] = useState<CareCircleMember[]>(
@@ -150,20 +94,11 @@ export default function PetDetailPage({
   const [editError, setEditError] = useState<string | null>(null);
 
   useEffect(() => {
-    const normalizedPet = petProp
-      ? ({
-          ...petProp,
-          careLogs:
-            Array.isArray(careLogsProp) && careLogsProp.length >= 0
-              ? careLogsProp
-              : petProp.careLogs ?? [],
-        } as PetData)
-      : null;
-
-    setPet(normalizedPet);
+    // Whenever the server sends updated pet data, we trust that as the source of truth.
+    setPet(petProp ?? null);
     setError(null);
     setLoading(false);
-  }, [petProp, careLogsProp]);
+  }, [petProp]);
 
   useEffect(() => {
     setCareCircleMembers(
@@ -366,87 +301,74 @@ export default function PetDetailPage({
   }
 
   return (
-    <Box
-      component="main"
-      className="mm-page"
-      sx={{
-        bgcolor: 'background.default',
-        color: 'text.primary',
-        minHeight: '100vh',
-        py: { xs: 3, md: 4 },
-      }}
-    >
-      <Container maxWidth="lg" className="mm-shell">
-        <Stack spacing={3.5}>
-          <Box component="section" className="mm-section">
-            <Button
-              type="button"
-              onClick={() => router.back()}
-              variant="text"
-              size="small"
-              sx={{
-                px: 1.5,
-                py: 0.5,
-                borderRadius: 999,
-                textTransform: 'none',
-                fontSize: 13,
-              }}
-            >
-              ← Back
-            </Button>
+    <PetDetailShell>
+      <Box component="section" className="mm-section">
+        <Button
+          type="button"
+          onClick={() => router.back()}
+          variant="text"
+          size="small"
+          sx={{
+            px: 1.5,
+            py: 0.5,
+            borderRadius: 999,
+            textTransform: 'none',
+            fontSize: 13,
+          }}
+        >
+          ← Back
+        </Button>
 
-            <PetHeaderCard pet={pet} />
-          </Box>
+        <PetHeaderCard pet={pet} />
+      </Box>
 
-          <PetPhotoProfileCard
-            pet={pet}
-            isEditingProfile={isEditingProfile}
-            isSavingProfile={isSavingProfile}
-            editForm={editForm}
-            editFieldErrors={editFieldErrors}
-            editError={editError}
-            onStartEditProfile={handleStartEditProfile}
-            onCancelEditProfile={handleCancelEditProfile}
-            onProfileSave={handleProfileSave}
-            onUpdateEditField={updateEditField}
-            onToggleCharacteristic={handleToggleCharacteristic}
-            onPhotoUploaded={(imageUrl) =>
-              setPet((prev) => (prev ? { ...prev, imageUrl } : prev))
-            }
-          />
+      <PetPhotoProfileCard
+        pet={pet}
+        isEditingProfile={isEditingProfile}
+        isSavingProfile={isSavingProfile}
+        editForm={editForm}
+        editFieldErrors={editFieldErrors}
+        editError={editError}
+        onStartEditProfile={handleStartEditProfile}
+        onCancelEditProfile={handleCancelEditProfile}
+        onProfileSave={handleProfileSave}
+        onUpdateEditField={updateEditField}
+        onToggleCharacteristic={handleToggleCharacteristic}
+        onPhotoUploaded={(imageUrl) =>
+          setPet((prev) => (prev ? { ...prev, imageUrl } : prev))
+        }
+      />
 
-          <Box component="section" className="mm-section">
-            <Paper
-              elevation={0}
-              className="mm-card"
-              sx={{
-                px: { xs: 2.5, md: 3 },
-                py: 2.5,
-                borderRadius: (theme) => {
-                  const radius = theme.shape.borderRadius;
-                  // We normalize borderRadius to a number so we can safely scale it without TS complaining.
-                  return (typeof radius === 'number'
-                    ? radius
-                    : parseFloat(radius as string)) * 2;
-                },
-                border: '1px solid',
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-              }}
-            >
-              <PetActivityList careLogs={pet.careLogs} />
-            </Paper>
-          </Box>
+      <Box component="section" className="mm-section">
+        <Paper
+          elevation={0}
+          className="mm-card"
+          sx={{
+            px: { xs: 2.5, md: 3 },
+            py: 2.5,
+            borderRadius: (theme) => {
+              const radius = theme.shape.borderRadius;
+              // I normalize the border radius into a number so we can safely scale it without fighting TS.
+              return (typeof radius === 'number'
+                ? radius
+                : parseFloat(radius as string)) * 2;
+            },
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+          }}
+        >
+          <PetActivityList careLogs={pet.careLogs} />
+        </Paper>
+      </Box>
 
-          <Box component="section" id="care-circle" className="mm-section">
-            <CareCirclePanel
-              recipientId={pet.id}
-              isOwner={isOwner}
-              initialMembers={careCircleMembers}
-            />
-          </Box>
-        </Stack>
-      </Container>
-    </Box>
+      <Box component="section" id="care-circle" className="mm-section">
+        <CareCirclePanel
+          recipientId={pet.id}
+          isOwner={isOwner}
+          initialMembers={careCircleMembers}
+        />
+      </Box>
+    </PetDetailShell>
   );
 }
