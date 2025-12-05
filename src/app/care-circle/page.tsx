@@ -1,14 +1,33 @@
+// src/app/care-circle/page.tsx
 import Link from "next/link";
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { getServerSession } from "next-auth";
+
+import {
+  Box,
+  Container,
+  Paper,
+  Stack,
+  Typography,
+  Button,
+  Divider,
+} from "@mui/material";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  loadCareCirclePageData,
+  type CareCirclePageData,
+  type CaregiverGroup,
+  type PetYouCareFor,
+  type OwnedPetSummary,
+} from "./loader";
 
 // Server action to remove a caregiver's access for a specific pet.
-// This mirrors the authorization checks in the /api/care-circles/members DELETE route
-// so that only the pet owner can revoke access.
+// I am keeping this in the page module so it stays close to the UI
+// that calls it, but it is intentionally separate from the loader
+// so the data path and mutation path don't get tangled.
 export async function removeCaregiverMembership(formData: FormData) {
   "use server";
 
@@ -85,264 +104,300 @@ export async function removeCaregiverMembership(formData: FormData) {
   }
 }
 
+// Coordinator: wire up data loader to sectional UI.
+// I want this component to stay boring on purpose so future changes
+// are clearly about data wiring or layout composition, not business logic.
 export default async function CareCirclePage() {
-  const session = await getServerSession(authOptions);
+  const data = await loadCareCirclePageData();
 
-  if (!session || !session.user?.email) {
+  if (!data) {
     redirect("/login?callbackUrl=/care-circle");
   }
 
-  const { email, name } = session.user;
-
-  // Mirror the dashboard logic so we always have a DB user record
-  const dbUser = await prisma.user.upsert({
-    where: { email: email! },
-    update: {},
-    create: {
-      email: email!,
-      name: name ?? "",
-      // Satisfies schema; not used for OAuth logins
-      passwordHash: "google-oauth",
-    },
-  });
-
-  // 1) Pets you own – used both for grouping and for the footer
-  const ownedPets = await prisma.recipient.findMany({
-    where: { ownerId: dbUser.id },
-    orderBy: { createdAt: "asc" },
-  });
-
-  // 2) People caring for your pets (you are the owner)
-  const caregiverMemberships = await prisma.careCircle.findMany({
-    where: {
-      recipient: { ownerId: dbUser.id },
-      role: { in: ["CAREGIVER", "VIEWER"] },
-    },
-    include: {
-      user: true,
-      recipient: {
-        include: {
-          owner: true,
-        },
-      },
-    },
-    orderBy: { grantedAt: "asc" },
-  });
-
-  type CaregiverPet = {
-    membershipId: string;
-    id: string;
-    name: string;
-    type: string;
-  };
-
-  type CaregiverGroup = {
-    caregiverId: string;
-    caregiverName: string | null;
-    caregiverEmail: string;
-    pets: CaregiverPet[];
-  };
-
-  const caregiversMap = new Map<string, CaregiverGroup>();
-
-  caregiverMemberships.forEach((membership) => {
-    const key = membership.userId;
-
-    let group = caregiversMap.get(key);
-    if (!group) {
-      group = {
-        caregiverId: membership.userId,
-        caregiverName: membership.user.name ?? null,
-        caregiverEmail: membership.user.email,
-        pets: [],
-      };
-      caregiversMap.set(key, group);
-    }
-
-    group.pets.push({
-      membershipId: membership.id,
-      id: membership.recipient.id,
-      name: membership.recipient.name,
-      type: membership.recipient.type,
-    });
-  });
-
-  const caregivers = Array.from(caregiversMap.values());
-
-  // 3) Pets you care for (someone else is the owner)
-  const petsYouCareForMemberships = await prisma.careCircle.findMany({
-    where: {
-      userId: dbUser.id,
-      role: { in: ["CAREGIVER", "VIEWER"] },
-    },
-    include: {
-      recipient: {
-        include: {
-          owner: true,
-        },
-      },
-    },
-    orderBy: { grantedAt: "asc" },
-  });
-
-  const petsYouCareFor = petsYouCareForMemberships.map((membership) => ({
-    id: membership.recipient.id,
-    name: membership.recipient.name,
-    type: membership.recipient.type,
-    ownerName:
-      membership.recipient.owner.name ??
-      membership.recipient.owner.email ??
-      "Pet owner",
-  }));
-
   return (
-    <main className="mx-auto max-w-5xl py-10 px-4">
-      {/* Hero */}
-      <section className="mb-8 rounded-lg border border-neutral-200 bg-amber-50 p-6">
-        <p className="mb-2 text-xs tracking-[0.2em] text-neutral-500">
-          CARE CIRCLE
-        </p>
-        <h1 className="mb-3 text-3xl font-semibold">Care Circle</h1>
-        <p className="mb-2 text-sm text-neutral-700">
-          See the people in your care circle and which pets they help with.
-          Removing someone from a pet&apos;s Care Circle immediately revokes
-          their access.
-        </p>
-        <p className="text-sm text-neutral-700">
-          Signed in as {name ?? email}
-        </p>
-      </section>
+    <Container maxWidth="lg" sx={{ py: 5 }}>
+      <Stack spacing={4}>
+        <CareCircleHeroSection user={data.user} />
+        <CareCircleCaregiversSection caregivers={data.caregivers} />
+        <CareCirclePetsYouCareForSection pets={data.petsYouCareFor} />
+        <CareCircleOwnedPetsSection pets={data.ownedPets} />
+      </Stack>
+    </Container>
+  );
+}
 
-      {/* 1. People caring for your pets */}
-      <section className="mb-10">
-        <h2 className="mb-2 text-xl font-semibold">
-          People caring for your pets ({caregivers.length})
-        </h2>
-        <p className="mb-4 text-sm text-neutral-600">
-          These people can view and log care for pets you own.
-        </p>
+// SECTION: Hero / intro copy and user identity
+function CareCircleHeroSection({
+  user,
+}: {
+  user: CareCirclePageData["user"];
+}) {
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 3,
+        borderRadius: 2,
+        border: 1,
+        borderColor: "divider",
+        bgcolor: "warning.light",
+      }}
+    >
+      <Typography
+        variant="overline"
+        sx={{
+          display: "block",
+          mb: 1,
+          letterSpacing: "0.2em",
+          color: "text.secondary",
+        }}
+      >
+        CARE CIRCLE
+      </Typography>
+      <Typography variant="h4" sx={{ mb: 1.5 }}>
+        Care Circle
+      </Typography>
+      <Typography variant="body2" sx={{ mb: 1.5, color: "text.secondary" }}>
+        See the people in your care circle and which pets they help with.
+        Removing someone from a pet&apos;s Care Circle immediately revokes
+        their access.
+      </Typography>
+      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+        Signed in as {user.name ?? user.email}
+      </Typography>
+    </Paper>
+  );
+}
 
-        {caregivers.length === 0 ? (
-          <p className="text-sm text-neutral-500">
-            You haven&apos;t shared any pets yet. Open a pet, scroll to
-            &quot;Shared with&quot;, and invite a caregiver by email.
-          </p>
-        ) : (
-          <ul className="space-y-3">
-            {caregivers.map((person) => (
-              <li
-                key={person.caregiverId}
-                className="flex flex-col gap-3 rounded border border-neutral-200 bg-white px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <div className="font-medium text-neutral-900">
-                    {person.caregiverName || person.caregiverEmail}
-                  </div>
-                  <div className="text-xs text-neutral-600">
-                    {person.caregiverEmail}
-                  </div>
-                  <div className="mt-2 text-xs text-neutral-600">
-                    Helps with{" "}
-                    {person.pets.map((pet, index) => (
-                      <span key={pet.id}>
-                        {index > 0 && ", "}
-                        {pet.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+// SECTION: People caring for your pets (you are the owner)
+function CareCircleCaregiversSection({
+  caregivers,
+}: {
+  caregivers: CaregiverGroup[];
+}) {
+  return (
+    <Box>
+      <Typography variant="h6" sx={{ mb: 0.5 }}>
+        People caring for your pets ({caregivers.length})
+      </Typography>
+      <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
+        These people can view and log care for pets you own.
+      </Typography>
 
-                <div className="flex flex-wrap gap-2">
-                  {person.pets.map((pet) => (
-                    <div key={pet.membershipId} className="flex items-center gap-2">
-                      <Link href={`/pets/${pet.id}`} className="nav-pill text-xs">
-                        View {pet.name}
-                      </Link>
-                      <form action={removeCaregiverMembership}>
-                        <input type="hidden" name="membershipId" value={pet.membershipId} />
-                        <input type="hidden" name="recipientId" value={pet.id} />
-                        <button
-                          type="submit"
-                          className="nav-pill text-[0.7rem] border border-red-200 bg-white text-red-700 hover:bg-red-50"
-                        >
-                          Remove
-                        </button>
-                      </form>
-                    </div>
-                  ))}
-                </div>
-              </li>
+      {caregivers.length === 0 ? (
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          You haven&apos;t shared any pets yet. Open a pet, scroll to &quot;Shared
+          with&quot;, and invite a caregiver by email.
+        </Typography>
+      ) : (
+        <Stack spacing={2}>
+          {caregivers.map((person) => (
+            <CareCircleCaregiverCard key={person.caregiverId} caregiver={person} />
+          ))}
+        </Stack>
+      )}
+    </Box>
+  );
+}
+
+// CARD: Single caregiver row with the pets they help with
+function CareCircleCaregiverCard({ caregiver }: { caregiver: CaregiverGroup }) {
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 2,
+        borderRadius: 2,
+        border: 1,
+        borderColor: "divider",
+      }}
+    >
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={2}
+        alignItems={{ sm: "center" }}
+        justifyContent="space-between"
+      >
+        <Box>
+          <Typography variant="subtitle1">
+            {caregiver.caregiverName || caregiver.caregiverEmail}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ display: "block", color: "text.secondary" }}
+          >
+            {caregiver.caregiverEmail}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ mt: 1, display: "block", color: "text.secondary" }}
+          >
+            Helps with{" "}
+            {caregiver.pets.map((pet, index) => (
+              <span key={pet.id}>
+                {index > 0 && ", "}
+                {pet.name}
+              </span>
             ))}
-          </ul>
-        )}
-      </section>
+          </Typography>
+        </Box>
 
-      {/* 2. Pets you care for */}
-      <section className="mb-10">
-        <h2 className="mb-2 text-xl font-semibold">
-          Pets you care for ({petsYouCareFor.length})
-        </h2>
-        <p className="mb-4 text-sm text-neutral-600">
-          Pets shared with you by friends, family, or housemates.
-        </p>
+        <Stack
+          direction="row"
+          spacing={1}
+          flexWrap="wrap"
+          useFlexGap
+          sx={{ justifyContent: { xs: "flex-start", sm: "flex-end" } }}
+        >
+          {caregiver.pets.map((pet) => (
+            <Box
+              key={pet.membershipId}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+              }}
+            >
+              {/* I am keeping the nav-pill link styling for now so this CTA
+                 continues to match the rest of the app while the shell moves
+                 over to MUI. */}
+              <Link href={`/pets/${pet.id}`} className="nav-pill text-xs">
+                View {pet.name}
+              </Link>
+              <form action={removeCaregiverMembership}>
+                <input type="hidden" name="membershipId" value={pet.membershipId} />
+                <input type="hidden" name="recipientId" value={pet.id} />
+                <Button
+                  type="submit"
+                  size="small"
+                  variant="outlined"
+                  color="error"
+                  sx={{
+                    textTransform: "none",
+                    fontSize: "0.7rem",
+                    px: 1.5,
+                  }}
+                >
+                  Remove
+                </Button>
+              </form>
+            </Box>
+          ))}
+        </Stack>
+      </Stack>
+    </Paper>
+  );
+}
 
-        {petsYouCareFor.length === 0 ? (
-          <p className="text-sm text-neutral-500">
-            No one has shared a pet with you yet.
-          </p>
-        ) : (
-          <ul className="space-y-3">
-            {petsYouCareFor.map((pet) => (
-              <li
-                key={pet.id}
-                className="flex items-center justify-between rounded border border-neutral-200 bg-white px-4 py-3 text-sm"
+// SECTION: Pets you care for (someone else is the owner)
+function CareCirclePetsYouCareForSection({
+  pets,
+}: {
+  pets: PetYouCareFor[];
+}) {
+  return (
+    <Box>
+      <Typography variant="h6" sx={{ mb: 0.5 }}>
+        Pets you care for ({pets.length})
+      </Typography>
+      <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
+        Pets shared with you by friends, family, or housemates.
+      </Typography>
+
+      {pets.length === 0 ? (
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          No one has shared a pet with you yet.
+        </Typography>
+      ) : (
+        <Stack spacing={1.5}>
+          {pets.map((pet) => (
+            <Paper
+              key={pet.id}
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                border: 1,
+                borderColor: "divider",
+              }}
+            >
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                spacing={2}
               >
-                <div>
-                  <div className="font-medium text-neutral-900">{pet.name}</div>
-                  <div className="text-xs text-neutral-600">
+                <Box>
+                  <Typography variant="subtitle1">{pet.name}</Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
                     Owner: {pet.ownerName}
-                  </div>
-                </div>
+                  </Typography>
+                </Box>
                 <Link href={`/pets/${pet.id}`} className="nav-pill text-xs">
                   View pet
                 </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+              </Stack>
+            </Paper>
+          ))}
+        </Stack>
+      )}
+    </Box>
+  );
+}
 
-      {/* 3. Pets you own (lightweight) */}
-      <section className="mb-4">
-        <h2 className="mb-2 text-lg font-semibold">
-          Pets you own ({ownedPets.length})
-        </h2>
-        <p className="mb-4 text-xs text-neutral-600">
-          To change sharing for a specific pet, open its details and use the
-          &quot;Shared with&quot; panel.
-        </p>
+// SECTION: Lightweight list of pets you own
+function CareCircleOwnedPetsSection({
+  pets,
+}: {
+  pets: OwnedPetSummary[];
+}) {
+  return (
+    <Box>
+      <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
+        Pets you own ({pets.length})
+      </Typography>
+      <Typography variant="caption" sx={{ mb: 2, display: "block", color: "text.secondary" }}>
+        To change sharing for a specific pet, open its details and use the
+        &quot;Shared with&quot; panel.
+      </Typography>
 
-        {ownedPets.length === 0 ? (
-          <p className="text-sm text-neutral-500">
-            You haven&apos;t added any pets yet. Use the dashboard to create
-            your first pet.
-          </p>
-        ) : (
-          <ul className="space-y-2">
-            {ownedPets.map((pet) => (
-              <li
-                key={pet.id}
-                className="flex items-center justify-between rounded border border-neutral-200 bg-white px-4 py-2 text-sm"
+      {pets.length === 0 ? (
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          You haven&apos;t added any pets yet. Use the dashboard to create your
+          first pet.
+        </Typography>
+      ) : (
+        <Stack spacing={1}>
+          {pets.map((pet) => (
+            <Paper
+              key={pet.id}
+              elevation={0}
+              sx={{
+                p: 1.5,
+                borderRadius: 2,
+                border: 1,
+                borderColor: "divider",
+              }}
+            >
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                spacing={2}
               >
-                <div className="font-medium text-neutral-900">{pet.name}</div>
+                <Typography variant="body2">{pet.name}</Typography>
                 <Link href={`/pets/${pet.id}`} className="nav-pill text-xs">
                   Manage sharing
                 </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </main>
+              </Stack>
+            </Paper>
+          ))}
+        </Stack>
+      )}
+      <Divider sx={{ mt: 3 }} />
+    </Box>
   );
 }
