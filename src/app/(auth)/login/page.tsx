@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 
@@ -13,15 +13,27 @@ import {
 } from "@mui/material";
 import AuthShell from "@/components/auth/AuthShell";
 
-// Login page kept as a client component so I can lean on next-auth's client helpers
-// (signIn/useSession) instead of inventing a fragile server-action auth layer.
+// I’m using a tiny Suspense wrapper here so Next.js is happy about
+// useSearchParams in a client-only page while still letting this bail
+// out cleanly during prerender.
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInner />
+    </Suspense>
+  );
+}
+
+// I keep the real login logic down here so the page export stays boring,
+// and all the auth behavior lives in one predictable place.
+function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status } = useSession();
 
   // If the user somehow lands here while already authenticated, just punt them
-  // to the dashboard instead of making them stare at a pointless login form.
+  // to the dashboard (or callback target) instead of making them stare at a
+  // pointless login form.
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
 
   // If NextAuth bounces us back with an error query param, I want a friendly,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 
@@ -13,9 +13,19 @@ import {
 } from "@mui/material";
 import AuthShell from "@/components/auth/AuthShell";
 
-// Signup stays client-side so I can keep the UX tight: inline validation,
-// controlled fields, and a seamless handoff into the same credentials flow.
+// Same pattern as login: I’m wrapping the actual signup screen in Suspense
+// so useSearchParams plays nicely with Next.js during prerender.
 export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupPageInner />
+    </Suspense>
+  );
+}
+
+// Keeping the signup behavior in its own inner component makes it easy
+// to test and reason about without mixing it with the Suspense ceremony.
+function SignupPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status } = useSession();
