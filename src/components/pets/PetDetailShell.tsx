@@ -1,5 +1,5 @@
 // src/components/pets/PetDetailShell.tsx
-import React, { Children, type ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 import { Box, Container, Stack } from '@mui/material';
 
 type PetDetailShellProps = {
