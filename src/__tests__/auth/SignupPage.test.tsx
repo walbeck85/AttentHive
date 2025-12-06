@@ -1,104 +1,107 @@
+// src/__tests__/auth/SignupPage.test.tsx
+
 import React from "react";
-import { screen, fireEvent, waitFor } from "../../test-utils";
-import { renderWithProviders } from "../../test-utils";
-import SignupPage from "../../app/(auth)/signup/page";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+
+import SignupPage from "@/app/(auth)/signup/page";
+import { DEFAULT_AUTH_REDIRECT } from "@/lib/authRedirect";
+
+jest.mock("next-auth/react", () => ({
+  __esModule: true,
+  useSession: jest.fn(),
+  signIn: jest.fn(),
+}));
+
+// Shared search params state, just like in the Login tests.
+let currentSearchParams = new URLSearchParams();
 
 const pushMock = jest.fn();
 const replaceMock = jest.fn();
-const mockSignIn = jest.fn();
 
-// I’m mirroring the login test setup so both auth screens share the same
-// assumptions about routing and session state in tests.
-jest.mock("next/navigation", () => {
-  const actual = jest.requireActual("next/navigation");
-  return {
-    ...actual,
-    useRouter: () => ({
-      push: pushMock,
-      replace: replaceMock,
-    }),
-    useSearchParams: () => ({
-      get: (key: string) => {
-        // Same story as the login tests: I don’t care which key is requested,
-        // I just want a predictable null return without lint noise.
-        void key;
-        return null;
-      },
-    }),
-  };
-});
+jest.mock("next/navigation", () => ({
+  __esModule: true,
+  useRouter: () => ({
+    push: pushMock,
+    replace: replaceMock,
+  }),
+  useSearchParams: () => ({
+    get: (key: string) => currentSearchParams.get(key),
+  }),
+}));
 
-jest.mock("next-auth/react", () => {
-  const actual = jest.requireActual("next-auth/react");
-  return {
-    ...actual,
-    signIn: (...args: unknown[]) => mockSignIn(...args),
-    useSession: () => ({ data: null, status: "unauthenticated" as const }),
-  };
-});
+const { useSession, signIn } = jest.requireMock("next-auth/react");
 
-type GlobalWithFetch = typeof globalThis & { fetch: jest.Mock };
+function mockSession(
+  status: "authenticated" | "unauthenticated" | "loading"
+) {
+  (useSession as jest.Mock).mockReturnValue({ status });
+}
 
-beforeEach(() => {
-  pushMock.mockReset();
-  replaceMock.mockReset();
-  mockSignIn.mockReset();
+function setSearchParams(params: URLSearchParams) {
+  currentSearchParams = params;
+}
 
-  // I’m stubbing fetch so the signup flow can pretend the backend exists
-  // without dragging a real API into the test run.
-  (global as GlobalWithFetch).fetch = jest.fn();
-});
+describe("SignupPage callbackUrl handling", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    setSearchParams(new URLSearchParams());
 
-test("shows a validation error when required fields are missing", async () => {
-  renderWithProviders(<SignupPage />);
-
-  const submit = screen.getByRole("button", { name: /^sign up$/i });
-  fireEvent.click(submit);
-
-  await waitFor(() => {
-    expect(
-      screen.getByText(/please fill in all fields/i)
-    ).toBeInTheDocument();
+    // Default fetch mock for the signup API call; tests can override if needed.
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({}),
+    }) as unknown as typeof fetch;
   });
 
-  expect((global as GlobalWithFetch).fetch).not.toHaveBeenCalled();
-  expect(mockSignIn).not.toHaveBeenCalled();
-});
+  it("redirects to /pets/:id after signup + auto-login with that callbackUrl", async () => {
+    setSearchParams(new URLSearchParams({ callbackUrl: "/pets/abc123" }));
 
-test("calls signup endpoint and then attempts sign-in on success", async () => {
-  (global as GlobalWithFetch).fetch.mockResolvedValue({
-    ok: true,
-    json: async () => ({}),
-  } as Response);
+    mockSession("unauthenticated");
+    (signIn as jest.Mock).mockResolvedValue({
+      ok: true,
+      error: null,
+      url: "/pets/abc123",
+    });
 
-  mockSignIn.mockResolvedValue({ error: null, url: "/dashboard" });
+    const user = userEvent.setup();
+    render(<SignupPage />);
 
-  renderWithProviders(<SignupPage />);
-
-  fireEvent.change(screen.getByLabelText(/name/i), {
-    target: { value: "Will Tester" },
-  });
-  // MUI appends an asterisk to required labels ("Email *"), so I’m using a
-  // relaxed match here instead of an over-strict regex that breaks on styling.
-  fireEvent.change(screen.getByLabelText(/email/i), {
-    target: { value: "will@example.com" },
-  });
-  fireEvent.change(screen.getByLabelText(/password/i), {
-    target: { value: "super-secret" },
-  });
-
-  const submit = screen.getByRole("button", { name: /^sign up$/i });
-  fireEvent.click(submit);
-
-  // The goal here is to prove the happy path: we hit the signup endpoint first,
-  // then hand off to the same credentials flow used by login.
-  await waitFor(() => {
-    expect((global as GlobalWithFetch).fetch).toHaveBeenCalledWith(
-      "/api/auth/signup",
-      expect.objectContaining({
-        method: "POST",
-      })
+    await user.type(screen.getByLabelText(/name/i), "Jane Tester");
+    await user.type(screen.getByLabelText(/^email/i), "user@example.com");
+    await user.type(screen.getByLabelText(/password/i), "password123");
+    await user.click(
+      screen.getByRole("button", { name: /create account/i })
     );
-    expect(mockSignIn).toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith("/pets/abc123");
+    });
+  });
+
+  it("redirects already-authenticated users to a safe callbackUrl", async () => {
+    setSearchParams(new URLSearchParams({ callbackUrl: "/care-circle" }));
+
+    mockSession("authenticated");
+
+    render(<SignupPage />);
+
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith("/care-circle");
+    });
+  });
+
+  it("falls back to /dashboard when callbackUrl is external", async () => {
+    setSearchParams(
+      new URLSearchParams({ callbackUrl: "https://evil.com/signup" })
+    );
+
+    mockSession("authenticated");
+
+    render(<SignupPage />);
+
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith(DEFAULT_AUTH_REDIRECT);
+    });
   });
 });

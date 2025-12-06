@@ -1,216 +1,183 @@
 "use client";
 
-import { useState, FormEvent, Suspense } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 
-import {
-  Button,
-  Divider,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import AuthShell from "@/components/auth/AuthShell";
+import { getSafeCallbackUrl, DEFAULT_AUTH_REDIRECT } from "@/lib/authRedirect";
 
-// Same pattern as login: I’m wrapping the actual signup screen in Suspense
-// so useSearchParams plays nicely with Next.js during prerender.
+// Signup mirrors Login's callback handling so we don't give the user two
+// different redirect stories depending on which form they used.
 export default function SignupPage() {
-  return (
-    <Suspense fallback={null}>
-      <SignupPageInner />
-    </Suspense>
-  );
-}
-
-// Keeping the signup behavior in its own inner component makes it easy
-// to test and reason about without mixing it with the Suspense ceremony.
-function SignupPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status } = useSession();
 
-  // I keep callbackUrl flowing through signup so users who were trying to reach
-  // a deep link still end up where they intended after creating an account.
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
+  const rawCallback = searchParams.get("callbackUrl");
+  const safeCallbackUrl = getSafeCallbackUrl(rawCallback);
 
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
 
-  // Error + loading states so the user gets clear feedback instead of
-  // staring at a frozen button or silent failure.
-  const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  if (status === "authenticated") {
-    router.replace(callbackUrl);
-    return null;
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    // Bare-minimum guardrail before touching the backend — this keeps obviously
-    // bad input out and mirrors the validation tone of the rest of the app.
-    if (!name.trim() || !email.trim() || !password.trim()) {
-      setError("Please fill in all fields.");
-      return;
+  // If a logged-in user hits /signup, we treat it just like /login:
+  // honor a safe callbackUrl if present, otherwise go to /dashboard.
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace(safeCallbackUrl || DEFAULT_AUTH_REDIRECT);
     }
+  }, [status, router, safeCallbackUrl]);
 
-    setError(null);
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
 
     try {
-      // I’m assuming the existing API surface already has a signup endpoint at
-      // /api/auth/signup; if that ever moves, I only want the path changing here,
-      // not the shape of the client-side flow.
-      const response = await fetch("/api/auth/signup", {
+      // 1. Hit your existing signup API route. This is intentionally left
+      // generic so we don't accidentally drift from your backend contract.
+      const res = await fetch("/api/auth/signup", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, email, password }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name, password }),
       });
 
-      if (!response.ok) {
-        // I don't expose raw server errors here — the goal is a stable,
-        // generic message that doesn't leak implementation details.
-        const data = await response.json().catch(() => null);
-        const message =
-          data?.error ||
-          data?.message ||
-          "We couldn't create that account. Please try again.";
-        setError(message);
+      if (!res.ok) {
+        // We stick with a generic error for security reasons.
+        setError("Unable to create account. Please check your details and try again.");
         setIsSubmitting(false);
         return;
       }
 
-      // Once the user exists, I hand off to the same credentials flow as login
-      // so the rest of the app doesn’t have to care whether they “logged in”
-      // or “just signed up.”
+      // 2. Optionally auto-login the user via NextAuth credentials.
+      // If your app currently sends them to /login instead, you can
+      // swap this block for a router.push to the login route that
+      // includes the same callbackUrl.
       const result = await signIn("credentials", {
+        redirect: false,
         email,
         password,
-        redirect: false,
-        callbackUrl,
+        callbackUrl: safeCallbackUrl,
       });
 
       if (!result || result.error) {
-        setError(
-          "Your account was created, but we couldn't log you in automatically. Please try logging in."
-        );
-        setIsSubmitting(false);
+        // If auto-login fails, drop them on the login page with the same
+        // callbackUrl preserved.
+        const loginUrl =
+          rawCallback != null
+            ? `/login?callbackUrl=${encodeURIComponent(rawCallback)}`
+            : "/login";
+
+        router.push(loginUrl);
         return;
       }
 
-      router.push(result.url ?? callbackUrl);
+      const target = getSafeCallbackUrl(result.url ?? safeCallbackUrl);
+      router.push(target);
     } catch (err) {
-      console.error("Signup failed unexpectedly:", err);
-      setError("Something went wrong creating your account. Please try again.");
+      console.error("Unexpected error during signup:", err);
+      setError("Something went wrong while creating your account. Please try again.");
       setIsSubmitting(false);
     }
   }
 
-  async function handleGoogleSignUp() {
-    // I’m not trying to synchronize this with the email form state; this path
-    // is its own thing and should feel like a clean slate when users tap it.
-    setError(null);
-    setIsSubmitting(true);
-
-    try {
-      // For Google-based accounts I let NextAuth own the redirect lifecycle,
-      // since most users already expect the “pop out to Google, come back here”
-      // behavior and it keeps the client code fairly boring.
-      await signIn("google", {
-        callbackUrl,
-      });
-    } catch (err) {
-      console.error("Google signup failed unexpectedly:", err);
-      setError("Something went wrong with Google sign-up. Please try again.");
-      setIsSubmitting(false);
-    }
+  if (status === "loading") {
+    return (
+      <div className="mm-page">
+        <div className="mm-shell">
+          <div className="mm-card">
+            <p className="mm-muted">Checking your login status…</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <AuthShell
-      title="Create your account"
-      subtitle="Start coordinating care for your pets, people, and plants."
-    >
-      <Stack spacing={2.5}>
-        {/* Leading with the “Sign up with Google” path keeps the lowest-friction
-            option front and center while still giving people a clear email fallback. */}
-        <Button
-          variant="outlined"
-          fullWidth
-          disabled={isSubmitting}
-          onClick={handleGoogleSignUp}
-        >
-          Sign up with Google
-        </Button>
+    <div className="mm-page">
+      <div className="mm-shell max-w-md mx-auto">
+        <div className="mm-card">
+          <h1 className="mm-h1 mb-4">Sign up</h1>
 
-        <Divider>or</Divider>
+          {error && (
+            <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} noValidate>
-          <Stack spacing={2.5}>
-            <TextField
-              label="Name"
-              name="name"
-              autoComplete="name"
-              fullWidth
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="name" className="mm-label">
+                Name
+              </label>
+              <input
+                id="name"
+                type="text"
+                autoComplete="name"
+                className="mm-input mt-1 w-full"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
 
-            <TextField
-              label="Email"
-              type="email"
-              name="email"
-              autoComplete="email"
-              fullWidth
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+            <div>
+              <label htmlFor="email" className="mm-label">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                className="mm-input mt-1 w-full"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
 
-            <TextField
-              label="Password"
-              type="password"
-              name="password"
-              autoComplete="new-password"
-              fullWidth
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              error={Boolean(error)}
-              helperText={error ?? " "}
-            />
+            <div>
+              <label htmlFor="password" className="mm-label">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                className="mm-input mt-1 w-full"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
 
-            <Button
+            <button
               type="submit"
-              variant="contained"
-              fullWidth
+              className="mm-button w-full"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Creating your account..." : "Sign up"}
-            </Button>
-          </Stack>
-        </form>
+              {isSubmitting ? "Creating account…" : "Create account"}
+            </button>
+          </form>
 
-        <Typography variant="body2" color="text.secondary">
-          Already have an account?{" "}
-          <Button
-            variant="text"
-            size="small"
-            onClick={() =>
-              router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
-            }
-          >
-            Log in
-          </Button>
-        </Typography>
-      </Stack>
-    </AuthShell>
+          <p className="mm-meta mt-4 text-center">
+            Already have an account?{" "}
+            <a
+              href={
+                rawCallback
+                  ? `/login?callbackUrl=${encodeURIComponent(rawCallback)}`
+                  : "/login"
+              }
+              className="mm-link"
+            >
+              Log in
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

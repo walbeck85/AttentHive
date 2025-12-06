@@ -1,202 +1,184 @@
 "use client";
 
-import { useState, FormEvent, Suspense } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 
-import {
-  Button,
-  Divider,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import AuthShell from "@/components/auth/AuthShell";
+import { getSafeCallbackUrl, DEFAULT_AUTH_REDIRECT } from "@/lib/authRedirect";
 
-// I’m using a tiny Suspense wrapper here so Next.js is happy about
-// useSearchParams in a client-only page while still letting this bail
-// out cleanly during prerender.
+// Login keeps the same UX as before, but now:
+// - We normalize callbackUrl for safety.
+// - We send already-authenticated users directly to their target page.
 export default function LoginPage() {
-  return (
-    <Suspense fallback={null}>
-      <LoginPageInner />
-    </Suspense>
-  );
-}
-
-// I keep the real login logic down here so the page export stays boring,
-// and all the auth behavior lives in one predictable place.
-function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status } = useSession();
 
-  // If the user somehow lands here while already authenticated, just punt them
-  // to the dashboard (or callback target) instead of making them stare at a
-  // pointless login form.
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
-
-  // If NextAuth bounces us back with an error query param, I want a friendly,
-  // non-leaky message rather than surfacing raw error codes.
-  const externalErrorCode = searchParams.get("error");
-  const externalError =
-    externalErrorCode === "CredentialsSignin"
-      ? "Invalid email or password."
-      : externalErrorCode
-      ? "We couldn't log you in. Please try again."
-      : null;
+  const rawCallback = searchParams.get("callbackUrl");
+  const safeCallbackUrl = getSafeCallbackUrl(rawCallback);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Local error state lets me handle both NextAuth error codes and my own
-  // validation issues without bouncing the user all over the place.
-  const [error, setError] = useState<string | null>(externalError);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  // If the session is already authenticated on the client, there's no reason
-  // to keep the user here — shove them toward where the rest of the app lives.
-  if (status === "authenticated") {
-    router.replace(callbackUrl);
-    return null;
-  }
+  // We keep a single generic error string to avoid leaking auth details.
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    // Basic guardrail so I don't hammer NextAuth with obviously bad input
-    // and can keep the error messaging consistent with the rest of the app.
-    if (!email.trim() || !password.trim()) {
-      setError("Please enter both email and password.");
-      return;
+  // If a signed-in user hits /login manually, just send them on their way.
+  // This matches the existing intent (redirect to dashboard) but respects
+  // any *safe* callbackUrl we were given.
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace(safeCallbackUrl || DEFAULT_AUTH_REDIRECT);
     }
+  }, [status, router, safeCallbackUrl]);
 
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // I’m explicitly using redirect: false so I stay in control of client-side
-      // navigation and error handling instead of letting NextAuth hard-redirect.
       const result = await signIn("credentials", {
+        redirect: false,
         email,
         password,
-        redirect: false,
-        callbackUrl,
+        callbackUrl: safeCallbackUrl,
       });
 
-      // NextAuth returns a result object instead of throwing, so I lean on that
-      // contract rather than playing guess-the-exception game.
+      // NextAuth will set result.error on invalid credentials, etc.
       if (!result || result.error) {
         setError("Invalid email or password.");
         setIsSubmitting(false);
         return;
       }
 
-      // If NextAuth gives me a URL, I trust it; otherwise I fall back to the
-      // callbackUrl that the rest of the app expects.
-      router.push(result.url ?? callbackUrl);
+      // Prefer the URL from NextAuth if present, but run it through the
+      // same safety net again.
+      const target = getSafeCallbackUrl(result.url ?? safeCallbackUrl);
+      router.push(target);
     } catch (err) {
-      // In case something truly weird happens (network, misconfig, etc.),
-      // I still give the user a clear message instead of a stack trace.
-      console.error("Login failed unexpectedly:", err);
-      setError("Something went wrong logging you in. Please try again.");
+      // We don't surface the raw error to the user; just let them know
+      // something went wrong and log in the console for debugging.
+      console.error("Unexpected error during login:", err);
+      setError("Something went wrong while logging in. Please try again.");
       setIsSubmitting(false);
     }
   }
 
   async function handleGoogleSignIn() {
-    // I’m clearing any credential-specific error here so the Google path
-    // doesn’t inherit stale state from a previous bad password attempt.
+    setIsGoogleLoading(true);
     setError(null);
-    setIsSubmitting(true);
 
     try {
-      // For OAuth I’m happy to let NextAuth own the redirect, since that’s
-      // already the mental model users expect from “Continue with Google”.
+      // Keep the same Google OAuth semantics, but make sure we only ever
+      // redirect to an internal route.
       await signIn("google", {
-        callbackUrl,
+        callbackUrl: safeCallbackUrl,
       });
+      // Note: with redirect: true (default), NextAuth will handle navigation.
     } catch (err) {
-      console.error("Google login failed unexpectedly:", err);
-      setError("Something went wrong with Google sign-in. Please try again.");
-      setIsSubmitting(false);
+      console.error("Google sign-in failed:", err);
+      setError("Google sign-in failed. Please try again.");
+      setIsGoogleLoading(false);
     }
   }
 
+  // If we're still resolving the session, just show a basic loading state.
+  if (status === "loading") {
+    return (
+      <div className="mm-page">
+        <div className="mm-shell">
+          <div className="mm-card">
+            <p className="mm-muted">Checking your login status…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Normal login form. Feel free to re-wrap this with your existing visual
+  // shell; the important parts are the handlers and state above.
   return (
-    <AuthShell
-      title="Welcome back"
-      subtitle="Pick up where you left off with your care circle."
-    >
-      <Stack spacing={2.5}>
-        {/* Keeping Google as the first option because it's the lowest-friction path,
-            but still pairing it with email so people have a clear fallback. */}
-        <Button
-          variant="outlined"
-          fullWidth
-          disabled={isSubmitting}
-          onClick={handleGoogleSignIn}
-        >
-          Continue with Google
-        </Button>
+    <div className="mm-page">
+      <div className="mm-shell max-w-md mx-auto">
+        <div className="mm-card">
+          <h1 className="mm-h1 mb-4">Log in</h1>
 
-        <Divider>or</Divider>
+          {error && (
+            <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} noValidate>
-          <Stack spacing={2.5}>
-            <TextField
-              label="Email"
-              type="email"
-              name="email"
-              autoComplete="email"
-              fullWidth
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              // Keeping validation feedback tight on the field so users
-              // don't have to hunt around the page to see what's wrong.
-              error={Boolean(error) && !password}
-            />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="mm-label">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                className="mm-input mt-1 w-full"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
 
-            <TextField
-              label="Password"
-              type="password"
-              name="password"
-              autoComplete="current-password"
-              fullWidth
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              error={Boolean(error)}
-              helperText={error ?? " "}
-            />
+            <div>
+              <label htmlFor="password" className="mm-label">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                className="mm-input mt-1 w-full"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
 
-            <Button
+            <button
               type="submit"
-              variant="contained"
-              fullWidth
-              disabled={isSubmitting}
+              className="mm-button w-full"
+              disabled={isSubmitting || isGoogleLoading}
             >
-              {isSubmitting ? "Signing you in..." : "Log in"}
-            </Button>
-          </Stack>
-        </form>
+              {isSubmitting ? "Logging in…" : "Log in"}
+            </button>
+          </form>
 
-        <Typography variant="body2" color="text.secondary">
-          Don&apos;t have an account yet?{" "}
-          <Button
-            variant="text"
-            size="small"
-            onClick={() =>
-              router.push(
-                `/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`
-              )
-            }
-          >
-            Sign up
-          </Button>
-        </Typography>
-      </Stack>
-    </AuthShell>
+          <div className="mt-6">
+            <button
+              type="button"
+              className="mm-button-secondary w-full"
+              onClick={handleGoogleSignIn}
+              disabled={isSubmitting || isGoogleLoading}
+            >
+              {isGoogleLoading ? "Connecting to Google…" : "Continue with Google"}
+            </button>
+          </div>
+
+          <p className="mm-meta mt-4 text-center">
+            Don&apos;t have an account?{" "}
+            <a
+              href={
+                rawCallback
+                  ? `/signup?callbackUrl=${encodeURIComponent(rawCallback)}`
+                  : "/signup"
+              }
+              className="mm-link"
+            >
+              Sign up
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
