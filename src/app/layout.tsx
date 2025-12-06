@@ -2,21 +2,18 @@
 import "./globals.css";
 import { Nunito } from "next/font/google";
 import Providers from "./providers";
-import NavBar from "@/components/NavBar";
+import RootShell from "@/components/RootShell";
 
-// Font setup ---------------------------------------------------
 const nunito = Nunito({
   subsets: ["latin"],
   variable: "--font-nunito",
 });
 
-// Metadata -----------------------------------------------------
 export const metadata = {
   title: "Mimamori",
   description: "Care coordination for pets, people, and plants",
 };
 
-// Layout -------------------------------------------------------
 export default function RootLayout({
   children,
 }: {
@@ -27,11 +24,8 @@ export default function RootLayout({
       {/* Body background and text color are controlled in globals.css via CSS variables */}
       <body className={`${nunito.variable} font-sans min-h-screen`}>
         <Providers>
-          {/* Sticky global nav */}
-          <NavBar />
-
-          {/* Page content – individual pages use .mm-page / .mm-shell for layout */}
-          <main className="mm-page">{children}</main>
+          {/* App shell: sticky MUI AppBar + responsive drawer + content shift */}
+          <RootShell>{children}</RootShell>
         </Providers>
       </body>
     </html>

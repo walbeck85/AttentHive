@@ -2,156 +2,339 @@
 "use client";
 
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
+import {
+  AppBar,
+  Box,
+  Button,
+  Divider,
+  Drawer,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemText,
+  Toolbar,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
+import CloseIcon from "@mui/icons-material/Close";
+import { alpha } from "@mui/material/styles";
 
-export default function NavBar() {
-  const { data: session } = useSession();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+type NavLink = {
+  label: string;
+  href: string;
+};
 
-  const handleLogoutClick = () => {
-    // Client-side sign out; NextAuth will clear the session and bounce to /login
-    signOut({ callbackUrl: "/login" });
+const NAV_LINKS: NavLink[] = [
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "Care Circle", href: "/care-circle" },
+  { label: "My Account", href: "/account" },
+];
+
+// Links are always visible; route-level auth still protects pages.
+const filteredLinks = NAV_LINKS;
+
+type NavBarProps = {
+  mobileOpen: boolean;
+  onToggleMobileDrawer: () => void;
+  drawerWidth: number;
+};
+
+export default function NavBar({
+  mobileOpen,
+  onToggleMobileDrawer,
+  drawerWidth,
+}: NavBarProps) {
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+  const { data: session, status } = useSession();
+  const pathname = usePathname();
+
+  const isAuthed = !!session;
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/login" });
   };
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen((prev) => !prev);
-  };
-
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
-
-  return (
-    <nav className="sticky top-0 z-50 border-b border-[#E5D9C6] bg-[#3E5C2E]">
-      {/* Top bar ------------------------------------------------------------ */}
-      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-3">
-        <div className="flex items-center gap-5">
-          {/* Mobile hamburger – hidden on desktop */}
-          <button
-            type="button"
-            onClick={toggleMobileMenu}
-            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={isMobileMenuOpen}
-            className="sm:hidden inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/80 bg-[#2F4A24] text-white shadow-sm"
-          >
-            {/* Use a literal hamburger glyph so Tailwind can't mangle it */}
-            <span className="text-2xl leading-none">≡</span>
-          </button>
-
-          {/* Brand */}
-          <span className="mm-nav-brand text-sm sm:text-base font-extrabold tracking-[0.16em] text-white uppercase">MIMAMORI</span>
-        </div>
-
-        {/* Desktop nav pills ------------------------------------------------ */}
-        <div className="hidden items-center gap-2 sm:flex sm:gap-3">
-          {session?.user && (
-            <span className="text-xs text-white/80 mr-2">
-              {session.user.name || session.user.email}
-            </span>
+  const drawerContent = (
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          p: 2,
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Box>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            Mimamori
+          </Typography>
+          {isAuthed && session.user?.name && (
+            <Typography
+              variant="body2"
+              sx={{ mt: 0.5, color: "text.secondary" }}
+            >
+              Signed in as {session.user.name}
+            </Typography>
           )}
+        </Box>
+        <IconButton
+          aria-label="close navigation"
+          onClick={onToggleMobileDrawer}
+          edge="end"
+        >
+          <CloseIcon />
+        </IconButton>
+      </Box>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center rounded-full border border-[#382110] bg-white px-4 py-1.5 text-[0.7rem] font-semibold tracking-[0.18em] uppercase text-[#382110] hover:bg-[#f4ede4] hover:no-underline"
-            >
-              Dashboard
-            </Link>
+      <Divider />
 
-            <Link
-              href="/care-circle"
-              className="inline-flex items-center justify-center rounded-full border border-[#382110] bg-white px-4 py-1.5 text-[0.7rem] font-semibold tracking-[0.18em] uppercase text-[#382110] hover:bg-[#f4ede4] hover:no-underline"
-            >
-              Care Circle
-            </Link>
-
-            <Link
-              href="/account"
-              className="inline-flex items-center justify-center rounded-full border border-[#382110] bg-white px-4 py-1.5 text-[0.7rem] font-semibold tracking-[0.18em] uppercase text-[#382110] hover:bg-[#f4ede4] hover:no-underline"
-            >
-              My Profile
-            </Link>
-
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-full border border-[#382110] bg-white px-4 py-1.5 text-[0.7rem] font-semibold tracking-[0.18em] uppercase text-[#382110] hover:bg-[#f4ede4] hover:no-underline"
-              onClick={handleLogoutClick}
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile slide-out drawer ------------------------------------------- */}
-      {isMobileMenuOpen && (
-        <>
-          {/* Backdrop */}
-          <button
-            type="button"
-            aria-label="Close menu"
-            onClick={closeMobileMenu}
-            className="fixed inset-0 z-40 bg-black/25 sm:hidden"
-          />
-
-          {/* Drawer panel (left side, narrow like GitHub) */}
-          <div className="fixed left-0 top-0 z-50 flex h-full w-72 flex-col bg-[#3E5C2E] px-4 py-4 shadow-xl sm:hidden">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-xs font-semibold tracking-[0.18em] text-white">
-                MENU
-              </span>
-              <button
-                type="button"
-                onClick={closeMobileMenu}
-                className="rounded-md border border-white/80 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white"
-              >
-                Close
-              </button>
-            </div>
-
-            {/* We intentionally do NOT show "Signed in as…" here – it already
-               appears in the page header and would just add noise in this panel. */}
-
-            <div className="mt-2 flex flex-col gap-3">
-              <Link
-                href="/dashboard"
-                className="inline-flex w-full items-center justify-center rounded-full border border-[#382110] bg-white px-4 py-[0.4375rem] text-[0.7rem] font-semibold tracking-[0.18em] uppercase text-[#382110] hover:bg-[#f4ede4] hover:no-underline"
-                onClick={closeMobileMenu}
-              >
-                Dashboard
-              </Link>
-
-              <Link
-                href="/care-circle"
-                className="inline-flex w-full items-center justify-center rounded-full border border-[#382110] bg-white px-4 py-[0.4375rem] text-[0.7rem] font-semibold tracking-[0.18em] uppercase text-[#382110] hover:bg-[#f4ede4] hover:no-underline"
-                onClick={closeMobileMenu}
-              >
-                Care Circle
-              </Link>
-
-              <Link
-                href="/account"
-                className="inline-flex w-full items-center justify-center rounded-full border border-[#382110] bg-white px-4 py-[0.4375rem] text-[0.7rem] font-semibold tracking-[0.18em] uppercase text-[#382110] hover:bg-[#f4ede4] hover:no-underline"
-                onClick={closeMobileMenu}
-              >
-                My Profile
-              </Link>
-
-              <button
-                type="button"
-                className="inline-flex w-full items-center justify-center rounded-full border border-[#382110] bg-white px-4 py-[0.4375rem] text-[0.7rem] font-semibold tracking-[0.18em] uppercase text-[#382110] hover:bg-[#f4ede4] hover:no-underline"
-                onClick={() => {
-                  closeMobileMenu();
-                  handleLogoutClick();
+      <Box sx={{ flexGrow: 1 }}>
+        <List component="nav">
+          {filteredLinks.map((link) => {
+            const selected =
+              pathname === link.href || pathname?.startsWith(link.href + "/");
+            return (
+              <ListItemButton
+                key={link.href}
+                component={Link}
+                href={link.href}
+                selected={selected}
+                onClick={onToggleMobileDrawer}
+                sx={{
+                  "&.Mui-selected": {
+                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                    "&:hover": {
+                      bgcolor: alpha(theme.palette.primary.main, 0.12),
+                    },
+                  },
                 }}
               >
-                Logout
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-    </nav>
+                <ListItemText primary={link.label} />
+              </ListItemButton>
+            );
+          })}
+        </List>
+      </Box>
+
+      <Divider />
+
+      <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1 }}>
+        {status !== "loading" && (
+          <>
+            {isAuthed ? (
+              <Button
+                variant="outlined"
+                fullWidth
+                onClick={handleLogout}
+                sx={{ textTransform: "none" }}
+              >
+                Log out
+              </Button>
+            ) : (
+              <>
+                <Button
+                  component={Link}
+                  href="/login"
+                  variant="contained"
+                  fullWidth
+                  sx={{ textTransform: "none" }}
+                >
+                  Log in
+                </Button>
+                <Button
+                  component={Link}
+                  href="/signup"
+                  variant="outlined"
+                  fullWidth
+                  sx={{ textTransform: "none" }}
+                >
+                  Sign up
+                </Button>
+              </>
+            )}
+          </>
+        )}
+      </Box>
+    </Box>
+  );
+
+  return (
+    <>
+      {/* Sticky AppBar that matches new app shell */}
+      <AppBar
+        position="sticky"
+        elevation={0}
+        color="transparent"
+        sx={{
+          borderBottom: 1,
+          borderColor: "divider",
+          backdropFilter: "blur(12px)",
+          backgroundColor:
+            theme.palette.mode === "light"
+              ? "rgba(255,255,255,0.9)"
+              : "rgba(18,18,18,0.9)",
+        }}
+      >
+        <Toolbar
+          sx={{
+            maxWidth: 1200,
+            mx: "auto",
+            width: "100%",
+            px: { xs: 2, sm: 3 },
+            minHeight: 64,
+          }}
+        >
+          {/* Global hamburger (mobile + desktop) */}
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="open navigation"
+            aria-controls="main-navigation-drawer"
+            aria-expanded={mobileOpen ? "true" : "false"}
+            onClick={onToggleMobileDrawer}
+            sx={{ mr: 1 }}
+          >
+            <MenuIcon />
+          </IconButton>
+
+          {/* Brand */}
+          <Typography
+            component={Link}
+            href={isAuthed ? "/dashboard" : "/"}
+            variant="h6"
+            sx={{
+              fontWeight: 800,
+              textDecoration: "none",
+              color: "text.primary",
+            }}
+          >
+            Mimamori
+          </Typography>
+
+          {/* Spacer between brand and right side */}
+          <Box sx={{ flexGrow: 1 }} />
+
+          {/* Desktop nav links */}
+          {isDesktop && (
+            <Box
+              component="nav"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                mr: 3,
+              }}
+            >
+              {filteredLinks.map((link) => {
+                const selected =
+                  pathname === link.href ||
+                  pathname?.startsWith(link.href + "/");
+                return (
+                  <Button
+                    key={link.href}
+                    component={Link}
+                    href={link.href}
+                    color={selected ? "primary" : "inherit"}
+                    sx={{
+                      fontWeight: selected ? 700 : 500,
+                      textTransform: "none",
+                    }}
+                  >
+                    {link.label}
+                  </Button>
+                );
+              })}
+            </Box>
+          )}
+
+          {/* Auth actions on the right */}
+          {status !== "loading" && (
+            <Box sx={{ display: { xs: "none", sm: "flex" }, gap: 1, alignItems: "center" }}>
+              {isAuthed ? (
+                <>
+                  <Typography
+                    variant="body2"
+                    sx={{ display: { xs: "none", sm: "block" } }}
+                  >
+                    {session.user?.name}
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={handleLogout}
+                    sx={{ textTransform: "none" }}
+                  >
+                    Log out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    component={Link}
+                    href="/login"
+                    size="small"
+                    sx={{ textTransform: "none" }}
+                  >
+                    Log in
+                  </Button>
+                  <Button
+                    component={Link}
+                    href="/signup"
+                    size="small"
+                    variant="contained"
+                    sx={{ textTransform: "none" }}
+                  >
+                    Sign up
+                  </Button>
+                </>
+              )}
+            </Box>
+          )}
+        </Toolbar>
+      </AppBar>
+
+      {/* Mobile drawer – pushes content via RootShell transform */}
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={onToggleMobileDrawer}
+        ModalProps={{
+          keepMounted: true,
+          BackdropProps: { sx: { backgroundColor: "rgba(0,0,0,0.05)" } },
+        }}
+        PaperProps={{
+          id: "main-navigation-drawer",
+          sx: {
+            width: drawerWidth,
+            bgcolor: "background.paper",
+            borderRight: 1,
+            borderColor: "divider",
+            boxShadow: theme.shadows[8],
+            transition: theme.transitions.create("box-shadow", {
+              duration: theme.transitions.duration.short,
+            }),
+          },
+        }}
+        sx={{
+          display: "block",
+          "& .MuiDrawer-paper": {
+            boxSizing: "border-box",
+          },
+        }}
+      >
+        {drawerContent}
+      </Drawer>
+    </>
   );
 }
