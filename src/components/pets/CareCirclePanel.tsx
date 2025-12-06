@@ -64,7 +64,6 @@ export default function CareCirclePanel({
   async function handleInvite(event: FormEvent) {
     event.preventDefault();
 
-    // Basic guardrail so we do not hammer the backend with junk requests.
     if (!email.trim()) {
       setErrorMessage("Please enter an email address.");
       setSuccessMessage(null);
@@ -95,7 +94,6 @@ export default function CareCirclePanel({
         throw new Error(message);
       }
 
-      // After a successful invite, re-fetch the members list so UI stays in sync.
       const membersResponse = await fetch(
         `/api/care-circles/members?recipientId=${encodeURIComponent(
           recipientId,
@@ -109,8 +107,6 @@ export default function CareCirclePanel({
       const data =
         (await membersResponse.json()) as CareCircleMembersApiResponse;
 
-      // The members API returns CareCircle rows with an attached user object.
-      // Normalize into the shape this component expects.
       const refreshedMembers: CareCircleMember[] = (data.members ?? []).map(
         (membership) => ({
           id: membership.id,
@@ -135,9 +131,7 @@ export default function CareCirclePanel({
     }
   }
 
-  // Owner-only action: remove an existing caregiver/viewer from this pet.
   async function handleRemove(memberId: string) {
-    // Clear previous status so feedback always reflects the latest action.
     setErrorMessage(null);
     setSuccessMessage(null);
     setRemovingId(memberId);
@@ -161,7 +155,6 @@ export default function CareCirclePanel({
         throw new Error(message);
       }
 
-      // Update the local list so the UI reflects the removal immediately.
       setMembers((prev) => prev.filter((member) => member.id !== memberId));
       setSuccessMessage("Caregiver removed successfully.");
     } catch (error) {

@@ -2,8 +2,9 @@
 "use client";
 
 import React from "react";
-import { CssBaseline, ThemeProvider, useMediaQuery } from "@mui/material";
+import { useMediaQuery } from "@mui/material";
 import type { PaletteMode } from "@mui/material";
+import type { Theme } from "@mui/material/styles";
 
 import { createAppTheme, type ThemePreference } from "@/theme";
 
@@ -14,19 +15,17 @@ type ThemeModeContextValue = {
   resolvedMode: PaletteMode;
   /** Set new preference (persists to localStorage) */
   setMode: (next: ThemePreference) => void;
+  /** Active MUI theme (light/dark aware) */
+  theme: Theme;
 };
 
-const ThemeModeContext = React.createContext<ThemeModeContextValue | undefined>(
-  undefined
-);
+export const ThemeModeContext = React.createContext<
+  ThemeModeContextValue | undefined
+>(undefined);
 
 const STORAGE_KEY = "mimamori-theme-mode";
 
-export function ThemeModeProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function useThemeModeController(): ThemeModeContextValue {
   // Respect OS-level preference when in "system" mode.
   const prefersDark = useMediaQuery("(prefers-color-scheme: dark)", {
     noSsr: true,
@@ -59,26 +58,24 @@ export function ThemeModeProvider({
     }
   }, []);
 
-  const theme = React.useMemo(
-    () => createAppTheme(resolvedMode),
-    [resolvedMode]
-  );
+  const theme = React.useMemo(() => createAppTheme(resolvedMode), [resolvedMode]);
 
-  const contextValue = React.useMemo<ThemeModeContextValue>(
-    () => ({
-      mode,
-      resolvedMode,
-      setMode: handleSetMode,
-    }),
-    [mode, resolvedMode, handleSetMode]
+  return React.useMemo<ThemeModeContextValue>(
+    () => ({ mode, resolvedMode, setMode: handleSetMode, theme }),
+    [mode, resolvedMode, handleSetMode, theme]
   );
+}
+
+export function ThemeModeProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const contextValue = useThemeModeController();
 
   return (
     <ThemeModeContext.Provider value={contextValue}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
-      </ThemeProvider>
+      {children}
     </ThemeModeContext.Provider>
   );
 }

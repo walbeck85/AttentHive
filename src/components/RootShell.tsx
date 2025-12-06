@@ -30,10 +30,6 @@ export default function RootShell({ children }: RootShellProps) {
 
   return (
     <Box
-      // Hydration warning here is caused by Emotion inserting global
-      // style tags differently between server and client. This flag
-      // tells React to accept the server HTML and let Emotion manage
-      // its own <style> tags without shouting at us.
       suppressHydrationWarning
       sx={{
         minHeight: "100vh",

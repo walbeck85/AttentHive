@@ -7,7 +7,7 @@ import PetList from "@/components/pets/PetList";
 import AddPetForm from "@/components/pets/AddPetForm";
 // MUI layout shell for the dashboard – this keeps spacing, max-width, and card
 // geometry aligned with the global theme instead of hand-tuned Tailwind margins.
-import { Box, Container, Paper, Stack, Typography } from "@mui/material";
+import { Container, Paper, Stack, Typography } from "@mui/material";
 
 // Server-rendered dashboard. This page always runs on the server, so it can
 // talk directly to Prisma and NextAuth without shipping any of that to the client.
@@ -69,224 +69,179 @@ export default async function DashboardPage() {
   }));
 
   return (
-    // Main background still respects the existing mm tokens, but we lean on MUI
-    // for min-height and typography color so the dashboard feels native to the theme.
-    <Box
-      component="main"
-      className="bg-mm-bg text-mm-ink"
-      sx={{
-        bgcolor: "background.default",
-        color: "text.primary",
-        minHeight: "100vh",
-      }}
-    >
-      {/* Container keeps the dashboard readable on large screens and gives us
-          a single place to tweak horizontal padding later instead of hunting
-          down individual divs. */}
-      <Container
-        maxWidth="lg"
-        sx={{
-          py: { xs: 4, md: 6 },
-        }}
-      >
-        {/* Stack handles vertical spacing between sections so we are not
-            micro-managing margin utilities on every card. */}
-        <Stack spacing={3.5}>
-          {/* Overview card */}
-          <Paper
-            elevation={0}
+    <Container maxWidth="lg" sx={{ py: 5 }}>
+      <Stack spacing={4}>
+        {/* Hero to mirror the Care Circle treatment */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 3,
+            borderRadius: 2,
+            border: 1,
+            borderColor: "divider",
+            bgcolor: "warning.main",
+            color: "warning.contrastText",
+          }}
+        >
+          <Typography
+            variant="overline"
             sx={{
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "divider",
-              bgcolor: "background.paper",
-              px: { xs: 2.5, md: 3 },
-              py: { xs: 3, md: 3.5 },
+              display: "block",
+              mb: 1,
+              letterSpacing: "0.2em",
+              opacity: 0.9,
             }}
           >
-            <Typography
-              variant="overline"
-              sx={{
-                mb: 1,
-                fontWeight: 600,
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                color: "text.secondary",
-                fontSize: 11,
-              }}
-            >
-              Dashboard
-            </Typography>
+            Dashboard
+          </Typography>
 
-            <Typography
-              variant="h4"
-              component="h1"
-              sx={{
-                mb: 1.5,
-                fontWeight: 600,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Manage your home
-            </Typography>
+          <Typography variant="h4" component="h1" sx={{ mb: 1.5 }}>
+            Manage your home
+          </Typography>
 
+          <Typography variant="body2" sx={{ mb: 1.5, opacity: 0.9 }}>
+            Keep track of pets, plants, family, and housemates you&apos;re caring
+            for in one place.
+          </Typography>
+
+          <Typography variant="body2" sx={{ opacity: 0.9 }}>
+            Welcome, {sessionUser.name ?? sessionUser.email ?? "friend"}
+          </Typography>
+        </Paper>
+
+        {/* Add pet card */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2.5, md: 3 },
+            borderRadius: 2,
+            border: 1,
+            borderColor: "divider",
+            bgcolor: "background.paper",
+          }}
+        >
+          <Typography
+            variant="overline"
+            component="h2"
+            sx={{
+              mb: 1,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "text.secondary",
+              fontSize: 12,
+            }}
+          >
+            Add new pet
+          </Typography>
+
+          <Typography
+            variant="body2"
+            sx={{ mb: 2, color: "text.secondary" }}
+          >
+            Create a profile for another member of your household.
+          </Typography>
+
+          {/* Keeping AddPetForm as-is so all existing validation, routing, and
+              success handling continues to behave the same; we’re only changing
+              the shell it lives inside. */}
+          <AddPetForm />
+        </Paper>
+
+        {/* Owned pets */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2.5, md: 3 },
+            borderRadius: 2,
+            border: 1,
+            borderColor: "divider",
+            bgcolor: "background.paper",
+          }}
+        >
+          <Typography
+            variant="h6"
+            component="h2"
+            sx={{
+              mb: 0.75,
+              fontWeight: 600,
+              letterSpacing: "-0.01em",
+              display: "flex",
+              alignItems: "baseline",
+              gap: 0.75,
+            }}
+          >
+            Pets you own
             <Typography
+              component="span"
               variant="body2"
-              sx={{ mb: 1.5 }}
-              color="text.secondary"
-            >
-              Keep track of pets, plants, family, and housemates you&apos;re caring
-              for in one place.
-            </Typography>
-
-            <Typography variant="body2" color="text.secondary">
-              {/* Prefer the user&apos;s name, but fall back to email so this never looks broken
-                  if their profile is half-filled. */}
-              Welcome, {sessionUser.name ?? sessionUser.email ?? "friend"}
-            </Typography>
-          </Paper>
-
-          {/* Add pet card */}
-          <Paper
-            elevation={0}
-            sx={{
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "divider",
-              bgcolor: "background.paper",
-              px: { xs: 2.5, md: 3 },
-              py: { xs: 3, md: 3.5 },
-            }}
-          >
-            <Typography
-              variant="overline"
-              component="h2"
               sx={{
-                mb: 1,
-                fontWeight: 600,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "text.secondary",
                 fontSize: 12,
+                fontWeight: 500,
+                color: "text.secondary",
               }}
             >
-              Add new pet
+              ({ownedPetsWithFlag.length})
             </Typography>
+          </Typography>
 
-            <Typography
-              variant="body2"
-              sx={{ mb: 2 }}
-              color="text.secondary"
-            >
-              Create a profile for another member of your household.
-            </Typography>
+          <Typography
+            variant="body2"
+            sx={{ mb: 2, color: "text.secondary" }}
+          >
+            Pets you created and fully manage.
+          </Typography>
 
-            {/* Keeping AddPetForm as-is so all existing validation, routing, and
-                success handling continues to behave the same; we’re only changing
-                the shell it lives inside. */}
-            <AddPetForm />
-          </Paper>
+          <PetList pets={ownedPetsWithFlag} />
+        </Paper>
 
-          {/* Owned pets */}
-          <Paper
-            elevation={0}
+        {/* Shared pets */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2.5, md: 3 },
+            borderRadius: 2,
+            border: 1,
+            borderColor: "divider",
+            bgcolor: "background.paper",
+            mb: 2,
+          }}
+        >
+          <Typography
+            variant="h6"
+            component="h2"
             sx={{
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "divider",
-              bgcolor: "background.paper",
-              px: { xs: 2.5, md: 3 },
-              py: { xs: 3, md: 3.5 },
+              mb: 0.75,
+              fontWeight: 600,
+              letterSpacing: "-0.01em",
+              display: "flex",
+              alignItems: "baseline",
+              gap: 0.75,
             }}
           >
+            Pets you care for
             <Typography
-              variant="h6"
-              component="h2"
+              component="span"
+              variant="body2"
               sx={{
-                mb: 0.75,
-                fontWeight: 600,
-                letterSpacing: "-0.01em",
-                display: "flex",
-                alignItems: "baseline",
-                gap: 0.75,
+                fontSize: 12,
+                fontWeight: 500,
+                color: "text.secondary",
               }}
             >
-              Pets you own
-              <Typography
-                component="span"
-                variant="body2"
-                sx={{
-                  fontSize: 12,
-                  fontWeight: 500,
-                  color: "text.secondary",
-                }}
-              >
-                ({ownedPetsWithFlag.length})
-              </Typography>
+              ({sharedPetsWithFlag.length})
             </Typography>
+          </Typography>
 
-            <Typography
-              variant="body2"
-              sx={{ mb: 2 }}
-              color="text.secondary"
-            >
-              Pets you created and fully manage.
-            </Typography>
-
-            <PetList pets={ownedPetsWithFlag} />
-          </Paper>
-
-          {/* Shared pets */}
-          <Paper
-            elevation={0}
-            sx={{
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "divider",
-              bgcolor: "background.paper",
-              px: { xs: 2.5, md: 3 },
-              py: { xs: 3, md: 3.5 },
-              mb: 2,
-            }}
+          <Typography
+            variant="body2"
+            sx={{ mb: 2, color: "text.secondary" }}
           >
-            <Typography
-              variant="h6"
-              component="h2"
-              sx={{
-                mb: 0.75,
-                fontWeight: 600,
-                letterSpacing: "-0.01em",
-                display: "flex",
-                alignItems: "baseline",
-                gap: 0.75,
-              }}
-            >
-              Pets you care for
-              <Typography
-                component="span"
-                variant="body2"
-                sx={{
-                  fontSize: 12,
-                  fontWeight: 500,
-                  color: "text.secondary",
-                }}
-              >
-                ({sharedPetsWithFlag.length})
-              </Typography>
-            </Typography>
+            Pets shared with you as a caregiver.
+          </Typography>
 
-            <Typography
-              variant="body2"
-              sx={{ mb: 2 }}
-              color="text.secondary"
-            >
-              Pets shared with you as a caregiver.
-            </Typography>
-
-            <PetList pets={sharedPetsWithFlag} />
-          </Paper>
-        </Stack>
-      </Container>
-    </Box>
+          <PetList pets={sharedPetsWithFlag} />
+        </Paper>
+      </Stack>
+    </Container>
   );
 }

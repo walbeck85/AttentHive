@@ -2,6 +2,8 @@
 'use client';
 
 import React from 'react';
+import { Box, Button, Paper, Stack, Typography } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 
 type ConfirmActionModalProps = {
   open: boolean;
@@ -15,8 +17,7 @@ type ConfirmActionModalProps = {
 
 /**
  * Full-screen confirmation modal for quick actions.
- * Uses inline styles for the overlay + card so it cannot be
- * accidentally affected by Tailwind or global CSS.
+ * Styled with the MUI theme so it matches light/dark mode surfaces.
  */
 export default function ConfirmActionModal({
   open,
@@ -27,65 +28,113 @@ export default function ConfirmActionModal({
   onConfirm,
   onCancel,
 }: ConfirmActionModalProps) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
   if (!open) return null;
 
+  const overlayColor = alpha(
+    theme.palette.common.black,
+    isDark ? 0.65 : 0.4
+  );
+
+  const cardBg = isDark ? '#0C1326' : '#FFF9F0';
+  const cardBorder = isDark
+    ? alpha(theme.palette.common.white, 0.08)
+    : '#D1C3A5';
+  const cardShadow = isDark
+    ? '0 28px 70px rgba(0, 0, 0, 0.7)'
+    : '0 20px 50px rgba(0, 0, 0, 0.35)';
+
   return (
-    <div
+    <Box
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-dialog-title"
-      // Full-screen dimmed overlay
-      style={{
+      aria-describedby="confirm-dialog-description"
+      sx={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9999,
-        backgroundColor: 'rgba(0, 0, 0, 0.35)',
+        zIndex: theme.zIndex.modal,
+        backgroundColor: overlayColor,
+        backdropFilter: 'blur(2px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        px: 2,
+        py: 3,
       }}
       onClick={onCancel} // click on backdrop closes
     >
-      {/* Modal card */}
-      <div
+      <Paper
         onClick={(event) => event.stopPropagation()} // don't close when clicking inside
-        style={{
-          maxWidth: '420px',
-          width: '90%',
-          borderRadius: '0.75rem',
-          backgroundColor: '#FFF9F0', // distinct from page background
-          border: '1px solid #D1C3A5',
-          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.35)',
-          padding: '1.5rem 1.75rem',
+        elevation={0}
+        sx={{
+          maxWidth: 440,
+          width: 'min(440px, 100%)',
+          borderRadius: 3,
+          bgcolor: cardBg,
+          border: `1px solid ${cardBorder}`,
+          boxShadow: cardShadow,
+          px: { xs: 2.5, sm: 3 },
+          py: { xs: 2.25, sm: 2.75 },
+          color: theme.palette.text.primary,
         }}
       >
-        <h2
-          id="confirm-dialog-title"
-          className="mb-2 text-base font-semibold text-[#382110] text-center"
-        >
-          {title}
-        </h2>
-
-        <p className="mb-4 text-sm text-[#7A6A56] text-center">{body}</p>
-
-        <div className="mt-2 flex justify-center gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="mm-chip"
+        <Stack spacing={1.5} alignItems="center" textAlign="center">
+          <Typography
+            id="confirm-dialog-title"
+            variant="h6"
+            sx={{ fontWeight: 700 }}
           >
-            {cancelLabel}
-          </button>
+            {title}
+          </Typography>
 
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="mm-chip mm-chip--solid-primary"
+          <Typography
+            id="confirm-dialog-description"
+            variant="body2"
+            color="text.secondary"
+            sx={{ maxWidth: 360 }}
           >
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
+            {body}
+          </Typography>
+
+          <Stack direction="row" spacing={1.5} justifyContent="center" width="100%" pt={0.5}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={onCancel}
+              sx={{
+                borderColor: isDark
+                  ? alpha(theme.palette.common.white, 0.25)
+                  : theme.palette.divider,
+                color: theme.palette.text.primary,
+                px: 2.5,
+                minWidth: 120,
+                fontWeight: 600,
+              }}
+            >
+              {cancelLabel}
+            </Button>
+
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={onConfirm}
+              sx={{
+                px: 2.75,
+                minWidth: 130,
+                fontWeight: 700,
+                boxShadow: isDark
+                  ? '0 8px 20px rgba(255, 145, 101, 0.35)'
+                  : '0 8px 18px rgba(255, 145, 101, 0.25)',
+              }}
+            >
+              {confirmLabel}
+            </Button>
+          </Stack>
+        </Stack>
+      </Paper>
+    </Box>
   );
 }

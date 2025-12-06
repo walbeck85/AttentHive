@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
+import { Box, Stack, Typography } from '@mui/material';
 
 // For now we keep this component very self-contained so any issues with
 // Supabase or the API route are obvious in one place.
@@ -115,53 +116,86 @@ export default function PetPhotoUpload({
   }
 
   return (
-    <div className="flex flex-col gap-4 md:flex-row md:items-start">
+    <Stack
+      direction={{ xs: 'column', md: 'row' }}
+      spacing={{ xs: 2.5, sm: 3 }}
+      alignItems={{ xs: 'flex-start', md: 'flex-start' }}
+      sx={{ width: '100%', minWidth: 0 }}
+    >
       {/* Left: tightly bounded preview so this never turns into a hero banner. */}
-      <div className="flex flex-col items-center gap-2 md:items-start">
-        <div className="overflow-hidden rounded-3xl border border-[#E5D9C6] bg-[#FAF3E7]">
-          {/* 
-            Hard-bounding the thumbnail:
-            - Fixed aspect ratio so we always crop, never stretch
-            - Narrow width so it feels like a card thumbnail, not the main event
-          */}
-          <div className="relative w-32 aspect-[4/5] md:w-40 lg:w-44">
-            {imageUrl ? (
-            // Preview uses a local object URL from the file input, which is a better fit for a plain img
-            // than wiring this through Next's Image component. Keeping this simple avoids over-optimizing the upload flow.
+      <Stack
+        spacing={1.5}
+        alignItems={{ xs: 'center', md: 'flex-start' }}
+        sx={{
+          width: { xs: '100%', md: 'auto' },
+          maxWidth: { xs: '100%', sm: 360, md: 360 },
+          flexShrink: 0,
+        }}
+      >
+        <Box
+          sx={{
+            width: { xs: '100%', sm: 320, md: 360 },
+            maxWidth: '100%',
+            aspectRatio: '4 / 5',
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            overflow: 'hidden',
+          }}
+        >
+          {imageUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={imageUrl}
-                alt={`${name} photo`}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center">
-                <span className="mm-muted-sm">No photo</span>
-              </div>
-            )}
-          </div>
-        </div>
+            <img
+              src={imageUrl}
+              alt={`${name} photo`}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <Stack
+              sx={{ width: '100%', height: '100%' }}
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Typography variant="body2" color="text.secondary">
+                No photo
+              </Typography>
+            </Stack>
+          )}
+        </Box>
         {status && (
-          <p className="text-xs text-[#7A6A56] text-center md:text-left max-w-xs">
+          <Typography variant="caption" color="text.secondary" textAlign="center">
             {status}
-          </p>
+          </Typography>
         )}
         {error && (
-          <p className="text-xs text-red-700 text-center md:text-left max-w-xs">
+          <Typography variant="caption" color="error" textAlign="center">
             {error}
-          </p>
+          </Typography>
         )}
-      </div>
+      </Stack>
 
       {/* Right: upload controls and helper copy. */}
-      <div className="flex-1 space-y-2 text-sm">
-        <p className="font-semibold text-[#382110]">Pet photo</p>
-        <p className="mm-muted-sm">
-          Upload a clear photo so the care circle knows exactly who they&apos;re
-          looking after.
-        </p>
+      <Stack
+        spacing={1}
+        flex={1}
+        sx={{
+          minWidth: 0,
+          width: '100%',
+          pt: { xs: 0, md: 2 },
+          pb: { md: 1 },
+          alignSelf: { md: 'stretch' },
+          justifyContent: { md: 'flex-end' },
+        }}
+      >
+        <Typography variant="subtitle2" color="text.primary">
+          Pet photo
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Upload a clear photo so the care circle knows exactly who they&apos;re looking after.
+        </Typography>
 
-        <div className="mt-2">
+        <Box>
           <input
             ref={fileInputRef}
             type="file"
@@ -169,14 +203,14 @@ export default function PetPhotoUpload({
             onChange={handleFileChange}
             disabled={isUploading}
           />
-        </div>
+        </Box>
 
         {isUploading && (
-          <p className="mm-muted-sm mt-2">
+          <Typography variant="body2" color="text.secondary">
             Uploading photo… this might take a moment for larger images.
-          </p>
+          </Typography>
         )}
-      </div>
-    </div>
+      </Stack>
+    </Stack>
   );
 }
