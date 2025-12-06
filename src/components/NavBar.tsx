@@ -124,6 +124,63 @@ export default function NavBar({
               </ListItemButton>
             );
           })}
+
+          {/* Mobile-first auth actions live directly in the drawer so they are always reachable on small screens. */}
+          {status !== "loading" && (
+            <>
+              {!isAuthed ? (
+                <>
+                  <ListItemButton
+                    component={Link}
+                    href="/login"
+                    selected={pathname === "/login"}
+                    onClick={onToggleMobileDrawer}
+                    sx={{
+                      "&.Mui-selected": {
+                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        "&:hover": {
+                          bgcolor: alpha(theme.palette.primary.main, 0.12),
+                        },
+                      },
+                    }}
+                  >
+                    <ListItemText primary="Log in" />
+                  </ListItemButton>
+
+                  <ListItemButton
+                    component={Link}
+                    href="/signup"
+                    selected={pathname === "/signup"}
+                    onClick={onToggleMobileDrawer}
+                    sx={{
+                      "&.Mui-selected": {
+                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        "&:hover": {
+                          bgcolor: alpha(theme.palette.primary.main, 0.12),
+                        },
+                      },
+                    }}
+                  >
+                    <ListItemText primary="Sign up" />
+                  </ListItemButton>
+                </>
+              ) : (
+                <ListItemButton
+                  onClick={handleLogout}
+                  sx={{
+                    "&.Mui-selected": {
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      "&:hover": {
+                        bgcolor: alpha(theme.palette.primary.main, 0.12),
+                      },
+                    },
+                  }}
+                >
+                  <ListItemText primary="Log out" />
+                </ListItemButton>
+              )}
+            </>
+          )}
         </List>
       </Box>
 

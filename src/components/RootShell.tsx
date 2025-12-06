@@ -14,7 +14,14 @@ const DRAWER_WIDTH = 280;
 
 export default function RootShell({ children }: RootShellProps) {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+  // Use noSsr so the media query is only evaluated on the client.
+  // This keeps the server-rendered markup stable and avoids layout
+  // decisions that depend on a "fake" server match.
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"), {
+    noSsr: true,
+  });
+
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleToggleMobileDrawer = () => {
@@ -23,6 +30,11 @@ export default function RootShell({ children }: RootShellProps) {
 
   return (
     <Box
+      // Hydration warning here is caused by Emotion inserting global
+      // style tags differently between server and client. This flag
+      // tells React to accept the server HTML and let Emotion manage
+      // its own <style> tags without shouting at us.
+      suppressHydrationWarning
       sx={{
         minHeight: "100vh",
         bgcolor: "background.default",
