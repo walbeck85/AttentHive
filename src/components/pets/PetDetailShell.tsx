@@ -1,5 +1,5 @@
 // src/components/pets/PetDetailShell.tsx
-import React, { type ReactNode } from 'react';
+import React, { Children, type ReactNode } from 'react';
 import { Box, Container, Stack } from '@mui/material';
 
 type PetDetailShellProps = {
@@ -9,6 +9,8 @@ type PetDetailShellProps = {
 // This shell owns the outer layout for the pet detail page so the main component
 // can focus on composing sections instead of repeating Box/Container/Stack markup.
 export default function PetDetailShell({ children }: PetDetailShellProps) {
+  const sections = Children.toArray(children);
+
   return (
     <Box
       component="main"
@@ -20,7 +22,7 @@ export default function PetDetailShell({ children }: PetDetailShellProps) {
       }}
     >
       <Container maxWidth="lg">
-        <Stack spacing={3.5}>{children}</Stack>
+        <Stack spacing={3.5}>{sections}</Stack>
       </Container>
     </Box>
   );

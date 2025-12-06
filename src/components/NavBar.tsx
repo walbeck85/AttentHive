@@ -16,7 +16,6 @@ import {
   ListItemText,
   Toolbar,
   Typography,
-  useMediaQuery,
   useTheme,
   ListSubheader,
   ToggleButton,
@@ -55,7 +54,6 @@ export default function NavBar({
   drawerWidth,
 }: NavBarProps) {
   const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const { mode, setMode } = useThemeMode();
   const { data: session, status } = useSession();
   const pathname = usePathname();
@@ -281,6 +279,7 @@ export default function NavBar({
         position="sticky"
         elevation={0}
         color="transparent"
+        suppressHydrationWarning
         sx={{
           borderBottom: 1,
           borderColor: "divider",
@@ -329,37 +328,34 @@ export default function NavBar({
           <Box sx={{ flexGrow: 1 }} />
 
           {/* Desktop nav links */}
-          {isDesktop && (
-            <Box
-              component="nav"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                mr: 3,
-              }}
-            >
-              {filteredLinks.map((link) => {
-                const selected =
-                  pathname === link.href ||
-                  pathname?.startsWith(link.href + "/");
-                return (
-                  <Button
-                    key={link.href}
-                    component={Link}
-                    href={link.href}
-                    color={selected ? "primary" : "inherit"}
-                    sx={{
-                      fontWeight: selected ? 700 : 500,
-                      textTransform: "none",
-                    }}
-                  >
-                    {link.label}
-                  </Button>
-                );
-              })}
-            </Box>
-          )}
+          <Box
+            component="nav"
+            sx={{
+              display: { xs: "none", md: "flex" },
+              alignItems: "center",
+              gap: 2,
+              mr: 3,
+            }}
+          >
+            {filteredLinks.map((link) => {
+              const selected =
+                pathname === link.href || pathname?.startsWith(link.href + "/");
+              return (
+                <Button
+                  key={link.href}
+                  component={Link}
+                  href={link.href}
+                  color={selected ? "primary" : "inherit"}
+                  sx={{
+                    fontWeight: selected ? 700 : 500,
+                    textTransform: "none",
+                  }}
+                >
+                  {link.label}
+                </Button>
+              );
+            })}
+          </Box>
 
           {/* Auth actions on the right */}
           {status !== "loading" && (

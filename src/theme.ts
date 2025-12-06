@@ -67,6 +67,27 @@ export function getDesignTokens(mode: PaletteMode): ThemeOptions {
     },
 
     components: {
+      MuiCssBaseline: {
+        styleOverrides: {
+          "html, body": {
+            margin: 0,
+            padding: 0,
+            minHeight: "100%",
+          },
+          body: {
+            backgroundColor: isDark ? "#020617" : "#FCFCFC",
+            color: isDark ? "#F9FAFB" : "#1A2340",
+            fontFamily:
+              "'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          },
+          "#__next, body > div:first-of-type": {
+            minHeight: "100%",
+            display: "flex",
+            flexDirection: "column",
+          },
+        },
+      },
+
       // Preserve existing button styling (pill-shaped CTAs).
       MuiButton: {
         styleOverrides: {

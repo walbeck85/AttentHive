@@ -37,8 +37,8 @@ export default async function AccountPage() {
   return (
     // Using the same Container/Stack pattern as the dashboard and Care Circle
     // so spacing, max-width, and typography all feel like one coherent app.
-    <Container maxWidth="md" sx={{ py: { xs: 3, md: 4 } }}>
-      <Stack spacing={{ xs: 3, md: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 5 }}>
+      <Stack spacing={4}>
         <AccountHeaderSection user={user} />
         <AccountProfileSection user={user} />
         <AccountSharedPetsSection
@@ -57,12 +57,24 @@ function AccountHeaderSection({
   user: AccountPageData["user"];
 }) {
   return (
-    <Box>
+    <Paper
+      elevation={0}
+      sx={{
+        p: 3,
+        borderRadius: 2,
+        border: 1,
+        borderColor: "divider",
+        bgcolor: "warning.main",
+        color: "warning.contrastText",
+      }}
+    >
       <Typography
         variant="overline"
         sx={{
-          color: "text.secondary",
-          letterSpacing: 1.2,
+          display: "block",
+          mb: 1,
+          letterSpacing: "0.2em",
+          opacity: 0.9,
         }}
       >
         ACCOUNT
@@ -71,7 +83,7 @@ function AccountHeaderSection({
       <Typography
         variant="h4"
         component="h1"
-        sx={{ mt: 0.5 }}
+        sx={{ mb: 1.5 }}
       >
         My profile
       </Typography>
@@ -80,7 +92,7 @@ function AccountHeaderSection({
           to keep contact info accurate so shared-care actually works. */}
       <Typography
         variant="body1"
-        sx={{ mt: 1.5, maxWidth: 600 }}
+        sx={{ mb: 1.5, maxWidth: 720, opacity: 0.9 }}
       >
         Review and update your contact details so this account stays
         current and actually usable for the people you share care with.
@@ -90,11 +102,11 @@ function AccountHeaderSection({
           the layout around it. */}
       <Typography
         variant="body2"
-        sx={{ mt: 1, color: "text.secondary" }}
+        sx={{ opacity: 0.9 }}
       >
         Signed in as {user.name ?? user.email}
       </Typography>
-    </Box>
+    </Paper>
   );
 }
 
@@ -111,8 +123,8 @@ function AccountProfileSection({
       elevation={0}
       sx={{
         p: { xs: 2.5, md: 3 },
-        borderRadius: 16,
-        border: "1px solid",
+        borderRadius: 2,
+        border: 1,
         borderColor: "divider",
         bgcolor: "background.paper",
       }}
@@ -165,8 +177,8 @@ function AccountSharedPetsSection({
       elevation={0}
       sx={{
         p: { xs: 2.5, md: 3 },
-        borderRadius: 16,
-        border: "1px solid",
+        borderRadius: 2,
+        border: 1,
         borderColor: "divider",
         bgcolor: "background.paper",
       }}

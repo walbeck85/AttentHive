@@ -1,9 +1,10 @@
 'use client';
 // Imports ------------------------------------------------------
 import { useState } from 'react';
+import type { CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import BreedSelect from './BreedSelect';
-import { useTheme } from '@mui/material/styles';
+import { alpha, useTheme } from '@mui/material/styles';
 import {
   PET_CHARACTERISTICS,
   type PetCharacteristicId,
@@ -35,6 +36,32 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
+  const borderColor = theme.palette.divider;
+  const surfaceColor = theme.palette.background.paper;
+  const subtleSurface = isDarkMode
+    ? theme.palette.background.default
+    : '#FFFDF8';
+  const textPrimary = theme.palette.text.primary;
+  const textSecondary = theme.palette.text.secondary;
+  const accent = theme.palette.primary.main;
+  const ctaBackground = isDarkMode ? alpha(accent, 0.14) : subtleSurface;
+  const ctaBorder = isDarkMode ? alpha(accent, 0.45) : borderColor;
+
+  const inputStyles: CSSProperties = {
+    backgroundColor: subtleSurface,
+    borderColor,
+    color: textPrimary,
+  };
+
+  const labelStyles: CSSProperties = {
+    color: textSecondary,
+    letterSpacing: '0.12em',
+  };
+
+  const focusRingStyle: CSSProperties = {
+    // Tailwind focus ring uses this CSS variable; set it to the brand accent
+    '--tw-ring-color': accent,
+  } as CSSProperties;
 
   // Form State
   const [formData, setFormData] = useState<FormState>({
@@ -185,25 +212,26 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
       <div
         className="mm-card mb-6 border"
         style={{
-          borderColor: isDarkMode ? theme.palette.divider : '#E1D6C5',
-          backgroundColor: isDarkMode ? theme.palette.background.paper : '#FBF4E8',
-          color: theme.palette.text.primary,
+          borderColor: ctaBorder,
+          backgroundColor: ctaBackground,
+          color: textPrimary,
         }}
       >
         <button
           type="button"
           onClick={() => setIsExpanded(true)}
-          className="flex w-full items-center justify-between px-4 py-3 text-left"
+          className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-transparent"
+          style={{ color: textPrimary }}
         >
-          <div>
-            <p className="text-[11px] font-semibold tracking-[0.12em] text-[#A68A5B] uppercase">
-              Add new pet
-            </p>
-            <p className="mt-1 text-sm text-[#5C4A34]">
-              Create a profile for another member of your household.
-            </p>
+          <p
+            className="text-sm font-semibold uppercase tracking-[0.12em]"
+            style={{ color: isDarkMode ? textPrimary : textSecondary }}
+          >
+            Open add pet form
+          </p>
+          <div className="ml-4 text-xl font-semibold" style={{ color: accent }}>
+            ›
           </div>
-          <div className="ml-4 text-xl font-semibold text-[#3E6B3A]">›</div>
         </button>
       </div>
     );
@@ -214,9 +242,9 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
     <div
       className="mm-card mb-6 border p-4 md:p-6 relative"
       style={{
-        borderColor: isDarkMode ? theme.palette.divider : '#E1D6C5',
-        backgroundColor: isDarkMode ? theme.palette.background.paper : '#FFFDF8',
-        color: theme.palette.text.primary,
+        borderColor,
+        backgroundColor: surfaceColor,
+        color: textPrimary,
       }}
     >
       <button
@@ -225,17 +253,28 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
           resetForm();
           setIsExpanded(false);
         }}
-        className="absolute top-3 right-3 text-sm text-[#B39A80] hover:text-[#5C4A34] transition-colors"
+        className="absolute top-3 right-3 text-sm transition-colors"
+        style={{ color: textSecondary }}
       >
         ✕
       </button>
 
-      <h2 className="mb-4 text-lg font-semibold tracking-[0.16em] text-[#A68A5B] uppercase">
+      <h2
+        className="mb-4 text-lg font-semibold tracking-[0.16em] uppercase"
+        style={{ color: textSecondary }}
+      >
         Add New Pet
       </h2>
 
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div
+          className="mb-4 rounded-md border px-3 py-2 text-sm"
+          style={{
+            borderColor: alpha(theme.palette.error.main, 0.35),
+            backgroundColor: alpha(theme.palette.error.main, 0.1),
+            color: theme.palette.error.light,
+          }}
+        >
           {error}
         </div>
       )}
@@ -244,27 +283,36 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {/* Name */}
           <div>
-            <label className="mb-1 block text-[11px] font-semibold tracking-[0.12em] text-[#A08C72] uppercase">
+            <label
+              className="mb-1 block text-[11px] font-semibold tracking-[0.12em] uppercase"
+              style={labelStyles}
+            >
               Name
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => updateField('name', e.target.value)}
-              className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+              className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
+              style={{ ...inputStyles, ...focusRingStyle }}
               placeholder="e.g. Truffle"
             />
             {fieldErrors.name && (
-              <p className="mt-1 text-[11px] text-red-600">{fieldErrors.name}</p>
+              <p className="mt-1 text-[11px]" style={{ color: theme.palette.error.main }}>
+                {fieldErrors.name}
+              </p>
             )}
           </div>
 
           {/* Type */}
           <div>
-            <label className="mb-1 block text-[11px] font-semibold tracking-[0.12em] text-[#A08C72] uppercase">
+            <label
+              className="mb-1 block text-[11px] font-semibold tracking-[0.12em] uppercase"
+              style={labelStyles}
+            >
               Type
             </label>
-            <div className="flex gap-4 text-sm text-[#3A2A18]">
+            <div className="flex gap-4 text-sm" style={{ color: textPrimary }}>
               <label className="flex cursor-pointer items-center gap-2">
                 <input
                   type="radio"
@@ -272,7 +320,8 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
                   value="DOG"
                   checked={formData.type === 'DOG'}
                   onChange={(e) => updateField('type', e.target.value as FormState['type'])}
-                  className="text-[#3E6B3A] focus:ring-[#3E6B3A]"
+                  className="focus:ring-offset-0"
+                  style={{ accentColor: accent }}
                 />
                 <span>Dog</span>
               </label>
@@ -283,7 +332,8 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
                   value="CAT"
                   checked={formData.type === 'CAT'}
                   onChange={(e) => updateField('type', e.target.value as FormState['type'])}
-                  className="text-[#3E6B3A] focus:ring-[#3E6B3A]"
+                  className="focus:ring-offset-0"
+                  style={{ accentColor: accent }}
                 />
                 <span>Cat</span>
               </label>
@@ -292,7 +342,10 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
 
           {/* Breed */}
           <div>
-            <label className="mb-1 block text-[11px] font-semibold tracking-[0.12em] text-[#A08C72] uppercase">
+            <label
+              className="mb-1 block text-[11px] font-semibold tracking-[0.12em] uppercase"
+              style={labelStyles}
+            >
               Breed
             </label>
             {/* Using the shared BreedSelect so dogs and cats get type-specific, searchable lists without changing the backend schema or validation rules. */}
@@ -303,13 +356,18 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
               required
             />
             {fieldErrors.breed && (
-              <p className="mt-1 text-[11px] text-red-600">{fieldErrors.breed}</p>
+              <p className="mt-1 text-[11px]" style={{ color: theme.palette.error.main }}>
+                {fieldErrors.breed}
+              </p>
             )}
           </div>
 
           {/* Gender */}
           <div>
-            <label className="mb-1 block text-[11px] font-semibold tracking-[0.12em] text-[#A08C72] uppercase">
+            <label
+              className="mb-1 block text-[11px] font-semibold tracking-[0.12em] uppercase"
+              style={labelStyles}
+            >
               Gender
             </label>
             <select
@@ -317,7 +375,8 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
               onChange={(e) =>
                 updateField('gender', e.target.value as FormState['gender'])
               }
-              className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+              className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
+              style={{ ...inputStyles, ...focusRingStyle }}
             >
               <option value="MALE">Male</option>
               <option value="FEMALE">Female</option>
@@ -326,17 +385,21 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
 
           {/* Birth Date */}
           <div>
-            <label className="mb-1 block text-[11px] font-semibold tracking-[0.12em] text-[#A08C72] uppercase">
+            <label
+              className="mb-1 block text-[11px] font-semibold tracking-[0.12em] uppercase"
+              style={labelStyles}
+            >
               Birth Date
             </label>
             <input
               type="date"
               value={formData.birthDate}
               onChange={(e) => updateField('birthDate', e.target.value)}
-              className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+              className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
+              style={{ ...inputStyles, ...focusRingStyle }}
             />
             {fieldErrors.birthDate && (
-              <p className="mt-1 text-[11px] text-red-600">
+              <p className="mt-1 text-[11px]" style={{ color: theme.palette.error.main }}>
                 {fieldErrors.birthDate}
               </p>
             )}
@@ -344,7 +407,10 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
 
           {/* Weight + Unit */}
           <div>
-            <label className="mb-1 block text-[11px] font-semibold tracking-[0.12em] text-[#A08C72] uppercase">
+            <label
+              className="mb-1 block text-[11px] font-semibold tracking-[0.12em] uppercase"
+              style={labelStyles}
+            >
               Weight
             </label>
             <div className="flex gap-2">
@@ -353,7 +419,8 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
                 step="0.1"
                 value={formData.weight}
                 onChange={(e) => updateField('weight', e.target.value)}
-                className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+                className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
+                style={{ ...inputStyles, ...focusRingStyle }}
                 placeholder="e.g. 25"
               />
               <select
@@ -364,14 +431,15 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
                     e.target.value as FormState['weightUnit']
                   )
                 }
-                className="w-24 rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+                className="w-24 rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
+                style={{ ...inputStyles, ...focusRingStyle }}
               >
                 <option value="lbs">lbs</option>
                 <option value="kg">kg</option>
               </select>
             </div>
             {fieldErrors.weight && (
-              <p className="mt-1 text-[11px] text-red-600">
+              <p className="mt-1 text-[11px]" style={{ color: theme.palette.error.main }}>
                 {fieldErrors.weight}
               </p>
             )}
@@ -379,10 +447,13 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
 
           {/* Characteristics */}
           <div className="md:col-span-2">
-            <label className="mb-1 block text-[11px] font-semibold tracking-[0.12em] text-[#A08C72] uppercase">
+            <label
+              className="mb-1 block text-[11px] font-semibold tracking-[0.12em] uppercase"
+              style={labelStyles}
+            >
               Characteristics
             </label>
-            <p className="mb-2 text-[12px] text-[#7A6A56]">
+            <p className="mb-2 text-[12px]" style={{ color: textSecondary }}>
               Add any safety or accessibility notes that should be visible on the pet card.
             </p>
             <div className="flex flex-wrap gap-2">
@@ -395,10 +466,21 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
                     onClick={() => toggleCharacteristic(option.id)}
                     className={[
                       'inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                      isSelected
-                        ? 'bg-[#FCEBE8] border-[#F5C6BE] text-[#8A3B32]'
-                        : 'bg-white border-[#E1D6C5] text-[#7A6A56] hover:bg-[#F7EFE3]',
+                      isSelected ? '' : 'hover:opacity-90',
                     ].join(' ')}
+                    style={
+                      isSelected
+                        ? {
+                            backgroundColor: alpha(accent, 0.16),
+                            borderColor: alpha(accent, 0.4),
+                            color: accent,
+                          }
+                        : {
+                            backgroundColor: subtleSurface,
+                            borderColor,
+                            color: textSecondary,
+                          }
+                    }
                   >
                     {option.label}
                   </button>
@@ -409,21 +491,31 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
         </div>
 
         {/* Actions */}
-        <div className="mt-2 flex justify-end gap-3 border-t border-[#E9DECF] pt-3">
+        <div
+          className="mt-2 flex justify-end gap-3 border-t pt-3"
+          style={{ borderColor }}
+        >
           <button
             type="button"
             onClick={() => {
               resetForm();
               setIsExpanded(false);
             }}
-            className="rounded-md px-4 py-1.5 text-sm font-medium text-[#6A5740] hover:bg-[#F3E6D3] transition-colors"
+            className="rounded-md px-4 py-1.5 text-sm font-medium transition-colors hover:opacity-80"
+            style={{
+              color: textSecondary,
+              backgroundColor: 'transparent',
+            }}
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-md bg-[#3E6B3A] px-5 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#355B32] disabled:opacity-50"
+            className="rounded-md px-5 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors disabled:opacity-50 hover:opacity-90"
+            style={{
+              backgroundColor: accent,
+            }}
           >
             {isSubmitting ? 'Adding…' : 'Add Pet'}
           </button>

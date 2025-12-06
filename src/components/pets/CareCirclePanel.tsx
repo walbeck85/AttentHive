@@ -1,6 +1,22 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import {
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 
 type CareCircleMember = {
   id: string;
@@ -51,7 +67,6 @@ export default function CareCirclePanel({
   async function handleInvite(event: FormEvent) {
     event.preventDefault();
 
-    // Basic guardrail so we do not hammer the backend with junk requests.
     if (!email.trim()) {
       setErrorMessage("Please enter an email address.");
       setSuccessMessage(null);
@@ -82,7 +97,6 @@ export default function CareCirclePanel({
         throw new Error(message);
       }
 
-      // After a successful invite, re-fetch the members list so UI stays in sync.
       const membersResponse = await fetch(
         `/api/care-circles/members?recipientId=${encodeURIComponent(
           recipientId,
@@ -96,8 +110,6 @@ export default function CareCirclePanel({
       const data =
         (await membersResponse.json()) as CareCircleMembersApiResponse;
 
-      // The members API returns CareCircle rows with an attached user object.
-      // Normalize into the shape this component expects.
       const refreshedMembers: CareCircleMember[] = (data.members ?? []).map(
         (membership) => ({
           id: membership.id,
@@ -122,9 +134,7 @@ export default function CareCirclePanel({
     }
   }
 
-  // Owner-only action: remove an existing caregiver/viewer from this pet.
   async function handleRemove(memberId: string) {
-    // Clear previous status so feedback always reflects the latest action.
     setErrorMessage(null);
     setSuccessMessage(null);
     setRemovingId(memberId);
@@ -148,7 +158,6 @@ export default function CareCirclePanel({
         throw new Error(message);
       }
 
-      // Update the local list so the UI reflects the removal immediately.
       setMembers((prev) => prev.filter((member) => member.id !== memberId));
       setSuccessMessage("Caregiver removed successfully.");
     } catch (error) {
@@ -163,88 +172,144 @@ export default function CareCirclePanel({
   }
 
   return (
-    <section className="mt-10 rounded-lg border border-neutral-200 bg-white p-4">
-      <h2 className="mb-2 text-lg font-semibold">Shared with</h2>
-      <p className="mb-4 text-sm text-neutral-600">
-        See who has access to this pet and, if you are the owner, invite
-        additional caregivers.
-      </p>
+    <Card
+      component="section"
+      elevation={0}
+      sx={{
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 2,
+        bgcolor: "background.paper",
+      }}
+    >
+      <CardHeader
+        title="Shared with"
+        subheader="See who has access to this pet and, if you are the owner, invite additional caregivers."
+        sx={{
+          pb: 0,
+          "& .MuiCardHeader-title": { fontWeight: 700 },
+          "& .MuiCardHeader-subheader": { color: "text.secondary" },
+        }}
+      />
 
-      {members.length === 0 ? (
-        <p className="mb-4 text-sm text-neutral-500">
-          This pet is not shared with anyone yet.
-        </p>
-      ) : (
-        <ul className="mb-4 space-y-2">
-          {members.map((member) => (
-            <li
-              key={member.id}
-              className="flex items-center justify-between rounded border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm"
+      <CardContent sx={{ pt: 1.5 }}>
+        <Stack spacing={2.5}>
+          {members.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              This pet is not shared with anyone yet.
+            </Typography>
+          ) : (
+            <List
+              disablePadding
+              dense
+              sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}
             >
-              <div>
-                <div className="font-medium">
-                  {member.userName || member.userEmail}
-                </div>
-                <div className="text-xs text-neutral-600">
-                  {member.userEmail}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs uppercase tracking-wide text-neutral-700">
-                  {member.role.toLowerCase()}
-                </span>
-                {isOwner && member.role !== "OWNER" && (
-                  <button
-                    type="button"
-                    onClick={() => handleRemove(member.id)}
-                    disabled={removingId === member.id}
-                    className="text-xs text-red-600 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+              {members.map((member) => (
+                <ListItem
+                  key={member.id}
+                  disableGutters
+                  sx={{
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 1.5,
+                    px: 1.5,
+                    py: 1.25,
+                    alignItems: "stretch",
+                    bgcolor: "background.default",
+                    flexDirection: { xs: "column", sm: "row" },
+                    gap: { xs: 1, sm: 0 },
+                  }}
+                >
+                  <Stack direction="row" spacing={1.5} alignItems="center" flex={1}>
+                    <ListItemAvatar sx={{ minWidth: 48 }}>
+                      <Avatar
+                        sx={{ bgcolor: "primary.light", color: "primary.dark" }}
+                      >
+                        {(member.userName || member.userEmail)
+                          .charAt(0)
+                          .toUpperCase()}
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={member.userName || member.userEmail}
+                      secondary={member.userEmail}
+                      primaryTypographyProps={{ fontWeight: 600 }}
+                      secondaryTypographyProps={{ color: "text.secondary" }}
+                      sx={{ mr: 2, wordBreak: "break-word", minWidth: 0 }}
+                    />
+                  </Stack>
+
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    alignItems="center"
+                    flexWrap="wrap"
+                    justifyContent={{ xs: "flex-start", sm: "flex-end" }}
                   >
-                    {removingId === member.id ? "Removing..." : "Remove"}
-                  </button>
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      label={member.role.toLowerCase()}
+                      sx={{
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
+                        fontWeight: 700,
+                      }}
+                    />
+                    {isOwner && member.role !== "OWNER" && (
+                      <Button
+                        type="button"
+                        size="small"
+                        color="error"
+                        onClick={() => handleRemove(member.id)}
+                        disabled={removingId === member.id}
+                      >
+                        {removingId === member.id ? "Removing…" : "Remove"}
+                      </Button>
+                    )}
+                  </Stack>
+                </ListItem>
+              ))}
+            </List>
+          )}
+
+          {isOwner && (
+            <Box component="form" onSubmit={handleInvite}>
+              <Stack spacing={1.25}>
+                <TextField
+                  type="email"
+                  label="Invite a caregiver by email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  size="small"
+                  placeholder="caregiver@example.com"
+                  required
+                />
+
+                {errorMessage && (
+                  <Typography variant="body2" color="error">
+                    {errorMessage}
+                  </Typography>
                 )}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+                {successMessage && (
+                  <Typography variant="body2" color="success.main">
+                    {successMessage}
+                  </Typography>
+                )}
 
-      {isOwner && (
-        <form className="space-y-3" onSubmit={handleInvite}>
-          <label className="block text-sm font-medium text-neutral-700">
-            Invite a caregiver by email
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-neutral-800 focus:outline-none focus:ring-1 focus:ring-neutral-800"
-              placeholder="caregiver@example.com"
-            />
-          </label>
-
-          {errorMessage && (
-            <p className="text-sm text-red-600">{errorMessage}</p>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={isSubmitting}
+                  sx={{ alignSelf: "flex-start", textTransform: "none" }}
+                >
+                  {isSubmitting ? "Inviting…" : "Invite caregiver"}
+                </Button>
+              </Stack>
+            </Box>
           )}
-          {successMessage && (
-            <p className="text-sm text-green-600">{successMessage}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="inline-flex items-center rounded-md border border-neutral-900 bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSubmitting ? "Inviting..." : "Invite caregiver"}
-          </button>
-        </form>
-      )}
-
-      {!isOwner && (
-        <p className="mt-2 text-xs text-neutral-500">
-          You can see who this pet is shared with, but only the owner can invite
-          new caregivers.
-        </p>
-      )}
-    </section>
+        </Stack>
+      </CardContent>
+    </Card>
   );
 }

@@ -34,6 +34,8 @@ function formatDateTime(dateString: string): string {
     hour: 'numeric',
     minute: 'numeric',
     hour12: true,
+    // Pin timezone so SSR and client renders stay in sync.
+    timeZone: 'UTC',
   }).format(date);
 }
 
