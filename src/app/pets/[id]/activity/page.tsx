@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import PetAvatar from '@/components/pets/PetAvatar';
+import { Box, Button, Typography } from '@mui/material';
 
 // Types --------------------------------------------------------
 
@@ -133,13 +134,21 @@ export default function ActivityLogPage() {
       <main className="mm-shell space-y-6">
         {/* Back + header */}
         <section className="mm-section">
-          <button
+          <Button
             type="button"
             onClick={() => router.back()}
-            className="mm-chip"
+            variant="outlined"
+            size="small"
+            sx={{
+              borderRadius: '9999px',
+              textTransform: 'none',
+              fontSize: 13,
+              px: 1.75,
+              py: 0.5,
+            }}
           >
             ← Back
-          </button>
+          </Button>
 
           <div className="mt-4 mm-card px-5 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -168,18 +177,22 @@ export default function ActivityLogPage() {
                     : ACTIVITY_LABELS[type as ActivityType];
 
                   return (
-                    <button
+                    <Button
                       key={type}
                       type="button"
                       onClick={() =>
                         setFilter(type === 'ALL' ? 'ALL' : (type as ActivityType))
                       }
-                      className={`mm-chip ${
-                        isActive ? 'mm-chip--solid-primary' : ''
-                      }`}
+                      variant={isActive ? 'contained' : 'outlined'}
+                      size="small"
+                      sx={{
+                        borderRadius: '9999px',
+                        textTransform: 'none',
+                        fontSize: 13,
+                      }}
                     >
                       {label}
-                    </button>
+                    </Button>
                   );
                 }
               )}
@@ -197,28 +210,69 @@ export default function ActivityLogPage() {
             ) : (
               <ul className="space-y-3 text-sm">
                 {filteredLogs.map((log) => (
-                  <li
+                  <Box
                     key={log.id}
-                    className="flex items-start justify-between border-b border-[#E5D9C6]/60 pb-2 last:border-0 last:pb-0"
+                    component="li"
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      pb: 2,
+                      borderBottom: '1px solid',
+                      borderColor: 'divider',
+                      '&:last-of-type': {
+                        borderBottom: 'none',
+                        pb: 0,
+                      },
+                    }}
                   >
                     <div>
-                      <p className="font-semibold text-[#382110]">
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 600,
+                          color: (theme) =>
+                            theme.palette.mode === 'dark'
+                              ? theme.palette.text.primary
+                              : '#382110',
+                        }}
+                      >
                         {ACTIVITY_LABELS[log.activityType]}
-                      </p>
-                      <p className="mm-muted-sm">
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        className="mm-muted-sm"
+                        sx={{ fontSize: 13, mt: 0.25 }}
+                      >
                         by{' '}
-                        <span className="text-[#D17D45] font-medium">
+                        <Box
+                          component="span"
+                          sx={{ color: '#D17D45', fontWeight: 500 }}
+                        >
                           {log.user?.name || 'Someone'}
-                        </span>
-                      </p>
+                        </Box>
+                      </Typography>
                       {log.notes && (
-                        <p className="mt-1 text-xs text-[#7A6A56]">
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            mt: 1,
+                            fontSize: 12,
+                            color: 'text.secondary',
+                          }}
+                        >
                           {log.notes}
-                        </p>
+                        </Typography>
                       )}
                     </div>
-                    <p className="mm-meta">{formatDateTime(log.createdAt)}</p>
-                  </li>
+                    <Typography
+                      variant="caption"
+                      className="mm-meta"
+                      sx={{ whiteSpace: 'nowrap', color: 'text.secondary' }}
+                    >
+                      {formatDateTime(log.createdAt)}
+                    </Typography>
+                  </Box>
                 ))}
               </ul>
             )}

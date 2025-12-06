@@ -40,6 +40,8 @@ export default function RootShell({ children }: RootShellProps) {
         bgcolor: "background.default",
         color: "text.primary",
         overflowX: "hidden",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       {/* This wrapper moves the entire page (NavBar + content) when drawer is open */}
@@ -51,6 +53,7 @@ export default function RootShell({ children }: RootShellProps) {
             duration: theme.transitions.duration.enteringScreen,
             easing: theme.transitions.easing.easeOut,
           }),
+          flex: 1,
         }}
       >
         <NavBar
@@ -60,7 +63,7 @@ export default function RootShell({ children }: RootShellProps) {
         />
 
         {/* Main page content; existing .mm-page / .mm-shell classes still apply inside */}
-        <Box component="main" sx={{ px: { xs: 2, sm: 3 }, pb: 4 }}>
+        <Box component="main" sx={{ px: { xs: 2, sm: 3 }, pb: 4, bgcolor: "background.default", color: "text.primary" }}>
           {children}
         </Box>
       </Box>

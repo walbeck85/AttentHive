@@ -140,7 +140,13 @@ function CareCircleHeroSection({
         borderRadius: 2,
         border: 1,
         borderColor: "divider",
-        bgcolor: "warning.light",
+        // Use the warm brand orange token from the theme so this hero stays
+        // on-brand in both light and dark mode without needing a runtime
+        // theme callback from this server component.
+        bgcolor: "warning.main",
+        // Rely on the warning.contrastText token for legible copy on top of
+        // the orange surface instead of hard-coding white.
+        color: "warning.contrastText",
       }}
     >
       <Typography
@@ -149,7 +155,7 @@ function CareCircleHeroSection({
           display: "block",
           mb: 1,
           letterSpacing: "0.2em",
-          color: "text.secondary",
+          opacity: 0.9,
         }}
       >
         CARE CIRCLE
@@ -157,12 +163,12 @@ function CareCircleHeroSection({
       <Typography variant="h4" sx={{ mb: 1.5 }}>
         Care Circle
       </Typography>
-      <Typography variant="body2" sx={{ mb: 1.5, color: "text.secondary" }}>
+      <Typography variant="body2" sx={{ mb: 1.5, opacity: 0.9 }}>
         See the people in your care circle and which pets they help with.
         Removing someone from a pet&apos;s Care Circle immediately revokes
         their access.
       </Typography>
-      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+      <Typography variant="body2" sx={{ opacity: 0.9 }}>
         Signed in as {user.name ?? user.email}
       </Typography>
     </Paper>
@@ -192,7 +198,10 @@ function CareCircleCaregiversSection({
       ) : (
         <Stack spacing={2}>
           {caregivers.map((person) => (
-            <CareCircleCaregiverCard key={person.caregiverId} caregiver={person} />
+            <CareCircleCaregiverCard
+              key={person.caregiverId}
+              caregiver={person}
+            />
           ))}
         </Stack>
       )}
@@ -261,11 +270,19 @@ function CareCircleCaregiverCard({ caregiver }: { caregiver: CaregiverGroup }) {
               {/* I am keeping the nav-pill link styling for now so this CTA
                  continues to match the rest of the app while the shell moves
                  over to MUI. */}
-              <Link href={`/pets/${pet.id}`} className="nav-pill text-xs">
+              <Link
+                href={`/pets/${pet.id}`}
+                className="nav-pill text-xs"
+                data-testid={`care-circle-view-pet-${pet.id}`}
+              >
                 View {pet.name}
               </Link>
               <form action={removeCaregiverMembership}>
-                <input type="hidden" name="membershipId" value={pet.membershipId} />
+                <input
+                  type="hidden"
+                  name="membershipId"
+                  value={pet.membershipId}
+                />
                 <input type="hidden" name="recipientId" value={pet.id} />
                 <Button
                   type="submit"
@@ -290,7 +307,7 @@ function CareCircleCaregiverCard({ caregiver }: { caregiver: CaregiverGroup }) {
 }
 
 // SECTION: Pets you care for (someone else is the owner)
-function CareCirclePetsYouCareForSection({
+export function CareCirclePetsYouCareForSection({
   pets,
 }: {
   pets: PetYouCareFor[];
@@ -336,7 +353,11 @@ function CareCirclePetsYouCareForSection({
                     Owner: {pet.ownerName}
                   </Typography>
                 </Box>
-                <Link href={`/pets/${pet.id}`} className="nav-pill text-xs">
+                <Link
+                  href={`/pets/${pet.id}`}
+                  className="nav-pill text-xs"
+                  data-testid={`care-circle-view-pet-${pet.id}`}
+                >
                   View pet
                 </Link>
               </Stack>
@@ -359,7 +380,10 @@ function CareCircleOwnedPetsSection({
       <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
         Pets you own ({pets.length})
       </Typography>
-      <Typography variant="caption" sx={{ mb: 2, display: "block", color: "text.secondary" }}>
+      <Typography
+        variant="caption"
+        sx={{ mb: 2, display: "block", color: "text.secondary" }}
+      >
         To change sharing for a specific pet, open its details and use the
         &quot;Shared with&quot; panel.
       </Typography>

@@ -18,10 +18,16 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  ListSubheader,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import { alpha } from "@mui/material/styles";
+
+import { useThemeMode } from "@/components/ThemeModeProvider";
+import type { ThemePreference } from "@/theme";
 
 type NavLink = {
   label: string;
@@ -50,10 +56,19 @@ export default function NavBar({
 }: NavBarProps) {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+  const { mode, setMode } = useThemeMode();
   const { data: session, status } = useSession();
   const pathname = usePathname();
 
   const isAuthed = !!session;
+
+  const handleAppearanceChange = (
+    _: React.MouseEvent<HTMLElement>,
+    next: ThemePreference | null
+  ) => {
+    if (!next) return;
+    setMode(next);
+  };
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: "/login" });
@@ -182,11 +197,44 @@ export default function NavBar({
             </>
           )}
         </List>
+
+        <Box sx={{ mt: 2, px: 2 }}>
+          <ListSubheader
+            component="div"
+            sx={{
+              px: 0,
+              pb: 1,
+              bgcolor: "transparent",
+              color: "text.secondary",
+            }}
+          >
+            Appearance
+          </ListSubheader>
+
+          <ToggleButtonGroup
+            size="small"
+            exclusive
+            value={mode}
+            onChange={handleAppearanceChange}
+            fullWidth
+          >
+            <ToggleButton value="light">Light</ToggleButton>
+            <ToggleButton value="dark">Dark</ToggleButton>
+            <ToggleButton value="system">System</ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </Box>
 
       <Divider />
 
-      <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1 }}>
+      <Box
+        sx={{
+          p: 2,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+        }}
+      >
         {status !== "loading" && (
           <>
             {isAuthed ? (
@@ -237,10 +285,8 @@ export default function NavBar({
           borderBottom: 1,
           borderColor: "divider",
           backdropFilter: "blur(12px)",
-          backgroundColor:
-            theme.palette.mode === "light"
-              ? "rgba(255,255,255,0.9)"
-              : "rgba(18,18,18,0.9)",
+          backgroundColor: alpha(theme.palette.background.paper, 0.9),
+          color: "text.primary",
         }}
       >
         <Toolbar
