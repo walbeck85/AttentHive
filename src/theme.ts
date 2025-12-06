@@ -1,67 +1,103 @@
 // src/theme.ts
 // Material UI theme for the Mimamori app, wired to the Option 3 brand palette.
-// This centralizes colors, typography, and shape so we can keep the UI consistent.
+// This centralizes colors, typography, and shape so we can keep the UI consistent
+// while supporting both light and dark modes via a small factory.
 
-import { createTheme } from "@mui/material/styles";
+import { createTheme, type ThemeOptions } from "@mui/material/styles";
+import type { PaletteMode } from "@mui/material";
 
-const theme = createTheme({
-  palette: {
-    mode: "light", // Explicitly lock this theme to light mode for now
+// User-facing preference options used by the theme mode context.
+export type ThemePreference = "light" | "dark" | "system";
 
-    // Brand background tones
-    background: {
-      default: "#FCFCFC", // Soft white app background
-      paper: "#FFFFFF",   // Card / surface background
+// Design tokens for light and dark modes. These keep the existing Option 3
+// palette (warm orange primary, soft yellow secondary, success green, navy text)
+// and simply adapt background/text/border values for dark mode.
+export function getDesignTokens(mode: PaletteMode): ThemeOptions {
+  const isDark = mode === "dark";
+
+  return {
+    palette: {
+      mode,
+
+      // Brand background tones: soft warm light surface vs deep navy-ish dark.
+      background: {
+        default: isDark ? "#020617" : "#FCFCFC", // App background
+        paper: isDark ? "#020617" : "#FFFFFF", // Card / primary surfaces
+      },
+
+      // Primary accent (warm orange) – unchanged from existing light theme.
+      primary: {
+        main: "#FF9165",
+      },
+
+      // Secondary accent (soft yellow) – unchanged from existing light theme.
+      secondary: {
+        main: "#FFEFB5",
+      },
+
+      // Success green (used for positive states / badges).
+      success: {
+        main: "#50DBAE",
+      },
+
+      text: {
+        primary: isDark ? "#F9FAFB" : "#1A2340", // Navy in light, near-white in dark
+        secondary: isDark ? "#CBD5F5" : "#1A2340", // Softer contrast in dark mode
+      },
+
+      divider: isDark ? "#1E293B" : "#E0E0E0", // Subtle borders tuned per mode
     },
-    // Primary accent (warm orange)
-    primary: {
-      main: "#FF9165",
+
+    shape: {
+      // Default radius – matches card rounding in the style guide.
+      borderRadius: 12,
     },
-    // Secondary accent (soft yellow)
-    secondary: {
-      main: "#FFEFB5",
-    },
-    // Success green (used for positive states / badges)
-    success: {
-      main: "#50DBAE",
-    },
-    text: {
-      primary: "#1A2340",   // Navy for headings and primary text
-      secondary: "#1A2340", // Same family for secondary text for now
-    },
-    divider: "#E0E0E0",      // Subtle neutral borders
-  },
-  shape: {
-    borderRadius: 12, // Default radius – matches card rounding in the style guide
-  },
-  typography: {
-    // Nunito is already loaded via next/font in RootLayout; this makes MUI use it.
-    fontFamily:
-      "'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    h1: { fontWeight: 700 },
-    h2: { fontWeight: 700 },
-    h3: { fontWeight: 600 },
-    button: {
-      textTransform: "none", // No ALL CAPS buttons
-      fontWeight: 600,
-    },
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 9999, // Pill-shaped CTAs
-        },
+
+    typography: {
+      // Nunito is already loaded via next/font in RootLayout; this makes MUI use it.
+      fontFamily:
+        "'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      h1: { fontWeight: 700 },
+      h2: { fontWeight: 700 },
+      h3: { fontWeight: 600 },
+      button: {
+        textTransform: "none", // No ALL CAPS buttons
+        fontWeight: 600,
       },
     },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
+
+    components: {
+      // Preserve existing button styling (pill-shaped CTAs).
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            borderRadius: 9999,
+          },
         },
       },
+
+      // Preserve existing paper radius so cards/surfaces stay on-brand.
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            borderRadius: 12,
+          },
+        },
+      },
+
+      // Additional component-level overrides for light/dark can be added here
+      // as needed (e.g., AppBar, Drawer, Card) without changing call sites.
     },
-  },
-});
+  };
+}
+
+// Factory that returns a concrete MUI theme for the given palette mode.
+export function createAppTheme(mode: PaletteMode) {
+  return createTheme(getDesignTokens(mode));
+}
+
+// Default theme export keeps existing imports working while we gradually
+// adopt the mode-aware factory + ThemeModeProvider.
+const theme = createAppTheme("light");
 
 export default theme;

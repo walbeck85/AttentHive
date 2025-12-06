@@ -372,19 +372,19 @@ export default function PetPhotoProfileCard({
                 <dl className="grid grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-6 text-xs uppercase tracking-wide text-[#B09A7C]">
                   <div>
                     <dt>Age</dt>
-                    <dd className="mt-1 font-medium normal-case text-[#382110]">
+                    <dd className="mt-1 font-medium normal-case text-[#382110] dark:text-[#FFF4E3]">
                       {calculateAge(pet.birthDate)} yrs
                     </dd>
                   </div>
                   <div>
                     <dt>Weight</dt>
-                    <dd className="mt-1 font-medium normal-case text-[#382110]">
+                    <dd className="mt-1 font-medium normal-case text-[#382110] dark:text-[#FFF4E3]">
                       {pet.weight} lbs
                     </dd>
                   </div>
                   <div>
                     <dt>Sex</dt>
-                    <dd className="mt-1 font-medium normal-case text-[#382110]">
+                    <dd className="mt-1 font-medium normal-case text-[#382110] dark:text-[#FFF4E3]">
                       {pet.gender === 'MALE' ? 'Male' : 'Female'}
                     </dd>
                   </div>

@@ -124,11 +124,15 @@ export async function loadCareCirclePageData(): Promise<CareCirclePageData | nul
   const caregivers = Array.from(caregiversMap.values());
 
   // 3) Pets you care for (someone else is the owner).
-  // Same semantics as the existing page so copy and counts stay in sync.
+  // We explicitly exclude pets you own so they only appear in the
+  // "Pets you own" section, even if you also have a caregiver record.
   const petsYouCareForMemberships = await prisma.careCircle.findMany({
     where: {
       userId: dbUser.id,
       role: { in: ["CAREGIVER", "VIEWER"] },
+      recipient: {
+        ownerId: { not: dbUser.id },
+      },
     },
     include: {
       recipient: {

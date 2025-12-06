@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import BreedSelect from './BreedSelect';
+import { useTheme } from '@mui/material/styles';
 import {
   PET_CHARACTERISTICS,
   type PetCharacteristicId,
@@ -32,6 +33,8 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
 
   // Form State
   const [formData, setFormData] = useState<FormState>({
@@ -179,7 +182,14 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
   // -------- Collapsed CTA --------
   if (!isExpanded) {
     return (
-      <div className="mm-card mb-6 border border-[#E1D6C5] bg-[#FBF4E8]">
+      <div
+        className="mm-card mb-6 border"
+        style={{
+          borderColor: isDarkMode ? theme.palette.divider : '#E1D6C5',
+          backgroundColor: isDarkMode ? theme.palette.background.paper : '#FBF4E8',
+          color: theme.palette.text.primary,
+        }}
+      >
         <button
           type="button"
           onClick={() => setIsExpanded(true)}
@@ -201,7 +211,14 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
 
   // -------- Expanded form --------
   return (
-    <div className="mm-card mb-6 border border-[#E1D6C5] bg-[#FFFDF8] p-4 md:p-6 relative">
+    <div
+      className="mm-card mb-6 border p-4 md:p-6 relative"
+      style={{
+        borderColor: isDarkMode ? theme.palette.divider : '#E1D6C5',
+        backgroundColor: isDarkMode ? theme.palette.background.paper : '#FFFDF8',
+        color: theme.palette.text.primary,
+      }}
+    >
       <button
         type="button"
         onClick={() => {

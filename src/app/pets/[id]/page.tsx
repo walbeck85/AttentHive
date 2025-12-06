@@ -48,7 +48,6 @@ export default async function PetDetailsPage({ params }: Params) {
   const dbPet = await prisma.recipient.findFirst({
     where: {
       id: petId,
-      ownerId: dbUser.id,
     },
     include: {
       careLogs: {
@@ -108,6 +107,22 @@ export default async function PetDetailsPage({ params }: Params) {
   };
 
   const careCircleMemberships = await getCareCircleMembersForPet(petId);
+
+  // Determine whether the current user is allowed to see this pet.
+  // Owners always have access. Non-owners must appear in the Care Circle
+  // membership list (e.g. as CAREGIVER or VIEWER) for this specific pet.
+  const isOwner = dbPet.ownerId === dbUser.id;
+
+  const hasCareCircleAccess =
+    isOwner ||
+    careCircleMemberships.some((membership) => membership.userId === dbUser.id);
+
+  if (!hasCareCircleAccess) {
+    // If the user is neither the owner nor a member of the pet's Care Circle,
+    // we fail with a 404 so we do not leak the existence of the pet ID.
+    notFound();
+  }
+
   const careCircleMembers: CareCircleMember[] = careCircleMemberships.map(
     (membership) => ({
       id: membership.id,
@@ -116,8 +131,6 @@ export default async function PetDetailsPage({ params }: Params) {
       role: membership.role,
     }),
   );
-
-  const isOwner = dbPet.ownerId === dbUser.id;
 
   return (
     <PetDetailPage

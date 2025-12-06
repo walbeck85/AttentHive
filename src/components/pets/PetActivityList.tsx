@@ -50,7 +50,7 @@ export default function PetActivityList({ careLogs }: PetActivityListProps) {
                 justifyContent: 'space-between',
                 pb: 1,
                 borderBottom: '1px solid',
-                borderColor: '#E5D9C6',
+                borderColor: (theme) => theme.palette.divider,
                 '&:last-of-type': {
                   borderBottom: 'none',
                   pb: 0,
@@ -60,7 +60,16 @@ export default function PetActivityList({ careLogs }: PetActivityListProps) {
               <Box>
                 <Typography
                   variant="body2"
-                  sx={{ fontWeight: 600, color: '#382110' }}
+                  sx={{
+                    fontWeight: 600,
+                    // In light mode, keep the warm brand brown. In dark mode, switch to
+                    // the primary text color so activity labels remain clearly legible
+                    // against the navy background.
+                    color: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? theme.palette.common.white
+                        : '#382110',
+                  }}
                 >
                   {getActivityLabel(log.activityType)}
                 </Typography>
@@ -83,7 +92,7 @@ export default function PetActivityList({ careLogs }: PetActivityListProps) {
                     sx={{
                       mt: 0.5,
                       fontSize: 12,
-                      color: '#7A6A56',
+                      color: 'text.secondary',
                     }}
                   >
                     {log.notes}
