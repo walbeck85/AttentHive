@@ -1,91 +1,69 @@
-// src/components/pets/PetList.tsx
 'use client';
 
-import type { Recipient } from '@prisma/client';
-import PetCard, { PetData } from './PetCard';
-import type { PetCharacteristicId } from '@/lib/petCharacteristics';
-// MUI layout primitives give the dashboard a consistent, theme-aware layout
-// without forcing us to rewrite every Tailwind utility in one go.
 import { Box, Typography } from '@mui/material';
+import PetCard, { type PetData } from './PetCard';
 
-type PetListProps = {
-  // The dashboard hands us raw Prisma Recipient records; we keep this type tight so any
-  // future query drift shows up here instead of randomly in the UI.
-  pets?: Recipient[] | null;
-  // Optional name of the current user so cards can personalize activity descriptions.
+type Props = {
+  // Callers (account/dashboard) can pass their own pet shapes;
+  // we normalize to PetData inside this component.
+  pets: unknown[];
   currentUserName?: string | null;
 };
 
-export default function PetList({ pets, currentUserName }: PetListProps) {
-  // Treat undefined, null, and empty arrays the same so the UI does not show a half-broken state.
-  if (!pets || pets.length === 0) {
-    // Empty state uses MUI here so spacing and typography stay in sync with the rest
-    // of the dashboard shell, even though the message itself is simple.
+export default function PetList({ pets, currentUserName }: Props) {
+  // Internally, we treat pets as PetData because PetCard expects that shape.
+  const typedPets = pets as PetData[];
+
+  // PetCard expects a string, so we normalize null/undefined to an empty string.
+  const safeCurrentUserName = currentUserName ?? '';
+
+  // Simple empty state so the section doesn't just vanish
+  if (!typedPets || typedPets.length === 0) {
     return (
-      <Box sx={{ py: 3 }} textAlign="center">
-        <Typography variant="body2" color="text.secondary">
-          No pets added yet. Use the Add New Pet form above to get started.
+      <Box
+        component="section"
+        sx={{
+          mt: 2,
+          px: { xs: 2, sm: 3 },
+          pb: { xs: 2, sm: 3 },
+        }}
+      >
+        <Typography variant="body1" color="text.secondary" align="center">
+          No pets found.
         </Typography>
       </Box>
     );
   }
 
-  // Map Prisma's Recipient shape into the more flexible PetData shape that the card expects.
-  // Doing the mapping here keeps the rest of the UI agnostic about where pets came from.
-  const mappedPets: PetData[] = pets.map((pet) => ({
-    id: pet.id,
-    name: pet.name,
-    type: pet.type,
-    breed: pet.breed,
-    gender: pet.gender,
-    // PetData.birthDate is a string, but Prisma gives us a Date.
-    // Converting to ISO keeps it unambiguous and easy to parse in the card.
-    birthDate: pet.birthDate.toISOString(),
-    weight: pet.weight,
-    imageUrl: pet.imageUrl ?? null,
-    // Surface any stored behavior/needs flags so the card can render
-    // badges without needing to know about Prisma's Recipient shape.
-    characteristics: (pet.characteristics ?? []) as PetCharacteristicId[],
-    // The dashboard query is not loading logs yet; starting with an empty array
-    // avoids null checks everywhere else.
-    careLogs: [],
-  }));
-
   return (
     // Wrapping the list in a Box makes it easy to adjust dashboard spacing later
     // without hunting through every caller; this Box uses a CSS grid so we still
-    // get a responsive layout without fighting the Grid v2 TypeScript surface.
-    <Box component="section" sx={{ mt: 2 }}>
+    // get a responsive layout that aligns with the shell without fighting Grid's TS surface.
+    <Box
+      component="section"
+      sx={{
+        mt: 2,
+        px: { xs: 2, sm: 3 },
+        pb: { xs: 2, sm: 3 },
+      }}
+    >
       <Box
         sx={{
           display: 'grid',
-          gap: 2,
+          gap: { xs: 2, sm: 2.5 },
           gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, minmax(0, 1fr))',
-            lg: 'repeat(3, minmax(0, 1fr))',
+            xs: '1fr',                                   // 1 per row on mobile
+            sm: 'repeat(2, minmax(0, 1fr))',            // 2-up on small screens
+            md: 'repeat(3, minmax(0, 1fr))',            // 3-up on larger screens
           },
         }}
       >
-        {mappedPets.map((pet) => (
-          // The inner Box keeps each card at a sane max width and recenters it,
-          // so we avoid the hyper-wide "stadium" look from the original mm-card radius
-          // while we gradually standardize card geometry in the theme.
-          <Box
-            key={pet.id}
-            sx={{
-              maxWidth: 360,
-              mx: 'auto',
-              width: '100%',
-              borderRadius: 3,
-              overflow: 'hidden',
-              height: '100%',
-            }}
-          >
+        {typedPets.map((pet) => (
+          <Box key={pet.id}>
             <PetCard
               pet={pet}
-              currentUserName={currentUserName}
-              // onQuickAction is required in PetCard's Props type.
+              currentUserName={safeCurrentUserName}
+              // onQuickAction is required in PetCard's props.
               // Right now the card handles the logging itself, so we pass a no-op to satisfy TS.
               onQuickAction={() => {}}
             />

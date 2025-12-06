@@ -17,6 +17,7 @@ import {
 // existing Tailwind tokens like mm-card/mm-chip as visual scaffolding for now.
 import {
   Box,
+  Button,
   Card,
   CardContent,
   CardActions,
@@ -242,6 +243,7 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
           bgcolor: 'background.paper',
           display: 'flex',
           flexDirection: 'column',
+          overflow: 'hidden',
         })}
       >
         {/* HEADER */}
@@ -441,51 +443,118 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
             }}
           >
             {/* Quick actions left */}
-            <Box className="flex flex-wrap gap-2">
-              <button
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: 'repeat(2, minmax(0, 1fr))',
+                  sm: 'repeat(4, auto)',
+                },
+                gap: 1,
+                width: '100%',
+                justifyItems: {
+                  xs: 'stretch',
+                  sm: 'center',
+                },
+              }}
+            >
+              <Button
                 onClick={() => handleRequestQuickAction('FEED')}
-                className="mm-chip"
+                variant="outlined"
+                size="small"
+                sx={{
+                  textTransform: 'none',
+                  width: { xs: '100%', sm: 'auto' },
+                  px: { xs: 0.5, sm: 2 },
+                  justifyContent: 'center',
+                  minHeight: 40,
+                }}
               >
                 Feed
-              </button>
+              </Button>
 
-              <button
+              <Button
                 onClick={() => handleRequestQuickAction('WALK')}
-                className="mm-chip"
+                variant="outlined"
+                size="small"
+                sx={{
+                  textTransform: 'none',
+                  width: { xs: '100%', sm: 'auto' },
+                  px: { xs: 0.5, sm: 2 },
+                  justifyContent: 'center',
+                  minHeight: 40,
+                }}
               >
                 Walk
-              </button>
+              </Button>
 
-              <button
+              <Button
                 onClick={() => handleRequestQuickAction('MEDICATE')}
-                className="mm-chip"
+                variant="outlined"
+                size="small"
+                sx={{
+                  textTransform: 'none',
+                  width: { xs: '100%', sm: 'auto' },
+                  px: { xs: 0.5, sm: 2 },
+                  justifyContent: 'center',
+                  minHeight: 40,
+                }}
               >
                 Meds
-              </button>
+              </Button>
 
-              <button
+              <Button
                 onClick={() => handleRequestQuickAction('ACCIDENT')}
-                className="mm-chip mm-chip--danger"
+                variant="outlined"
+                size="small"
+                color="error"
+                sx={{
+                  textTransform: 'none',
+                  width: { xs: '100%', sm: 'auto' },
+                  px: { xs: 0.5, sm: 2 },
+                  justifyContent: 'center',
+                  minHeight: 40,
+                }}
               >
                 Oops
-              </button>
+              </Button>
             </Box>
 
             {/* Details / History right */}
-            <Box className="flex flex-wrap gap-2 sm:justify-end">
-              <Link
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 1,
+                justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                width: { xs: '100%', sm: 'auto' },
+              }}
+            >
+              <Button
+                component={Link}
                 href={`/pets/${pet.id}`}
-                className="mm-chip mm-chip--solid-primary"
+                variant="contained"
+                size="small"
+                sx={{
+                  textTransform: 'none',
+                  width: { xs: '100%', sm: 'auto' },
+                }}
               >
                 + Details
-              </Link>
+              </Button>
 
-              <Link
+              <Button
+                component={Link}
                 href={`/pets/${pet.id}/activity`}
-                className="mm-chip mm-chip--solid-green"
+                variant="outlined"
+                size="small"
+                sx={{
+                  textTransform: 'none',
+                  width: { xs: '100%', sm: 'auto' },
+                }}
               >
                 View History
-              </Link>
+              </Button>
             </Box>
           </CardActions>
         </Box>

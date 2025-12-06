@@ -143,4 +143,34 @@ describe('PetCard', () => {
 
     expect(onQuickAction).toHaveBeenCalledWith('pet-1', 'Fluffy', 'FEED');
   });
+
+  test('renders quick action and navigation buttons', () => {
+    const pet = createPet({ id: 'pet-123' });
+
+    renderWithProviders(
+      <PetCard pet={pet} currentUserName="Will" onQuickAction={jest.fn()} />
+    );
+
+    // Quick action buttons should be present and accessible by their labels.
+    expect(
+      screen.getByRole('button', { name: /feed/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /walk/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /meds/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /oops/i })
+    ).toBeInTheDocument();
+
+    // Footer navigation actions render as links (MUI Button with component=Link).
+    expect(
+      screen.getByRole('link', { name: /\+ details/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /view history/i })
+    ).toBeInTheDocument();
+  });
 });
