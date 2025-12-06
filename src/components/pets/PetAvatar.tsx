@@ -14,13 +14,12 @@ type Props = {
 };
 
 const DIMENSIONS: Record<Size, number> = {
-  sm: 32,
-  md: 40,
-  lg: 56,
+  sm: 32, // 2rem
+  md: 40, // 2.5rem
+  lg: 56, // 3.5rem
 };
 
-// Shared avatar for pets: shows a photo when we have one, otherwise initials.
-// Using MUI Avatar keeps sizing predictable and centers content without extra wrappers.
+// Shared avatar for pets: photo when available, initials otherwise.
 export default function PetAvatar({
   name,
   imageUrl,
@@ -46,24 +45,22 @@ export default function PetAvatar({
     <Box
       className={className}
       sx={{
-        width: dimension,
-        height: dimension,
-        display: 'inline-flex',
+        display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
       <Avatar
-        src={imageUrl ?? undefined}
+        src={imageUrl || undefined}
         alt={name ? `${name} photo` : 'Pet photo'}
         sx={{
-          width: '100%',
-          height: '100%',
+          width: dimension,
+          height: dimension,
+          fontSize: Math.round(dimension * 0.4),
+          fontWeight: 600,
           bgcolor: '#FAF3E7',
           color: '#382110',
-          fontWeight: 700,
-          border: '1px solid',
-          borderColor: 'divider',
+          border: '1px solid #D17D45',
         }}
       >
         {initials}

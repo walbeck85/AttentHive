@@ -5,9 +5,6 @@ import {
   Avatar,
   Box,
   Button,
-  Card,
-  CardContent,
-  CardHeader,
   Chip,
   List,
   ListItem,
@@ -171,145 +168,156 @@ export default function CareCirclePanel({
     }
   }
 
-  return (
-    <Card
-      component="section"
-      elevation={0}
-      sx={{
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: 2,
-        bgcolor: "background.paper",
-      }}
-    >
-      <CardHeader
-        title="Shared with"
-        subheader="See who has access to this pet and, if you are the owner, invite additional caregivers."
-        sx={{
-          pb: 0,
-          "& .MuiCardHeader-title": { fontWeight: 700 },
-          "& .MuiCardHeader-subheader": { color: "text.secondary" },
-        }}
-      />
+  const hasMembers = members.length > 0;
 
-      <CardContent sx={{ pt: 1.5 }}>
-        <Stack spacing={2.5}>
-          {members.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              This pet is not shared with anyone yet.
-            </Typography>
-          ) : (
-            <List
-              disablePadding
-              dense
-              sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}
-            >
-              {members.map((member) => (
-                <ListItem
-                  key={member.id}
-                  disableGutters
+  return (
+    <Box>
+      <Box sx={{ px: 3, pt: 1, pb: hasMembers ? 2 : 0 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          See who has access to this pet and, if you are the owner, invite
+          additional caregivers.
+        </Typography>
+
+        {!hasMembers && (
+          <Typography variant="body2" color="text.secondary">
+            This pet is not shared with anyone yet.
+          </Typography>
+        )}
+      </Box>
+
+      {hasMembers && (
+        <List disablePadding>
+          {members.map((member) => {
+            const displayName = member.userName || member.userEmail;
+            const roleLabel =
+              member.role === "OWNER"
+                ? "Owner"
+                : member.role === "CAREGIVER"
+                  ? "Caregiver"
+                  : "Viewer";
+            const initials =
+              (member.userName || member.userEmail || "?")
+                .split(" ")
+                .map((part) => part[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase();
+
+            return (
+              <ListItem
+                key={member.id}
+                divider
+                alignItems="flex-start"
+                sx={{
+                  px: 3,
+                  py: 1.5,
+                  flexWrap: { xs: "wrap", sm: "nowrap" },
+                  alignItems: { xs: "center", sm: "flex-start" },
+                  gap: { xs: 1.5, sm: 0 },
+                }}
+              >
+                <ListItemAvatar>
+                  <Avatar sx={{ bgcolor: "primary.light", color: "primary.contrastText" }}>
+                    {initials}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={displayName}
+                  secondary={
+                    <Typography variant="caption" color="text.secondary">
+                      {member.userEmail}
+                    </Typography>
+                  }
+                  primaryTypographyProps={{
+                    variant: "body2",
+                    sx: { fontWeight: 600 },
+                  }}
+                  secondaryTypographyProps={{ component: "div" }}
+                  sx={{ minWidth: 0, pr: { sm: 2, md: 3 } }}
+                />
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  alignItems="center"
                   sx={{
-                    border: "1px solid",
-                    borderColor: "divider",
-                    borderRadius: 1.5,
-                    px: 1.5,
-                    py: 1.25,
-                    alignItems: "stretch",
-                    bgcolor: "background.default",
-                    flexDirection: { xs: "column", sm: "row" },
-                    gap: { xs: 1, sm: 0 },
+                    ml: { sm: "auto" },
+                    mt: { xs: 1, sm: 0 },
+                    width: { xs: "100%", sm: "auto" },
+                    justifyContent: { xs: "flex-start", sm: "flex-end" },
                   }}
                 >
-                  <Stack direction="row" spacing={1.5} alignItems="center" flex={1}>
-                    <ListItemAvatar sx={{ minWidth: 48 }}>
-                      <Avatar
-                        sx={{ bgcolor: "primary.light", color: "primary.dark" }}
-                      >
-                        {(member.userName || member.userEmail)
-                          .charAt(0)
-                          .toUpperCase()}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={member.userName || member.userEmail}
-                      secondary={member.userEmail}
-                      primaryTypographyProps={{ fontWeight: 600 }}
-                      secondaryTypographyProps={{ color: "text.secondary" }}
-                      sx={{ mr: 2, wordBreak: "break-word", minWidth: 0 }}
-                    />
-                  </Stack>
-
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    alignItems="center"
-                    flexWrap="wrap"
-                    justifyContent={{ xs: "flex-start", sm: "flex-end" }}
-                  >
-                    <Chip
+                  <Chip
+                    label={roleLabel}
+                    size="small"
+                    variant="outlined"
+                    sx={{ textTransform: "capitalize" }}
+                  />
+                  {isOwner && member.role !== "OWNER" && (
+                    <Button
+                      type="button"
+                      onClick={() => handleRemove(member.id)}
+                      disabled={removingId === member.id}
+                      color="error"
                       size="small"
-                      variant="outlined"
-                      label={member.role.toLowerCase()}
-                      sx={{
-                        textTransform: "uppercase",
-                        letterSpacing: "0.08em",
-                        fontWeight: 700,
-                      }}
-                    />
-                    {isOwner && member.role !== "OWNER" && (
-                      <Button
-                        type="button"
-                        size="small"
-                        color="error"
-                        onClick={() => handleRemove(member.id)}
-                        disabled={removingId === member.id}
-                      >
-                        {removingId === member.id ? "Removing…" : "Remove"}
-                      </Button>
-                    )}
-                  </Stack>
-                </ListItem>
-              ))}
-            </List>
+                    >
+                      {removingId === member.id ? "Removing..." : "Remove"}
+                    </Button>
+                  )}
+                </Stack>
+              </ListItem>
+            );
+          })}
+        </List>
+      )}
+
+      {isOwner && (
+        <Box
+          component="form"
+          onSubmit={handleInvite}
+          sx={{ px: 3, py: hasMembers ? 2 : 3, display: "flex", flexDirection: "column", gap: 1.25 }}
+        >
+          <TextField
+            type="email"
+            label="Invite a caregiver by email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="caregiver@example.com"
+            size="small"
+            fullWidth
+          />
+
+          {errorMessage && (
+            <Typography variant="body2" color="error">
+              {errorMessage}
+            </Typography>
+          )}
+          {successMessage && (
+            <Typography variant="body2" sx={{ color: "success.main" }}>
+              {successMessage}
+            </Typography>
           )}
 
-          {isOwner && (
-            <Box component="form" onSubmit={handleInvite}>
-              <Stack spacing={1.25}>
-                <TextField
-                  type="email"
-                  label="Invite a caregiver by email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  size="small"
-                  placeholder="caregiver@example.com"
-                  required
-                />
+          <Stack direction="row" justifyContent="flex-end">
+            <Button
+              type="submit"
+              variant="contained"
+              size="small"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Inviting..." : "Invite caregiver"}
+            </Button>
+          </Stack>
+        </Box>
+      )}
 
-                {errorMessage && (
-                  <Typography variant="body2" color="error">
-                    {errorMessage}
-                  </Typography>
-                )}
-                {successMessage && (
-                  <Typography variant="body2" color="success.main">
-                    {successMessage}
-                  </Typography>
-                )}
-
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={isSubmitting}
-                  sx={{ alignSelf: "flex-start", textTransform: "none" }}
-                >
-                  {isSubmitting ? "Inviting…" : "Invite caregiver"}
-                </Button>
-              </Stack>
-            </Box>
-          )}
-        </Stack>
-      </CardContent>
-    </Card>
+      {!isOwner && (
+        <Box sx={{ px: 3, pb: 2 }}>
+          <Typography variant="caption" color="text.secondary">
+            You can see who this pet is shared with, but only the owner can
+            invite new caregivers.
+          </Typography>
+        </Box>
+      )}
+    </Box>
   );
 }

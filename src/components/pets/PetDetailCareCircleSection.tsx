@@ -1,6 +1,11 @@
 // src/components/pets/PetDetailCareCircleSection.tsx
 import React from 'react';
-import { Box } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+} from '@mui/material';
 import CareCirclePanel from '@/components/pets/CareCirclePanel';
 import type { CareCircleMember } from '@/components/pets/petDetailTypes';
 
@@ -19,11 +24,35 @@ export default function PetDetailCareCircleSection({
 }: PetDetailCareCircleSectionProps) {
   return (
     <Box component="section" id="care-circle" className="mm-section">
-      <CareCirclePanel
-        recipientId={recipientId}
-        isOwner={isOwner}
-        initialMembers={initialMembers}
-      />
+      <Card
+        elevation={0}
+        sx={{
+          borderRadius: 2,
+          border: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          overflow: 'hidden',
+          height: '100%',
+        }}
+      >
+        <CardHeader
+          title="Shared with"
+          sx={{
+            pb: 0,
+            '& .MuiCardHeader-title': {
+              fontSize: 16,
+              fontWeight: 600,
+            },
+          }}
+        />
+        <CardContent sx={{ pt: 1, px: 0, pb: 0 }}>
+          <CareCirclePanel
+            recipientId={recipientId}
+            isOwner={isOwner}
+            initialMembers={initialMembers}
+          />
+        </CardContent>
+      </Card>
     </Box>
   );
 }
