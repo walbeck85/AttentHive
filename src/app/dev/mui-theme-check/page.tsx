@@ -1,6 +1,9 @@
 // src/app/chakra-test/page.tsx
 // Simple MUI test route to verify that the theme provider is wired correctly.
 
+// Dev-only route to validate the MUI theme wiring.
+// Safe to remove before production if not needed.
+
 import { Box, Button, Stack, Typography } from "@mui/material";
 
 export default function MuiTestPage() {

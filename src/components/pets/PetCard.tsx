@@ -237,14 +237,21 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
           and spacing instead of hand-tuning each dashboard card. */}
       <Card
         component="article"
-        className="mm-card group"
-        sx={(theme) => ({
-          borderRadius: theme.shape.borderRadius,
+        className="group"
+        sx={{
+          // Force a rectangular shell on all breakpoints.
+          borderRadius: 0,
           bgcolor: 'background.paper',
           display: 'flex',
           flexDirection: 'column',
+          // Keep children clipped so the border shows cleanly at the corners.
           overflow: 'hidden',
-        })}
+          // Give the card a subtle border and remove elevation so we are not
+          // re-introducing any circular mask or heavy drop shadow.
+          border: '1px solid',
+          borderColor: 'divider',
+          boxShadow: 'none',
+        }}
       >
         {/* HEADER */}
         {/* Using Box + Stack here gives us responsive padding and gap control,
@@ -254,7 +261,7 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
           sx={{
             borderBottom: 1,
             borderColor: 'divider',
-            bgcolor: 'background.default',
+            bgcolor: 'background.paper',
             px: 2.5,
             py: 2,
           }}
@@ -432,13 +439,13 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
             sx={{
               borderTop: 1,
               borderColor: 'divider',
-              bgcolor: 'background.default',
+              bgcolor: 'background.paper',
               px: 2.5,
               py: 2,
               display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              alignItems: { xs: 'flex-start', sm: 'center' },
-              justifyContent: 'space-between',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
               gap: 1.5,
             }}
           >
@@ -452,10 +459,7 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
                 },
                 gap: 1,
                 width: '100%',
-                justifyItems: {
-                  xs: 'stretch',
-                  sm: 'center',
-                },
+                justifyItems: 'center',
               }}
             >
               <Button
@@ -465,9 +469,10 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
                 sx={{
                   textTransform: 'none',
                   width: { xs: '100%', sm: 'auto' },
-                  px: { xs: 0.5, sm: 2 },
+                  px: { xs: 1, sm: 2 },
                   justifyContent: 'center',
-                  minHeight: 40,
+                  minHeight: { xs: 34, sm: 40 },
+                  fontSize: { xs: 12, sm: 14 },
                 }}
               >
                 Feed
@@ -480,9 +485,10 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
                 sx={{
                   textTransform: 'none',
                   width: { xs: '100%', sm: 'auto' },
-                  px: { xs: 0.5, sm: 2 },
+                  px: { xs: 1, sm: 2 },
                   justifyContent: 'center',
-                  minHeight: 40,
+                  minHeight: { xs: 34, sm: 40 },
+                  fontSize: { xs: 12, sm: 14 },
                 }}
               >
                 Walk
@@ -495,9 +501,10 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
                 sx={{
                   textTransform: 'none',
                   width: { xs: '100%', sm: 'auto' },
-                  px: { xs: 0.5, sm: 2 },
+                  px: { xs: 1, sm: 2 },
                   justifyContent: 'center',
-                  minHeight: 40,
+                  minHeight: { xs: 34, sm: 40 },
+                  fontSize: { xs: 12, sm: 14 },
                 }}
               >
                 Meds
@@ -511,23 +518,24 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
                 sx={{
                   textTransform: 'none',
                   width: { xs: '100%', sm: 'auto' },
-                  px: { xs: 0.5, sm: 2 },
+                  px: { xs: 1, sm: 2 },
                   justifyContent: 'center',
-                  minHeight: 40,
+                  minHeight: { xs: 34, sm: 40 },
+                  fontSize: { xs: 12, sm: 14 },
                 }}
               >
                 Oops
               </Button>
             </Box>
 
-            {/* Details / History right */}
+            {/* Details / History */}
             <Box
               sx={{
                 display: 'flex',
                 flexWrap: 'wrap',
                 gap: 1,
-                justifyContent: { xs: 'flex-start', sm: 'flex-end' },
-                width: { xs: '100%', sm: 'auto' },
+                justifyContent: 'center',
+                width: '100%',
               }}
             >
               <Button
@@ -538,6 +546,9 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
                 sx={{
                   textTransform: 'none',
                   width: { xs: '100%', sm: 'auto' },
+                  px: { xs: 1.25, sm: 2.5 },
+                  minHeight: { xs: 36, sm: 40 },
+                  fontSize: { xs: 12, sm: 14 },
                 }}
               >
                 + Details
@@ -551,6 +562,9 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
                 sx={{
                   textTransform: 'none',
                   width: { xs: '100%', sm: 'auto' },
+                  px: { xs: 1.25, sm: 2.5 },
+                  minHeight: { xs: 36, sm: 40 },
+                  fontSize: { xs: 12, sm: 14 },
                 }}
               >
                 View History
