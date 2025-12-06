@@ -13,9 +13,6 @@ jest.mock("next-auth/react", () => ({
   signIn: jest.fn(),
 }));
 
-// Shared search params state, just like in the Login tests.
-let currentSearchParams = new URLSearchParams();
-
 const pushMock = jest.fn();
 const replaceMock = jest.fn();
 
@@ -24,9 +21,6 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: pushMock,
     replace: replaceMock,
-  }),
-  useSearchParams: () => ({
-    get: (key: string) => currentSearchParams.get(key),
   }),
 }));
 
@@ -38,16 +32,11 @@ function mockSession(
   (useSession as jest.Mock).mockReturnValue({ status });
 }
 
-function setSearchParams(params: URLSearchParams) {
-  currentSearchParams = params;
-}
-
 describe("SignupPage callbackUrl handling", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    setSearchParams(new URLSearchParams());
 
-    // Default fetch mock for the signup API call; tests can override if needed.
+    // Default fetch mock for the signup API call
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({}),
@@ -55,8 +44,6 @@ describe("SignupPage callbackUrl handling", () => {
   });
 
   it("redirects to /pets/:id after signup + auto-login with that callbackUrl", async () => {
-    setSearchParams(new URLSearchParams({ callbackUrl: "/pets/abc123" }));
-
     mockSession("unauthenticated");
     (signIn as jest.Mock).mockResolvedValue({
       ok: true,
@@ -65,7 +52,7 @@ describe("SignupPage callbackUrl handling", () => {
     });
 
     const user = userEvent.setup();
-    render(<SignupPage />);
+    render(<SignupPage searchParams={{ callbackUrl: "/pets/abc123" }} />);
 
     await user.type(screen.getByLabelText(/name/i), "Jane Tester");
     await user.type(screen.getByLabelText(/^email/i), "user@example.com");
@@ -80,11 +67,9 @@ describe("SignupPage callbackUrl handling", () => {
   });
 
   it("redirects already-authenticated users to a safe callbackUrl", async () => {
-    setSearchParams(new URLSearchParams({ callbackUrl: "/care-circle" }));
-
     mockSession("authenticated");
 
-    render(<SignupPage />);
+    render(<SignupPage searchParams={{ callbackUrl: "/care-circle" }} />);
 
     await waitFor(() => {
       expect(replaceMock).toHaveBeenCalledWith("/care-circle");
@@ -92,13 +77,13 @@ describe("SignupPage callbackUrl handling", () => {
   });
 
   it("falls back to /dashboard when callbackUrl is external", async () => {
-    setSearchParams(
-      new URLSearchParams({ callbackUrl: "https://evil.com/signup" })
-    );
-
     mockSession("authenticated");
 
-    render(<SignupPage />);
+    render(
+      <SignupPage
+        searchParams={{ callbackUrl: "https://evil.com/signup" }}
+      />
+    );
 
     await waitFor(() => {
       expect(replaceMock).toHaveBeenCalledWith(DEFAULT_AUTH_REDIRECT);

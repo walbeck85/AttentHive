@@ -13,10 +13,6 @@ jest.mock("next-auth/react", () => ({
   signIn: jest.fn(),
 }));
 
-// We control the querystring for all tests via this shared variable.
-// useSearchParams will always read from here.
-let currentSearchParams = new URLSearchParams();
-
 const pushMock = jest.fn();
 const replaceMock = jest.fn();
 
@@ -26,9 +22,6 @@ jest.mock("next/navigation", () => ({
     push: pushMock,
     replace: replaceMock,
   }),
-  useSearchParams: () => ({
-    get: (key: string) => currentSearchParams.get(key),
-  }),
 }));
 
 const { useSession, signIn } = jest.requireMock("next-auth/react");
@@ -37,10 +30,6 @@ function mockSession(
   status: "authenticated" | "unauthenticated" | "loading"
 ) {
   (useSession as jest.Mock).mockReturnValue({ status });
-}
-
-function setSearchParams(params: URLSearchParams) {
-  currentSearchParams = params;
 }
 
 describe("getSafeCallbackUrl", () => {
@@ -72,13 +61,9 @@ describe("getSafeCallbackUrl", () => {
 describe("LoginPage callbackUrl handling", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    setSearchParams(new URLSearchParams());
   });
 
   it("redirects to /pets/:id when login succeeds with that callbackUrl", async () => {
-    // Simulate /login?callbackUrl=/pets/abc123
-    setSearchParams(new URLSearchParams({ callbackUrl: "/pets/abc123" }));
-
     mockSession("unauthenticated");
     (signIn as jest.Mock).mockResolvedValue({
       ok: true,
@@ -87,7 +72,7 @@ describe("LoginPage callbackUrl handling", () => {
     });
 
     const user = userEvent.setup();
-    render(<LoginPage />);
+    render(<LoginPage searchParams={{ callbackUrl: "/pets/abc123" }} />);
 
     await user.type(screen.getByLabelText(/email/i), "user@example.com");
     await user.type(screen.getByLabelText(/password/i), "password123");
@@ -99,8 +84,6 @@ describe("LoginPage callbackUrl handling", () => {
   });
 
   it("redirects to /care-circle when login succeeds with that callbackUrl", async () => {
-    setSearchParams(new URLSearchParams({ callbackUrl: "/care-circle" }));
-
     mockSession("unauthenticated");
     (signIn as jest.Mock).mockResolvedValue({
       ok: true,
@@ -109,7 +92,7 @@ describe("LoginPage callbackUrl handling", () => {
     });
 
     const user = userEvent.setup();
-    render(<LoginPage />);
+    render(<LoginPage searchParams={{ callbackUrl: "/care-circle" }} />);
 
     await user.type(screen.getByLabelText(/email/i), "user@example.com");
     await user.type(screen.getByLabelText(/password/i), "password123");
@@ -121,11 +104,9 @@ describe("LoginPage callbackUrl handling", () => {
   });
 
   it("sends already-authenticated users to a safe callbackUrl", async () => {
-    setSearchParams(new URLSearchParams({ callbackUrl: "/pets/abc123" }));
-
     mockSession("authenticated");
 
-    render(<LoginPage />);
+    render(<LoginPage searchParams={{ callbackUrl: "/pets/abc123" }} />);
 
     await waitFor(() => {
       expect(replaceMock).toHaveBeenCalledWith("/pets/abc123");
@@ -133,13 +114,13 @@ describe("LoginPage callbackUrl handling", () => {
   });
 
   it("falls back to /dashboard when callbackUrl is external", async () => {
-    setSearchParams(
-      new URLSearchParams({ callbackUrl: "https://evil.com/redirect" })
-    );
-
     mockSession("authenticated");
 
-    render(<LoginPage />);
+    render(
+      <LoginPage
+        searchParams={{ callbackUrl: "https://evil.com/redirect" }}
+      />
+    );
 
     await waitFor(() => {
       expect(replaceMock).toHaveBeenCalledWith(DEFAULT_AUTH_REDIRECT);
