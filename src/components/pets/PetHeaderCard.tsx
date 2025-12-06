@@ -78,12 +78,8 @@ export default function PetHeaderCard({ pet }: PetHeaderCardProps) {
         mt: 2,
         px: { xs: 2.5, md: 3 },
         py: 2.5,
-        borderRadius: (theme) => {
-          const radius = theme.shape.borderRadius;
-          return (typeof radius === 'number'
-            ? radius
-            : parseFloat(radius as string)) * 2;
-        },
+        // Match the rest of the dashboard cards so the border renders cleanly.
+        borderRadius: (theme) => theme.shape.borderRadius,
         border: '1px solid',
         borderColor: 'divider',
         bgcolor: 'background.paper',

@@ -49,8 +49,8 @@ export function getDesignTokens(mode: PaletteMode): ThemeOptions {
     },
 
     shape: {
-      // Default radius – matches card rounding in the style guide.
-      borderRadius: 12,
+      // Default radius – dialed back so cards feel squared-off instead of pill shaped.
+      borderRadius: 8,
     },
 
     typography: {
@@ -80,7 +80,22 @@ export function getDesignTokens(mode: PaletteMode): ThemeOptions {
       MuiPaper: {
         styleOverrides: {
           root: {
-            borderRadius: 12,
+            // Keep a light rounding for most surfaces.
+            borderRadius: 8,
+          },
+          rounded: {
+            // Ensure the "rounded" Paper variant does not multiply the base radius.
+            borderRadius: 8,
+          },
+        },
+      },
+
+      MuiCard: {
+        styleOverrides: {
+          root: {
+            // Cards should be rectangular with gentle rounding and no implicit masking.
+            borderRadius: 8,
+            overflow: "hidden",
           },
         },
       },
