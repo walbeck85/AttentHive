@@ -1,10 +1,23 @@
 // src/app/(auth)/signup/SignupPageClient.tsx
 "use client";
 
+import Link from "next/link";
+import AuthShell from "@/components/auth/AuthShell";
+
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { DEFAULT_AUTH_REDIRECT, getSafeCallbackUrl } from "@/lib/authRedirect";
+
+import {
+  Alert,
+  Box,
+  Button,
+  Divider,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 
 type SignupPageClientProps = {
   rawCallback: string | null;
@@ -26,7 +39,11 @@ export default function SignupPageClient({
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
 
+  // Tracks the in-flight state for the email/password signup path.
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Tracks the in-flight state for the Google OAuth path so we can prevent double-submits.
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  // Shared error surface for both credential and Google flows.
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,6 +51,33 @@ export default function SignupPageClient({
       router.replace(safeCallbackUrl || DEFAULT_AUTH_REDIRECT);
     }
   }, [status, router, safeCallbackUrl]);
+
+  async function handleGoogleSignup() {
+    // Avoid double-taps while we already have an OAuth request in flight.
+    if (isGoogleLoading) {
+      return;
+    }
+
+    // Reset any previous error so the user gets a clean read on this attempt.
+    setError(null);
+    setIsGoogleLoading(true);
+
+    try {
+      // Delegate to NextAuth's Google provider, using the same safe callback contract
+      // that the credentials flow relies on. NextAuth will own the redirect.
+      await signIn("google", {
+        callbackUrl: safeCallbackUrl,
+      });
+    } catch (err) {
+      console.error("Google signup failed before redirect:", err);
+      // If something fails before NextAuth gets a chance to redirect,
+      // we clear the loading state and surface a helpful error.
+      setIsGoogleLoading(false);
+      setError(
+        "Unable to connect with Google. Please try again or use email and password."
+      );
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -88,98 +132,111 @@ export default function SignupPageClient({
 
   if (status === "loading") {
     return (
-      <div className="mm-page">
-        <div className="mm-shell">
-          <div className="mm-card">
-            <p className="mm-muted">Checking your login status…</p>
-          </div>
-        </div>
-      </div>
+      <AuthShell title="Sign up">
+        <Typography variant="body2" color="text.secondary">
+          Checking your login status…
+        </Typography>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="mm-page">
-      <div className="mm-shell max-w-md mx-auto">
-        <div className="mm-card">
-          <h1 className="mm-h1 mb-4">Sign up</h1>
+    <AuthShell
+      title="Sign up"
+      subtitle="Create your Mimamori account to coordinate care."
+    >
+      {error && (
+        <Alert severity="error">
+          {error}
+        </Alert>
+      )}
 
-          {error && (
-            <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
-              {error}
-            </div>
-          )}
+      <Stack spacing={3}>
+        {/* Primary Google CTA – matches the login layout for consistency. */}
+        <Button
+          type="button"
+          variant="outlined"
+          fullWidth
+          onClick={handleGoogleSignup}
+          disabled={isGoogleLoading || isSubmitting}
+          sx={{
+            textTransform: "none",
+            borderRadius: 999,
+            borderColor: "warning.main",
+            color: "warning.main",
+            py: 1.1,
+          }}
+        >
+          {isGoogleLoading ? "Connecting to Google…" : "Continue with Google"}
+        </Button>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="name" className="mm-label">
-                Name
-              </label>
-              <input
-                id="name"
-                type="text"
-                autoComplete="name"
-                className="mm-input mt-1 w-full"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
+        {/* Divider between OAuth and email/password form. */}
+        <Divider sx={{ fontSize: 12, color: "text.secondary" }}>
+          or continue with email
+        </Divider>
 
-            <div>
-              <label htmlFor="email" className="mm-label">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                className="mm-input mt-1 w-full"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="mm-label">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                className="mm-input mt-1 w-full"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <button
+        {/* Email/password signup form – behavior unchanged, now using MUI fields. */}
+        <Box component="form" onSubmit={handleSubmit} noValidate>
+          <Stack spacing={2}>
+            <TextField
+              id="name"
+              label="Name"
+              type="text"
+              autoComplete="name"
+              fullWidth
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+            <TextField
+              id="email"
+              label="Email"
+              type="email"
+              autoComplete="email"
+              fullWidth
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <TextField
+              id="password"
+              label="Password"
+              type="password"
+              autoComplete="new-password"
+              fullWidth
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <Button
               type="submit"
-              className="mm-button w-full"
+              variant="contained"
+              fullWidth
               disabled={isSubmitting}
+              sx={{ textTransform: "none" }}
             >
               {isSubmitting ? "Creating account…" : "Create account"}
-            </button>
-          </form>
+            </Button>
+          </Stack>
+        </Box>
 
-          <p className="mm-meta mt-4 text-center">
-            Already have an account?{" "}
-            <a
-              href={
-                rawCallback
-                  ? `/login?callbackUrl=${encodeURIComponent(rawCallback)}`
-                  : "/login"
-              }
-              className="mm-link"
-            >
-              Log in
-            </a>
-          </p>
-        </div>
-      </div>
-    </div>
+        {/* Footer link to login, keeping callbackUrl behavior identical. */}
+        <Typography variant="body2" align="center">
+          Already have an account?{" "}
+          <Button
+            component={Link}
+            href={
+              rawCallback
+                ? `/login?callbackUrl=${encodeURIComponent(rawCallback)}`
+                : "/login"
+            }
+            variant="text"
+            sx={{ textTransform: "none", px: 0.75, minWidth: "auto" }}
+          >
+            Log in
+          </Button>
+        </Typography>
+      </Stack>
+    </AuthShell>
   );
 }
