@@ -35,23 +35,23 @@ Mimamori gives you a shared source of truth for **who did what, when, and for wh
   - [Database Migration Issues](#database-migration-issues)
 - [Support](#support)
 - [Roadmap](#roadmap)
-- [License](#license)
 
 ---
 
 ## Tech Stack
 
 **Framework & Language**  
-- [Next.js 14](https://nextjs.org/) (App Router)  
+- [Next.js 16](https://nextjs.org/) (App Router)  
 - TypeScript
 
 **Data & Auth**  
 - PostgreSQL, managed via [Prisma ORM](https://www.prisma.io/)  
-- [NextAuth.js](https://next-auth.js.org/) using credentials provider
+- [NextAuth.js](https://next-auth.js.org/) using credentials provider + Google OAuth
 
 **UI & Styling**  
-- [Tailwind CSS](https://tailwindcss.com/)  
-- [shadcn/ui](https://ui.shadcn.com/)
+- [MUI (Material UI)](https://mui.com/) + [Emotion](https://emotion.sh/docs/introduction)  
+- Custom light/dark theme via `ThemeModeProvider`, `RootShell`, and MUI theme tokens  
+- [Tailwind CSS](https://tailwindcss.com/) for legacy utilities and global styles
 
 **Deployment & Infra**  
 - [Vercel](https://vercel.com/) for hosting  
@@ -63,27 +63,24 @@ Mimamori gives you a shared source of truth for **who did what, when, and for wh
 
 ### Core (MVP)
 
-- ✅ **User authentication**
+- **User authentication**
   - Sign up, login, logout, session handling
-- ✅ **Pet profiles (full CRUD)**  
+- **Pet profiles (full CRUD)**  
   - Create, view, update, and delete pets with ownership validation
-- ✅ **Care activity logging**  
+- **Care activity logging**  
   - Track feeding, walking, medication, bathroom, and accident events
-- ✅ **Activity timeline**  
+- **Activity timeline**  
   - See who did what, when, for each pet
-- ✅ **Mobile‑responsive UI**  
+- **Mobile‑responsive UI**  
   - Designed to work cleanly on phones, tablets, and desktops
-
-### Stretch Goals (Planned / In Progress)
-
-- 🔄 **Shared pet access via CareCircle**  
+- **Shared pet access via CareCircle**  
   - Many‑to‑many relationship between users and pets for shared households
-- 🔄 **Role‑based permissions**  
+- **Role‑based permissions**  
   - Owner, caregiver, viewer roles with different capabilities
-- 🔄 **Activity filtering**  
+- **Activity filtering**  
   - Filter by type (feed, walk, medicate, etc.) and by date range
-- 🔄 **Reminders & notifications**  
-  - Optional reminders for overdue walks, meds, or feedings
+
+> Note: An initial version of CareCircle sharing, shared pet access, and activity filtering is now implemented and used throughout the dashboard and pet detail flows. 
 
 ---
 
@@ -92,114 +89,236 @@ Mimamori gives you a shared source of truth for **who did what, when, and for wh
 ```bash
 mimamori/
 .
-├── eslint.config.mjs              # ESLint configuration for code quality
-├── jest.config.cjs                # Jest config for testing
-├── jest.setup.ts                  # Global test setup (mocks, env, etc.)
-├── next-auth.d.ts                 # Type augmentation for NextAuth session/user
-├── next-env.d.ts                  # Next.js environment types
-├── next.config.ts                 # Next.js build/runtime configuration
-├── package-lock.json              # Locked dependency tree
-├── package.json                   # Project dependencies and scripts
-├── postcss.config.mjs             # PostCSS configuration (used by Tailwind)
+├── eslint.config.mjs              # ESLint configuration for code quality rules
+├── jest.config.cjs                # Jest configuration for unit/integration tests
+├── jest.setup.ts                  # Global Jest setup (RTL helpers, polyfills, mocks)
+├── next-auth.d.ts                 # Type augmentation for NextAuth session and user objects
+├── next-env.d.ts                  # Next.js environment type declarations
+├── next.config.ts                 # Next.js runtime and build configuration
+├── package-lock.json              # Locked dependency tree for reproducible installs
+├── package.json                   # Project metadata, scripts, and dependencies
+├── postcss.config.mjs             # PostCSS config (used by Tailwind and CSS pipeline)
 ├── prisma                         # Database schema, migrations, and seed scripts
-│   ├── migrations                 # Auto‑generated Prisma migrations
-│   │   ├── 20251119083320_init
-│   │   │   └── migration.sql      # Initial schema (users, pets, care logs)
-│   │   ├── 20251119211856_remove_timestamp_field
-│   │   │   └── migration.sql
-│   │   ├── 20251120115220_add_gender_to_pets
-│   │   │   └── migration.sql
-│   │   ├── 20251129194214_add_user_contact_fields
-│   │   │   └── migration.sql
-│   │   └── migration_lock.toml    # Prevents concurrent generation of migrations
-│   ├── schema.prisma              # Main database schema defining models
-│   └── seed.ts                    # Optional seed script for test data
-├── public                         # Static files served as-is   
-├── file.svg
-│   ├── globe.svg
-│   ├── next.svg
-│   ├── vercel.svg
-│   └── window.svg
-├── README.md                      # Project documentation
+│   ├── migrations                 # Auto-generated Prisma migrations
+│   │   ├── 20251119083320_init
+│   │   │   └── migration.sql      # Initial schema (users, pets, care logs, care circles)
+│   │   ├── 20251119211856_remove_timestamp_field
+│   │   │   └── migration.sql      # Cleanup/adjustment to timestamp fields
+│   │   ├── 20251120115220_add_gender_to_pets
+│   │   │   └── migration.sql      # Adds gender to Pet model
+│   │   ├── 20251129194214_add_user_contact_fields
+│   │   │   └── migration.sql      # Adds user contact fields for CareCircle invites
+│   │   ├── 20251202204455_add_image_url_to_recipient
+│   │   │   └── migration.sql      # Adds imageUrl for recipient/pet-like entities
+│   │   ├── 20251204221553_add_pet_characteristics
+│   │   │   └── migration.sql      # Adds structured pet characteristics (badges)
+│   │   └── migration_lock.toml    # Prevents concurrent migration generation
+│   ├── schema.prisma              # Main Prisma schema defining models and relations
+│   └── seed.ts                    # Optional seed script for local/test data
+├── public                         # Static assets served directly by Next.js
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+├── README.md                      # Project documentation (you are here)
+├── scripts                        # Utility scripts for local development/health checks
+│   ├── prisma-healthcheck.cjs     # Node script wrapper for Prisma healthcheck
+│   ├── prisma-healthcheck.ts      # TypeScript version of DB healthcheck logic
+│   └── run-healthcheck.mjs        # Orchestrator script to run healthcheck in CI/dev
 ├── src
-│   ├── __tests__                  # Jest test suite
-│   │   └── smoke.test.ts
-│   ├── app                        # Next.js App Router pages and routing logic
-│   │   ├── (auth)                 # Auth routes grouped as a segment
-│   │   │   ├── login
-│   │   │   │   └── page.tsx       # Login screen
-│   │   │   └── signup
-│   │   │       └── page.tsx       # Signup screen
-│   │   ├── account
-│   │   │   └── page.tsx           # User profile / account settings
-│   │   ├── api                    # Server-side API route handlers
-│   │   │   ├── auth
-│   │   │   │   ├── [...nextauth]
-│   │   │   │   │   └── route.ts   # NextAuth core handler
-│   │   │   │   └── signup
-│   │   │   │       └── route.ts   # Custom signup endpoint
-│   │   │   ├── care-logs
-│   │   │   │   └── route.ts       # Care log creation and retrieval
-│   │   │   ├── pets
-│   │   │   │   ├── [id]
-│   │   │   │   │   ├── care-logs
-│   │   │   │   │   │   └── route.ts   # Nested care-log endpoint (legacy path)
-│   │   │   │   │   └── route.ts       # Pet detail / update / delete
-│   │   │   │   └── route.ts           # Create/list pets
-│   │   │   └── user
-│   │   │       └── profile
-│   │   │           └── route.ts
-│   │   ├── dashboard
-│   │   │   └── page.tsx               # Dashboard landing page for logged‑in users
-│   │   ├── globals.css                # Global CSS (Tailwind layers, CSS vars, resets)
-│   │   ├── layout.tsx                 # Root layout shared across all pages
-│   │   ├── page.tsx                   # Landing page (marketing or login redirect)
-│   │   ├── pets
-│   │   │   └── [id]
-│   │   │       ├── activity
-│   │   │       │   └── page.tsx       # Activity timeline UI for a specific pet
-│   │   │       └── page.tsx           # Pet detail page
-│   │   └── providers.tsx              # Global providers (auth, theme, etc.)
-│   ├── components                     # Reusable UI components
-│   │   ├── NavBar.tsx                 # Navigation bar shown on authenticated pages
-│   │   ├── pets
-│   │   │   ├── AddPetForm.tsx         # Form for creating new pets
-│   │   │   ├── ConfirmActionModal.tsx # Shared modal for confirming destructive actions
-│   │   │   ├── PetCard.tsx            # Pet summary card (used in lists)
-│   │   │   ├── PetList.tsx            # Renders the full list of a user’s pets
-│   │   │   └── QuickActions.tsx       # One‑click logging for feed/walk/medication
-│   │   ├── SessionProvider.tsx        # Wraps NextAuth session provider
-│   │   ├── ui
-│   │   │   └── Button.tsx             # Custom button component (shadcn-based)
-│   │   └── UserProfileForm.tsx        # Editable user profile fields component
-│   └── lib
-│       ├── auth-client.ts             # Client-side NextAuth helpers
-│       ├── auth.ts                    # NextAuth server-side config
-│       └── prisma.ts                  # Prisma client singleton (prevents hot-reload issues)
-├── tailwind.config.ts                 # Tailwind theme configuration
-├── tsconfig.json                      # TypeScript compiler config
-└── tsconfig.tsbuildinfo               # Incremental build cache
+│   ├── __tests__                  # Jest + React Testing Library test suites
+│   │   ├── api                    # API route tests (server-side logic)
+│   │   │   ├── pets-id-route.test.ts   # Tests for /api/pets/[id] endpoint
+│   │   │   └── pets-route.test.ts      # Tests for /api/pets CRUD list/create endpoint
+│   │   ├── auth                   # Auth screen tests
+│   │   │   ├── LoginPage.test.tsx      # Login page rendering and validation tests
+│   │   │   └── SignupPage.test.tsx     # Signup page rendering and validation tests
+│   │   ├── care-circle            # Care Circle tests
+│   │   │   └── CareCircleLinks.test.tsx   # Ensures Care Circle links navigate to pets
+│   │   ├── Components             # Component-level unit tests
+│   │   │   └── PetCard.test.tsx   # PetCard behavior, quick actions, and links
+│   │   └── smoke.test.ts          # Basic smoke test to verify Jest wiring
+│   ├── app                        # Next.js App Router entrypoints and route handlers
+│   │   ├── (auth)                 # Auth route group (isolated layout for auth flows)
+│   │   │   ├── login
+│   │   │   │   ├── LoginPageClient.tsx   # Client component for login form + logic
+│   │   │   │   └── page.tsx             # Server entrypoint for /login
+│   │   │   └── signup
+│   │   │       ├── page.tsx             # Server entrypoint for /signup
+│   │   │       └── SignupPageClient.tsx # Client component for signup form + logic
+│   │   ├── account
+│   │   │   ├── loader.ts                # Server-side loader for account/user data
+│   │   │   └── page.tsx                 # Account settings and profile UI
+│   │   ├── api                          # Route handlers for server-side API endpoints
+│   │   │   ├── auth
+│   │   │   │   ├── [...nextauth]
+│   │   │   │   │   └── route.ts         # NextAuth core handler (credentials + Google)
+│   │   │   │   └── signup
+│   │   │   │       └── route.ts         # Custom signup API (creates user + CareCircle)
+│   │   │   ├── care-circles
+│   │   │   │   ├── invite
+│   │   │   │   │   └── route.ts         # Invite members to a CareCircle
+│   │   │   │   ├── members
+│   │   │   │   │   └── route.ts         # List/add/remove CareCircle members
+│   │   │   │   └── shared-pets
+│   │   │   │       └── route.ts         # Shared pet lookup for current user
+│   │   │   ├── care-logs
+│   │   │   │   └── route.ts             # Create/list care logs for pets
+│   │   │   ├── pets
+│   │   │   │   ├── [id]
+│   │   │   │   │   ├── care-logs
+│   │   │   │   │   │   └── route.ts     # Legacy nested care log route per pet
+│   │   │   │   │   ├── photo
+│   │   │   │   │   │   └── route.ts     # Upload/update pet photo URL
+│   │   │   │   │   └── route.ts         # Get/update/delete a single pet
+│   │   │   │   └── route.ts             # Create/list pets for the current user
+│   │   │   └── user
+│   │   │       └── profile
+│   │   │           └── route.ts         # Update and fetch user profile fields
+│   │   ├── care-circle
+│   │   │   ├── loader.ts                # Server-side loader for CareCircle dashboard
+│   │   │   └── page.tsx                 # CareCircle page shell and hero layout
+│   │   ├── dashboard
+│   │   │   └── page.tsx                 # Pet dashboard (grid of PetCards + quick actions)
+│   │   ├── dev
+│   │   │   └── mui-theme-check
+│   │   │       └── page.tsx             # Internal dev page for verifying MUI theme tokens
+│   │   ├── globals.css                  # Global CSS, Tailwind layers, CSS variables
+│   │   ├── layout.tsx                   # Root layout; wires Providers, RootShell, NavBar
+│   │   ├── page.tsx                     # Landing page (marketing/redirect into app)
+│   │   ├── pets
+│   │   │   └── [id]
+│   │   │       ├── activity
+│   │   │       │   └── page.tsx         # Full activity timeline for a single pet
+│   │   │       └── page.tsx             # Pet detail page built on PetDetailShell
+│   │   └── providers.tsx                # Global providers (SessionProvider, ThemeMode, etc.)
+│   ├── components                       # Reusable UI components and app shell pieces
+│   │   ├── auth
+│   │   │   └── AuthShell.tsx            # Shared layout shell for login/signup screens
+│   │   ├── MuiCacheProvider.tsx         # Emotion/MUI cache provider to stabilize SSR hydration
+│   │   ├── NavBar.tsx                   # Global AppBar + Drawer navigation component
+│   │   ├── pets
+│   │   │   ├── AddPetForm.tsx           # Controlled form for creating new pets
+│   │   │   ├── BreedSelect.tsx          # Reusable select component for pet breeds
+│   │   │   ├── CareCirclePanel.tsx      # "Shared with" card for CareCircle members
+│   │   │   ├── ConfirmActionModal.tsx   # Confirm dialog for destructive pet/care actions
+│   │   │   ├── PetActivityList.tsx      # Small recent-activity list component
+│   │   │   ├── petActivityUtils.ts      # Formatting/helpers for care log display
+│   │   │   ├── PetAvatar.tsx            # Avatar renderer for pets (photo or initials)
+│   │   │   ├── PetCard.tsx              # Summary card with quick actions for each pet
+│   │   │   ├── PetDetailActivitySection.tsx # Activity section on pet detail page
+│   │   │   ├── PetDetailCareCircleSection.tsx # CareCircle section on pet detail page
+│   │   │   ├── PetDetailHeaderSection.tsx # Hero header card (avatar + identity + badges)
+│   │   │   ├── PetDetailPage.tsx        # Top-level composition for pet detail UI
+│   │   │   ├── PetDetailProfileSection.tsx # Editable profile fields for a pet
+│   │   │   ├── PetDetailShell.tsx       # Layout shell used by /pets/[id] route
+│   │   │   ├── petDetailTypes.ts        # Shared TypeScript types for pet detail views
+│   │   │   ├── PetHeaderCard.tsx        # Reusable header card for pet identity summary
+│   │   │   ├── PetList.tsx              # Responsive grid list of PetCards
+│   │   │   ├── PetPhotoProfileCard.tsx  # Card showing pet profile photo + metadata
+│   │   │   ├── PetPhotoUpload.tsx       # Controlled uploader for pet photos
+│   │   │   ├── QuickActions.tsx         # Grid of thumb-friendly care quick actions
+│   │   │   └── RemoveCaregiverButton.tsx # Button to remove a caregiver from CareCircle
+│   │   ├── RootShell.tsx                # App shell that shifts content with the Drawer
+│   │   ├── SessionProvider.tsx          # Wrapper around NextAuth SessionProvider
+│   │   ├── ThemeModeProvider.tsx        # Light/dark mode state and MUI theme wiring
+│   │   ├── ui
+│   │   │   └── Button.tsx               # Shared button component matching brand styles
+│   │   └── UserProfileForm.tsx          # Form for editing user profile/contact info
+│   ├── lib
+│   │   ├── auth-client.ts               # Client-side helpers for NextAuth sign-in/out
+│   │   ├── auth.ts                      # NextAuth server configuration and adapters
+│   │   ├── authRedirect.ts              # Safe callback URL handling to prevent open redirects
+│   │   ├── breeds.ts                    # Static breed list and helpers for BreedSelect
+│   │   ├── carecircle.ts                # CareCircle utility functions and role helpers
+│   │   ├── petCharacteristics.ts        # Characteristic definitions and mapping utilities
+│   │   ├── prisma.ts                    # Prisma client singleton (avoids hot-reload issues)
+│   │   └── supabase-server.ts           # Helper for connecting to Supabase-hosted Postgres
+│   ├── test-utils.tsx                   # Custom RTL render helpers and providers for tests
+│   └── theme.ts                         # Central MUI theme definition (colors, typography, cards)
+├── tailwind.config.ts                   # Tailwind configuration (legacy/global utility usage)
+├── tsconfig.json                        # TypeScript compiler options
+└── tsconfig.tsbuildinfo                 # Incremental TS build cache (generated)
 ```
+
+---
+
+## Architecture & UI Overview
+
+Over the course of the capstone, Mimamori’s internals evolved from a simple “pages + components” layout into a more opinionated app shell with consistent patterns for data loading, navigation, and visual design.
+
+At a high level, the app now follows these core ideas:
+
+- **App shell & theming**
+  - `RootShell` wraps all authenticated pages, handling the global MUI layout, a sticky `AppBar`, and a responsive slide-out drawer.
+  - `ThemeModeProvider` owns light/dark mode state and wires it into the MUI theme so cards, typography, and surfaces stay readable in both themes.
+  - Hydration issues between Emotion/MUI on the server and client were resolved by fixing timezone-sensitive formatting (using UTC), stabilizing `useMediaQuery` usage, and applying `suppressHydrationWarning` only at the top shell where Emotion injects styles.
+
+- **Auth flows**
+  - Login and signup live under the `(auth)` route group and are implemented as server wrappers with client components (`LoginPageClient`, `SignupPageClient`) to satisfy Next.js 16 `useSearchParams` + `Suspense` requirements.
+  - Both screens share a dedicated `AuthShell` for consistent spacing, copy, and layout.
+  - Credentials auth and Google OAuth both normalize `callbackUrl` via a shared `getSafeCallbackUrl` helper to prevent open redirects and ensure deep-linking (e.g. `/pets/[id]`, `/care-circle`) remains stable.
+
+- **Navigation & layout**
+  - The global `NavBar` is now a MUI `AppBar` + `Drawer` combo that behaves the same on mobile and desktop.
+  - The drawer pushes the page content horizontally (managed by `RootShell`) so users keep context while navigating.
+  - Auth actions are available directly in the drawer: logged-out users see “Log in” / “Sign up”; logged-in users see “Log out.”
+
+- **Domain pages**
+  - **Dashboard** shows a grid of `PetCard` components using a responsive CSS grid (`PetList`). Cards are now rectangular, with unified border radius, overflow rules, and thumb-friendly quick actions.
+  - **Pet detail** (`/pets/[id]`) uses `PetDetailShell` and is visually aligned with the Care Circle hero pattern: a single hero card with avatar, identity metadata, badges, and recent activity, followed by standard MUI cards for activity and sharing.
+  - **Care Circle** has its own loader and page shell, mirroring the same hero + detail card layout used for pets.
+
+- **Design system & cards**
+  - MUI `Card` is the canonical card primitive across the app, with geometry (border radius, overflow, borders) defined in the theme instead of per-component overrides.
+  - Legacy Tailwind-based “stadium” cards were removed in favor of rectangular cards with predictable behavior on all breakpoints.
+  - Shared patterns for chips, buttons, and typography ensure dark-mode safety and consistent spacing.
+
+- **Testing**
+  - Jest/RTL tests cover core flows: smoke tests, auth screens, pet API routes, Care Circle links, and `PetCard` behavior.
+  - All refactors keep `npm run check` (lint, typecheck, test) green as a precondition for merging.
+
+This architecture makes it easier to introduce new “care entities” (people, plants, places) while reusing the same hero card, detail shell, and CareCircle patterns that now power the pet experience.
 
 ---
 
 ## Visuals
 
-Screenshots and demo media will live here.
-
-- `TBD` – Dashboard / pets list view  
-- `TBD` – Pet detail with activity timeline  
-- `TBD` – Mobile view of logging a care activity
-
-Once captured, you can add something like:
-
-```md
-![Mimamori dashboard](./public/readme/dashboard.png)
-```
+Loom Video Recording: https://www.loom.com/share/2f9e712bbaa04bffa2f44a4734fd0198 
 
 ---
 
+
 ## Getting Started
+
+### Local Setup (TL;DR)
+
+If you already have Node and a PostgreSQL database (or Supabase) ready, this is the fastest way to get Mimamori running locally:
+
+```bash
+# 1. Clone the repo and install dependencies
+git clone https://github.com/walbeck85/mimamori.git
+cd mimamori
+npm install
+
+# 2. Copy env template and fill in values
+cp .env.example .env
+# Edit .env and set DATABASE_URL, NEXTAUTH_SECRET, NEXTAUTH_URL, and any Supabase creds
+
+# 3. Run Prisma migrations (creates tables in your database)
+npx prisma generate
+npx prisma migrate dev --name init
+
+# 4. (Optional) Seed with test data
+npx prisma db seed
+
+# 5. Start the dev server
+npm run dev
+# App will be available at http://localhost:3000
+```
+
+If you are new to any of the tools in this stack (Next.js, Prisma, Supabase, etc.), the sections below expand on each step in more detail.
 
 ### Requirements
 
@@ -493,7 +612,3 @@ Planned enhancements include:
 If you have ideas that would make Mimamori more useful for your household or care network, please open an issue or submit a PR.
 
 ---
-
-## License
-
-License terms are still being finalized. Until then, treat this as a closed-source project intended for personal and educational use only.
