@@ -10,6 +10,7 @@ import {
   PET_CHARACTERISTICS,
   type PetCharacteristicId,
 } from '@/lib/petCharacteristics';
+import { alpha, type Theme, useTheme } from '@mui/material/styles';
 
 // MUI imports --------------------------------------------------
 // I’m using MUI here for the structural shell (Card, Box, Stack, Typography)
@@ -133,35 +134,64 @@ function getCharacteristicLabel(id: PetCharacteristicId | string): string {
 
 // Helper: map each characteristic to a distinct visual style so the most
 // important safety flags stand out without overwhelming the card.
-function getCharacteristicClasses(id: PetCharacteristicId | string): string {
+function getCharacteristicStyles(theme: Theme, id: PetCharacteristicId | string) {
   switch (id) {
     case 'AGGRESSIVE':
       // High-alert flag: strong red pill.
-      return 'border-[#FCA5A5] bg-[#FEE2E2] text-[#991B1B]';
+      return {
+        borderColor: alpha(theme.palette.error.main, 0.55),
+        backgroundColor: alpha(theme.palette.error.main, 0.14),
+        color: theme.palette.error.dark ?? theme.palette.error.main,
+      };
     case 'REACTIVE':
       // Medium-alert flag: warm amber pill.
-      return 'border-[#FCD34D] bg-[#FEF3C7] text-[#92400E]';
+      return {
+        borderColor: alpha(theme.palette.warning.main, 0.6),
+        backgroundColor: alpha(theme.palette.warning.light, 0.22),
+        color: theme.palette.warning.dark ?? theme.palette.warning.main,
+      };
     case 'MOBILITY_ISSUES':
       // Accessibility-related: calming teal pill.
-      return 'border-[#6EE7B7] bg-[#ECFDF5] text-[#065F46]';
+      return {
+        borderColor: alpha(theme.palette.success.main, 0.6),
+        backgroundColor: alpha(theme.palette.success.main, 0.18),
+        color: theme.palette.success.dark ?? theme.palette.success.main,
+      };
     case 'BLIND':
       // Sensory note: cool indigo pill.
-      return 'border-[#A5B4FC] bg-[#EEF2FF] text-[#3730A3]';
+      return {
+        borderColor: alpha(theme.palette.info.main, 0.6),
+        backgroundColor: alpha(theme.palette.info.light, 0.18),
+        color: theme.palette.info.dark ?? theme.palette.info.main,
+      };
     case 'DEAF':
       // Sensory note: soft blue pill.
-      return 'border-[#BFDBFE] bg-[#EFF6FF] text-[#1D4ED8]';
+      return {
+        borderColor: alpha(theme.palette.info.main, 0.45),
+        backgroundColor: alpha(theme.palette.info.main, 0.12),
+        color: theme.palette.info.main,
+      };
     case 'SHY':
       // Temperament note: gentle mauve pill.
-      return 'border-[#FBCFE8] bg-[#FDF2F8] text-[#9D174D]';
+      return {
+        borderColor: alpha(theme.palette.secondary.main, 0.55),
+        backgroundColor: alpha(theme.palette.secondary.main, 0.2),
+        color: theme.palette.text.primary,
+      };
     default:
       // Fallback for any future flags we add.
-      return 'border-[#E5E7EB] bg-[#F9FAFB] text-[#374151]';
+      return {
+        borderColor: theme.palette.divider,
+        backgroundColor: alpha(theme.palette.text.secondary, 0.06),
+        color: theme.palette.text.secondary,
+      };
   }
 }
 
 // Component -----------------------------------------------------
 // Renders a card displaying pet information and quick actions
 export default function PetCard({ pet, currentUserName, onQuickAction }: Props) {
+  const theme = useTheme();
   const lastLog = pet.careLogs?.[0];
 
   // Modal state: which action is waiting for confirmation?
@@ -272,15 +302,17 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
             {pet.characteristics && pet.characteristics.length > 0 && (
               <Box className="flex flex-wrap gap-2">
                 {pet.characteristics.map((id) => (
-                  <span
+                  <Box
                     key={id}
-                    className={[
-                      'inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em]',
-                      getCharacteristicClasses(id),
-                    ].join(' ')}
+                    component="span"
+                    className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em]"
+                    sx={{
+                      border: '1px solid',
+                      ...getCharacteristicStyles(theme, id),
+                    }}
                   >
                     {getCharacteristicLabel(id)}
-                  </span>
+                  </Box>
                 ))}
               </Box>
             )}

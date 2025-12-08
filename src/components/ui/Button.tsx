@@ -1,6 +1,14 @@
 'use client';
 
 import * as React from 'react';
+import { Box } from '@mui/material';
+import {
+  alpha,
+  useTheme,
+  type SxProps,
+  type Theme,
+} from '@mui/material/styles';
+import type { SystemStyleObject } from '@mui/system';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -12,30 +20,57 @@ export interface ButtonProps
   fullWidth?: boolean;
 }
 
-function getVariantClasses(variant: ButtonVariant): string {
+type ButtonStyleObject = SystemStyleObject<Theme>;
+
+function getVariantStyles(theme: Theme, variant: ButtonVariant): ButtonStyleObject {
+  const primaryMain = theme.palette.primary.main;
+  const primaryDark = theme.palette.primary.dark;
+  const hoverTint = alpha(primaryMain, 0.08);
+
   switch (variant) {
     case 'secondary':
-      // Secondary: light surface with green accent border/text, used for less-prominent actions.
-      return 'bg-white text-[#3E5C2E] border border-[#3E5C2E] hover:bg-[#F5F3EA]';
+      // Secondary: light surface with accent border/text for quieter actions.
+      return {
+        bgcolor: 'background.paper',
+        color: primaryMain,
+        border: `1px solid ${primaryMain}`,
+        '&:hover': {
+          bgcolor: hoverTint,
+        },
+      };
     case 'ghost':
-      // Ghost: transparent background that relies on the surrounding surface, ideal for subtle actions.
-      return 'bg-transparent text-[#3E5C2E] hover:bg-[#F5F3EA]';
+      // Ghost: transparent background that relies on the surrounding surface.
+      return {
+        bgcolor: 'transparent',
+        color: primaryMain,
+        border: '1px solid transparent',
+        '&:hover': {
+          bgcolor: hoverTint,
+        },
+      };
     case 'primary':
     default:
-      // Primary: solid brand green call-to-action, used for the main action in a view.
-      return 'bg-[#3E5C2E] text-white hover:bg-[#2F4A24]';
+      // Primary: solid brand call-to-action color.
+      return {
+        bgcolor: primaryMain,
+        color: theme.palette.primary.contrastText,
+        border: '1px solid transparent',
+        '&:hover': {
+          bgcolor: primaryDark,
+        },
+      };
   }
 }
 
-function getSizeClasses(size: ButtonSize): string {
+function getSizeStyles(size: ButtonSize): ButtonStyleObject {
   switch (size) {
     case 'sm':
-      return 'px-3 py-1.5 text-sm';
+      return { px: 1.5, py: 0.75, fontSize: '0.875rem' };
     case 'lg':
-      return 'px-5 py-3 text-base';
+      return { px: 2.5, py: 1.5, fontSize: '1rem' };
     case 'md':
     default:
-      return 'px-4 py-2 text-sm';
+      return { px: 2, py: 1, fontSize: '0.875rem' };
   }
 }
 
@@ -47,25 +82,46 @@ export default function Button({
   children,
   ...props
 }: ButtonProps) {
-  const baseClasses =
-    'inline-flex items-center justify-center rounded-full font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3E5C2E] disabled:opacity-50 disabled:cursor-not-allowed';
+  const theme = useTheme();
 
-  const widthClasses = fullWidth ? 'w-full' : '';
-
-  const finalClassName = [
-    baseClasses,
-    getVariantClasses(variant),
-    getSizeClasses(size),
-    widthClasses,
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .trim();
+  const sx: SxProps<Theme> = [
+    {
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 9999,
+      fontWeight: 600,
+      lineHeight: 1.5,
+      border: '1px solid transparent',
+      textDecoration: 'none',
+      cursor: 'pointer',
+      transition: theme.transitions.create(
+        ['background-color', 'color', 'box-shadow', 'border-color'],
+        { duration: theme.transitions.duration.short }
+      ),
+      '&:focus-visible': {
+        outline: 'none',
+        boxShadow: `0 0 0 2px ${theme.palette.background.paper}, 0 0 0 4px ${theme.palette.primary.main}`,
+      },
+      '&:disabled': {
+        opacity: 0.5,
+        cursor: 'not-allowed',
+        boxShadow: 'none',
+      },
+    },
+    getVariantStyles(theme, variant),
+    getSizeStyles(size),
+    ...(fullWidth ? [{ width: '100%' }] : []),
+  ];
 
   return (
-    <button className={finalClassName} {...props}>
+    <Box
+      component="button"
+      className={className}
+      sx={sx}
+      {...props}
+    >
       {children}
-    </button>
+    </Box>
   );
 }

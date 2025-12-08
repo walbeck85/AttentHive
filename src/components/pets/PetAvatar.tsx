@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { Avatar, Box } from '@mui/material';
+import { Avatar, Box, useTheme } from '@mui/material';
 
 type Size = 'sm' | 'md' | 'lg';
 
@@ -26,6 +26,7 @@ export default function PetAvatar({
   size = 'md',
   className = '',
 }: Props) {
+  const theme = useTheme();
   const initials = React.useMemo(() => {
     const trimmed = name?.trim();
     if (!trimmed) return '?';
@@ -58,9 +59,9 @@ export default function PetAvatar({
           height: dimension,
           fontSize: Math.round(dimension * 0.4),
           fontWeight: 600,
-          bgcolor: '#FAF3E7',
-          color: '#382110',
-          border: '1px solid #D17D45',
+          bgcolor: theme.palette.background.paper,
+          color: theme.palette.text.primary,
+          border: `1px solid ${theme.palette.primary.main}`,
         }}
       >
         {initials}

@@ -32,14 +32,23 @@ export function useThemeModeController(): ThemeModeContextValue {
   });
 
   const [mode, setModeState] = React.useState<ThemePreference>("system");
+  const [hasHydrated, setHasHydrated] = React.useState(false);
 
   // Compute actual palette mode based on preference + OS preference.
-  const resolvedMode: PaletteMode =
-    mode === "system" ? (prefersDark ? "dark" : "light") : mode;
+  const resolvedMode: PaletteMode = React.useMemo(() => {
+    // During SSR and the very first client render, force light mode so the
+    // server HTML matches the initial client markup. This avoids hydration
+    // mismatches when the user prefers dark mode.
+    if (!hasHydrated) return "light";
+
+    return mode === "system" ? (prefersDark ? "dark" : "light") : mode;
+  }, [hasHydrated, mode, prefersDark]);
 
   // On first client render, hydrate from localStorage.
   React.useEffect(() => {
     if (typeof window === "undefined") return;
+
+    setHasHydrated(true);
 
     const stored = window.localStorage.getItem(STORAGE_KEY) as
       | ThemePreference
