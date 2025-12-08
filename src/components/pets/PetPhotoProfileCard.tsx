@@ -183,7 +183,8 @@ export default function PetPhotoProfileCard({
                       borderRadius: 4,
                       border: '1px solid',
                       borderColor: theme.palette.error.light,
-                      bgcolor: alpha(theme.palette.error.light, 0.3),
+                      bgcolor: alpha(theme.palette.error.main, 0.08),
+                      color: theme.palette.error.main,
                       px: 1.5,
                       py: 1,
                     }}
@@ -216,7 +217,10 @@ export default function PetPhotoProfileCard({
                           sx={inputSx}
                         />
                         {editFieldErrors.name && (
-                          <p className="mt-1 text-[11px] text-red-600">
+                          <p
+                            className="mt-1 text-[11px]"
+                            style={{ color: theme.palette.error.main }}
+                          >
                             {editFieldErrors.name}
                           </p>
                         )}
@@ -275,7 +279,10 @@ export default function PetPhotoProfileCard({
                           required
                         />
                         {editFieldErrors.breed && (
-                          <p className="mt-1 text-[11px] text-red-600">
+                          <p
+                            className="mt-1 text-[11px]"
+                            style={{ color: theme.palette.error.main }}
+                          >
                             {editFieldErrors.breed}
                           </p>
                         )}
@@ -313,7 +320,10 @@ export default function PetPhotoProfileCard({
                           sx={inputSx}
                         />
                         {editFieldErrors.birthDate && (
-                          <p className="mt-1 text-[11px] text-red-600">
+                          <p
+                            className="mt-1 text-[11px]"
+                            style={{ color: theme.palette.error.main }}
+                          >
                             {editFieldErrors.birthDate}
                           </p>
                         )}
@@ -332,7 +342,10 @@ export default function PetPhotoProfileCard({
                           sx={inputSx}
                         />
                         {editFieldErrors.weight && (
-                          <p className="mt-1 text-[11px] text-red-600">
+                          <p
+                            className="mt-1 text-[11px]"
+                            style={{ color: theme.palette.error.main }}
+                          >
                             {editFieldErrors.weight}
                           </p>
                         )}
@@ -367,9 +380,10 @@ export default function PetPhotoProfileCard({
                                 >
                                   <span
                                     className={[
-                                      'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                                      'inline-block h-4 w-4 transform rounded-full shadow transition-transform',
                                       isSelected ? 'translate-x-4' : 'translate-x-0.5',
                                     ].join(' ')}
+                                    style={{ backgroundColor: theme.palette.background.paper }}
                                   />
                                 </span>
                               </button>

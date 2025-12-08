@@ -268,9 +268,10 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
       <Card
         component="article"
         className="group"
+        elevation={0}
         sx={{
           // Force a rectangular shell on all breakpoints.
-          borderRadius: 0,
+          borderRadius: 2,
           bgcolor: 'background.paper',
           display: 'flex',
           flexDirection: 'column',
