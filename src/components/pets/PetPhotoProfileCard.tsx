@@ -4,6 +4,7 @@ import React from 'react';
 import PetPhotoUpload from '@/components/pets/PetPhotoUpload';
 import BreedSelect from '@/components/pets/BreedSelect';
 import Grid from '@mui/material/Grid';
+import { alpha, useTheme } from '@mui/material/styles';
 import { Box, Card, CardContent, Typography, Button, Divider } from '@mui/material';
 import {
   PET_CHARACTERISTICS,
@@ -61,6 +62,35 @@ export default function PetPhotoProfileCard({
   onToggleCharacteristic,
   onPhotoUploaded,
 }: PetPhotoProfileCardProps) {
+  const theme = useTheme();
+
+  const borderSubtle = theme.palette.divider;
+  const textMuted = theme.palette.text.secondary;
+  const focusColor = theme.palette.success.main;
+  const hoverSurface = alpha(theme.palette.primary.main, 0.12);
+  const quietSurface = alpha(theme.palette.primary.main, 0.06);
+  const selectedSurface = alpha(theme.palette.success.main, 0.18);
+  const selectedText = theme.palette.success.dark || theme.palette.success.main;
+
+  const inputSx = {
+    width: '100%',
+    borderRadius: 1,
+    border: '1px solid',
+    borderColor: borderSubtle,
+    bgcolor: 'background.paper',
+    px: 2,
+    py: 1.5,
+    fontSize: '0.875rem',
+    color: 'text.primary',
+    '&:focus': {
+      borderColor: focusColor,
+      outline: 'none',
+      boxShadow: `0 0 0 1px ${focusColor}`,
+    },
+  } as const;
+
+  const labelColorSx = { color: textMuted };
+
   return (
     <Box component="section" className="mm-section">
       <Card
@@ -98,9 +128,9 @@ export default function PetPhotoProfileCard({
             <Grid size={{ xs: 12, md: 7 }}>
               <Box
                 sx={{
-                  borderTop: { xs: "1px solid", md: "none" },
-                  borderLeft: { xs: "none", md: "1px solid" },
-                  borderColor: "#E5D9C6",
+                  borderTop: { xs: '1px solid', md: 'none' },
+                  borderLeft: { xs: 'none', md: '1px solid' },
+                  borderColor: borderSubtle,
                   pt: { xs: 2, md: 0 },
                   pl: { xs: 0, md: 3 },
                 }}
@@ -133,11 +163,11 @@ export default function PetPhotoProfileCard({
                         letterSpacing: '0.12em',
                         fontSize: 11,
                         fontWeight: 600,
-                        borderColor: '#D0C1AC',
-                        color: '#6A5740',
+                        borderColor: borderSubtle,
+                        color: textMuted,
                         '&:hover': {
-                          bgcolor: '#F3E6D3',
-                          borderColor: '#D0C1AC',
+                          bgcolor: hoverSurface,
+                          borderColor: borderSubtle,
                         },
                       }}
                     >
@@ -152,12 +182,12 @@ export default function PetPhotoProfileCard({
                       mb: 2,
                       borderRadius: 4,
                       border: '1px solid',
-                      borderColor: '#fecaca',
-                      bgcolor: '#fee2e2',
+                      borderColor: theme.palette.error.light,
+                      bgcolor: alpha(theme.palette.error.light, 0.3),
                       px: 1.5,
                       py: 1,
                     }}
-                    className="text-xs text-red-700"
+                    className="text-xs"
                   >
                     {editError}
                   </Box>
@@ -170,14 +200,20 @@ export default function PetPhotoProfileCard({
                     sx={{ mt: 1.5 }}
                     className="space-y-4"
                   >
-                    <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs uppercase tracking-wide text-[#B09A7C]">
+                    <div
+                      className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs uppercase tracking-wide"
+                      style={{ color: textMuted }}
+                    >
                       <div>
-                        <label className="mb-1 block">Name</label>
-                        <input
+                        <label className="mb-1 block" style={labelColorSx}>
+                          Name
+                        </label>
+                        <Box
+                          component="input"
                           type="text"
                           value={editForm.name}
                           onChange={(e) => onUpdateEditField('name', e.target.value)}
-                          className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+                          sx={inputSx}
                         />
                         {editFieldErrors.name && (
                           <p className="mt-1 text-[11px] text-red-600">
@@ -187,8 +223,10 @@ export default function PetPhotoProfileCard({
                       </div>
 
                       <div>
-                        <label className="mb-1 block">Type</label>
-                        <div className="flex gap-3 text-[13px] text-[#3A2A18]">
+                        <label className="mb-1 block" style={labelColorSx}>
+                          Type
+                        </label>
+                        <div className="flex gap-3 text-[13px]">
                           <label className="flex cursor-pointer items-center gap-1.5">
                             <input
                               type="radio"
@@ -201,7 +239,8 @@ export default function PetPhotoProfileCard({
                                   e.target.value as EditFormState['type'],
                                 )
                               }
-                              className="text-[#3E6B3A] focus:ring-[#3E6B3A]"
+                              className="focus:ring-0"
+                              style={{ accentColor: focusColor }}
                             />
                             <span>Dog</span>
                           </label>
@@ -213,11 +252,12 @@ export default function PetPhotoProfileCard({
                               checked={editForm.type === 'CAT'}
                               onChange={(e) =>
                                 onUpdateEditField(
-                                  'type',
-                                  e.target.value as EditFormState['type'],
-                                )
-                              }
-                              className="text-[#3E6B3A] focus:ring-[#3E6B3A]"
+                                'type',
+                                e.target.value as EditFormState['type'],
+                              )
+                            }
+                              className="focus:ring-0"
+                              style={{ accentColor: focusColor }}
                             />
                             <span>Cat</span>
                           </label>
@@ -225,7 +265,9 @@ export default function PetPhotoProfileCard({
                       </div>
 
                       <div>
-                        <label className="mb-1 block">Breed</label>
+                        <label className="mb-1 block" style={labelColorSx}>
+                          Breed
+                        </label>
                         <BreedSelect
                           petType={editForm.type}
                           value={editForm.breed}
@@ -240,8 +282,11 @@ export default function PetPhotoProfileCard({
                       </div>
 
                       <div>
-                        <label className="mb-1 block">Sex</label>
-                        <select
+                        <label className="mb-1 block" style={labelColorSx}>
+                          Sex
+                        </label>
+                        <Box
+                          component="select"
                           value={editForm.gender}
                           onChange={(e) =>
                             onUpdateEditField(
@@ -249,20 +294,23 @@ export default function PetPhotoProfileCard({
                               e.target.value as EditFormState['gender'],
                             )
                           }
-                          className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+                          sx={inputSx}
                         >
                           <option value="MALE">Male</option>
                           <option value="FEMALE">Female</option>
-                        </select>
+                        </Box>
                       </div>
 
                       <div>
-                        <label className="mb-1 block">Birth Date</label>
-                        <input
+                        <label className="mb-1 block" style={labelColorSx}>
+                          Birth Date
+                        </label>
+                        <Box
+                          component="input"
                           type="date"
                           value={editForm.birthDate}
                           onChange={(e) => onUpdateEditField('birthDate', e.target.value)}
-                          className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+                          sx={inputSx}
                         />
                         {editFieldErrors.birthDate && (
                           <p className="mt-1 text-[11px] text-red-600">
@@ -272,13 +320,16 @@ export default function PetPhotoProfileCard({
                       </div>
 
                       <div>
-                        <label className="mb-1 block">Weight (lbs)</label>
-                        <input
+                        <label className="mb-1 block" style={labelColorSx}>
+                          Weight (lbs)
+                        </label>
+                        <Box
+                          component="input"
                           type="number"
                           step="0.1"
                           value={editForm.weight}
                           onChange={(e) => onUpdateEditField('weight', e.target.value)}
-                          className="w-full rounded border border-[#E1D6C5] bg-white px-2 py-1.5 text-sm text-[#3A2A18] focus:border-[#3E6B3A] focus:outline-none focus:ring-1 focus:ring-[#3E6B3A]"
+                          sx={inputSx}
                         />
                         {editFieldErrors.weight && (
                           <p className="mt-1 text-[11px] text-red-600">
@@ -288,7 +339,9 @@ export default function PetPhotoProfileCard({
                       </div>
 
                       <div className="col-span-2">
-                        <label className="mb-2 block">Characteristics</label>
+                        <label className="mb-2 block" style={labelColorSx}>
+                          Characteristics
+                        </label>
                         <div className="space-y-2">
                           {PET_CHARACTERISTICS.map((item) => {
                             const isSelected = editForm.characteristics.includes(item.id);
@@ -297,19 +350,20 @@ export default function PetPhotoProfileCard({
                                 key={item.id}
                                 type="button"
                                 onClick={() => onToggleCharacteristic(item.id)}
-                                className={[
-                                  'flex w-full items-center justify-between rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors',
-                                  isSelected
-                                    ? 'border-[#3E6B3A] bg-[#E0F2E9] text-[#234434]'
-                                    : 'border-[#D0C1AC] bg-[#FDF7EE] text-[#6A5740] hover:bg-[#F3E6D3]',
-                                ].join(' ')}
+                                className="flex w-full items-center justify-between rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors"
+                                style={{
+                                  border: '1px solid',
+                                  borderColor: isSelected ? focusColor : borderSubtle,
+                                  backgroundColor: isSelected ? selectedSurface : quietSurface,
+                                  color: isSelected ? selectedText : textMuted,
+                                }}
                               >
                                 <span>{getCharacteristicLabel(item.id)}</span>
                                 <span
-                                  className={[
-                                    'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
-                                    isSelected ? 'bg-[#3E6B3A]' : 'bg-[#D1C5B5]',
-                                  ].join(' ')}
+                                  className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors"
+                                  style={{
+                                    backgroundColor: isSelected ? focusColor : borderSubtle,
+                                  }}
                                 >
                                   <span
                                     className={[
@@ -325,7 +379,7 @@ export default function PetPhotoProfileCard({
                       </div>
                     </div>
 
-                    <Divider sx={{ mt: 2, mb: 1.5, borderColor: '#E9DECF' }} />
+                    <Divider sx={{ mt: 2, mb: 1.5, borderColor: borderSubtle }} />
 
                     <Box
                       sx={{
@@ -341,8 +395,8 @@ export default function PetPhotoProfileCard({
                         sx={{
                           textTransform: 'none',
                           fontSize: 12,
-                          color: '#6A5740',
-                          '&:hover': { bgcolor: '#F3E6D3' },
+                          color: textMuted,
+                          '&:hover': { bgcolor: hoverSurface },
                         }}
                       >
                         Cancel
@@ -364,22 +418,25 @@ export default function PetPhotoProfileCard({
                     </Box>
                   </Box>
                 ) : (
-                  <dl className="grid grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-6 text-xs uppercase tracking-wide text-[#B09A7C]">
+                  <dl
+                    className="grid grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-6 text-xs uppercase tracking-wide"
+                    style={{ color: textMuted }}
+                  >
                     <div>
                       <dt>Age</dt>
-                      <dd className="mt-1 font-medium normal-case text-[#382110] dark:text-[#FFF4E3]">
+                      <dd className="mt-1 font-medium normal-case">
                         {calculateAge(pet.birthDate)} yrs
                       </dd>
                     </div>
                     <div>
                       <dt>Weight</dt>
-                      <dd className="mt-1 font-medium normal-case text-[#382110] dark:text-[#FFF4E3]">
+                      <dd className="mt-1 font-medium normal-case">
                         {pet.weight} lbs
                       </dd>
                     </div>
                     <div>
                       <dt>Sex</dt>
-                      <dd className="mt-1 font-medium normal-case text-[#382110] dark:text-[#FFF4E3]">
+                      <dd className="mt-1 font-medium normal-case">
                         {pet.gender === 'MALE' ? 'Male' : 'Female'}
                       </dd>
                     </div>

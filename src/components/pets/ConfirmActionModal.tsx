@@ -38,13 +38,11 @@ export default function ConfirmActionModal({
     isDark ? 0.65 : 0.4
   );
 
-  const cardBg = isDark ? '#0C1326' : '#FFF9F0';
-  const cardBorder = isDark
-    ? alpha(theme.palette.common.white, 0.08)
-    : '#D1C3A5';
+  const cardBg = theme.palette.background.paper;
+  const cardBorder = theme.palette.divider;
   const cardShadow = isDark
-    ? '0 28px 70px rgba(0, 0, 0, 0.7)'
-    : '0 20px 50px rgba(0, 0, 0, 0.35)';
+    ? `0 28px 70px ${alpha(theme.palette.common.black, 0.7)}`
+    : `0 20px 50px ${alpha(theme.palette.common.black, 0.35)}`;
 
   return (
     <Box
@@ -126,8 +124,8 @@ export default function ConfirmActionModal({
                 minWidth: 130,
                 fontWeight: 700,
                 boxShadow: isDark
-                  ? '0 8px 20px rgba(255, 145, 101, 0.35)'
-                  : '0 8px 18px rgba(255, 145, 101, 0.25)',
+                  ? `0 8px 20px ${alpha(theme.palette.primary.main, 0.35)}`
+                  : `0 8px 18px ${alpha(theme.palette.primary.main, 0.25)}`,
               }}
             >
               {confirmLabel}

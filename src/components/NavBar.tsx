@@ -410,7 +410,9 @@ export default function NavBar({
         onClose={onToggleMobileDrawer}
         ModalProps={{
           keepMounted: true,
-          BackdropProps: { sx: { backgroundColor: "rgba(0,0,0,0.05)" } },
+          BackdropProps: {
+            sx: { backgroundColor: alpha(theme.palette.common.black, 0.05) },
+          },
         }}
         PaperProps={{
           id: "main-navigation-drawer",

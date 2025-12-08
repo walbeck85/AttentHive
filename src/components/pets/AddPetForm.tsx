@@ -40,7 +40,7 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
   const surfaceColor = theme.palette.background.paper;
   const subtleSurface = isDarkMode
     ? theme.palette.background.default
-    : '#FFFDF8';
+    : theme.palette.action.hover;
   const textPrimary = theme.palette.text.primary;
   const textSecondary = theme.palette.text.secondary;
   const accent = theme.palette.primary.main;
@@ -512,9 +512,10 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-md px-5 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors disabled:opacity-50 hover:opacity-90"
+            className="rounded-md px-5 py-1.5 text-sm font-semibold shadow-sm transition-colors disabled:opacity-50 hover:opacity-90"
             style={{
               backgroundColor: accent,
+              color: theme.palette.common.white,
             }}
           >
             {isSubmitting ? 'Adding…' : 'Add Pet'}
