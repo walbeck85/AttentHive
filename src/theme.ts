@@ -9,6 +9,35 @@ import type { PaletteMode } from "@mui/material";
 // User-facing preference options used by the theme mode context.
 export type ThemePreference = "light" | "dark" | "system";
 
+const baseTypography: ThemeOptions["typography"] = {
+  fontFamily:
+    "'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  h1: { fontWeight: 700, fontSize: "48px", lineHeight: 1.1 },
+  h2: { fontWeight: 700, fontSize: "40px", lineHeight: 1.2 },
+  h3: { fontWeight: 600, fontSize: "32px", lineHeight: 1.25 },
+  h4: { fontWeight: 700, fontSize: "28px", lineHeight: 1.3 },
+  h5: { fontWeight: 600, fontSize: "22px", lineHeight: 1.35 },
+  h6: { fontWeight: 600, fontSize: "20px", lineHeight: 1.4 },
+  subtitle1: { fontWeight: 600, fontSize: "18px", lineHeight: 1.45 },
+  subtitle2: { fontWeight: 600, fontSize: "16px", lineHeight: 1.45 },
+  body1: { fontWeight: 400, fontSize: "16px", lineHeight: 1.6 },
+  body2: { fontWeight: 400, fontSize: "14px", lineHeight: 1.6 },
+  caption: { fontWeight: 500, fontSize: "12px", lineHeight: 1.4 },
+  overline: {
+    fontWeight: 600,
+    fontSize: "11px",
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    lineHeight: 1.6,
+  },
+  button: {
+    fontWeight: 600,
+    fontSize: "14px",
+    lineHeight: 1.5,
+    textTransform: "none",
+  },
+};
+
 // Design tokens for light and dark modes. These keep the existing Option 3
 // palette (warm orange primary, soft yellow secondary, success green, navy text)
 // and simply adapt background/text/border values for dark mode.
@@ -53,18 +82,7 @@ export function getDesignTokens(mode: PaletteMode): ThemeOptions {
       borderRadius: 8,
     },
 
-    typography: {
-      // Nunito is already loaded via next/font in RootLayout; this makes MUI use it.
-      fontFamily:
-        "'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      h1: { fontWeight: 700 },
-      h2: { fontWeight: 700 },
-      h3: { fontWeight: 600 },
-      button: {
-        textTransform: "none", // No ALL CAPS buttons
-        fontWeight: 600,
-      },
-    },
+    typography: baseTypography,
 
     components: {
       MuiCssBaseline: {
