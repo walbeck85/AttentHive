@@ -21,7 +21,10 @@ export default function PetDetailShell({ children }: PetDetailShellProps) {
         minHeight: '100vh',
       }}
     >
-      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
+      <Container
+        maxWidth="lg"
+        sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}
+      >
         <Stack spacing={3}>
           {sections.map((section, index) => (
             <Box key={index}>{section}</Box>

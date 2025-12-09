@@ -37,7 +37,10 @@ export default async function AccountPage() {
   return (
     // Using the same Container/Stack pattern as the dashboard and Care Circle
     // so spacing, max-width, and typography all feel like one coherent app.
-    <Container maxWidth="lg" sx={{ py: 5 }}>
+    <Container
+      maxWidth="lg"
+      sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}
+    >
       <Stack spacing={4}>
         <AccountHeaderSection user={user} />
         <AccountProfileSection user={user} />

@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import PetAvatar from '@/components/pets/PetAvatar';
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button, Container, Paper, Stack, Typography } from '@mui/material';
 
 // Types --------------------------------------------------------
 
@@ -132,10 +132,13 @@ export default function ActivityLogPage() {
   // Main layout ------------------------------------------------
 
   return (
-    <div className="mm-page">
-      <main className="mm-shell space-y-6">
-        {/* Back + header */}
-        <section className="mm-section">
+    <Container
+      maxWidth="lg"
+      sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}
+    >
+      <Stack spacing={3}>
+        {/* Back + header card */}
+        <Stack spacing={2}>
           <Button
             type="button"
             onClick={() => router.back()}
@@ -152,135 +155,175 @@ export default function ActivityLogPage() {
             ← Back
           </Button>
 
-          <div className="mt-4 mm-card px-5 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {/* Even without an image URL, showing initials keeps this page visually consistent with the rest of the app. */}
-              <div className="h-10 w-10 shrink-0 rounded-full overflow-hidden">
-                <PetAvatar name={petName} size="md" />
-              </div>
-              <div>
-                <h1 className="mm-h2">{petName}</h1>
-                <p className="mm-muted-sm">Activity log</p>
-              </div>
-            </div>
-          </div>
-        </section>
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2.5, md: 3 },
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 3,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                {/* Even without an image URL, showing initials keeps this page visually consistent with the rest of the app. */}
+                <Box
+                  sx={{
+                    height: 40,
+                    width: 40,
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                  }}
+                >
+                  <PetAvatar name={petName} size="md" />
+                </Box>
+                <div>
+                  <h1 className="mm-h2">{petName}</h1>
+                  <p className="mm-muted-sm">Activity log</p>
+                </div>
+              </Box>
+            </Box>
+          </Paper>
+        </Stack>
 
         {/* Filters */}
-        <section className="mm-section">
-          <div className="mm-card px-5 py-4">
-            <div className="flex flex-wrap gap-2">
-              {(['ALL', 'FEED', 'WALK', 'MEDICATE', 'ACCIDENT'] as const).map(
-                (type) => {
-                  const isAll = type === 'ALL';
-                  const isActive = filter === type;
-                  const label = isAll
-                    ? 'All activity'
-                    : ACTIVITY_LABELS[type as ActivityType];
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2.5, md: 3 },
+            borderRadius: 2,
+            border: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+          }}
+        >
+          <div className="flex flex-wrap gap-2">
+            {(['ALL', 'FEED', 'WALK', 'MEDICATE', 'ACCIDENT'] as const).map(
+              (type) => {
+                const isAll = type === 'ALL';
+                const isActive = filter === type;
+                const label = isAll
+                  ? 'All activity'
+                  : ACTIVITY_LABELS[type as ActivityType];
 
-                  return (
-                    <Button
-                      key={type}
-                      type="button"
-                      onClick={() =>
-                        setFilter(type === 'ALL' ? 'ALL' : (type as ActivityType))
-                      }
-                      variant={isActive ? 'contained' : 'outlined'}
-                      size="small"
-                      sx={{
-                        borderRadius: '9999px',
-                        textTransform: 'none',
-                        fontSize: 13,
-                      }}
-                    >
-                      {label}
-                    </Button>
-                  );
-                }
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* Activity list */}
-        <section className="mm-section">
-          <div className="mm-card px-5 py-4">
-            <h2 className="mm-h3 mb-3">Recent activity</h2>
-
-            {filteredLogs.length === 0 ? (
-              <p className="mm-muted-sm">No records found for this filter.</p>
-            ) : (
-              <ul className="space-y-3 text-sm">
-                {filteredLogs.map((log) => (
-                  <Box
-                    key={log.id}
-                    component="li"
+                return (
+                  <Button
+                    key={type}
+                    type="button"
+                    onClick={() =>
+                      setFilter(type === 'ALL' ? 'ALL' : (type as ActivityType))
+                    }
+                    variant={isActive ? 'contained' : 'outlined'}
+                    size="small"
                     sx={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      justifyContent: 'space-between',
-                      pb: 2,
-                      borderBottom: '1px solid',
-                      borderColor: 'divider',
-                      '&:last-of-type': {
-                        borderBottom: 'none',
-                        pb: 0,
-                      },
+                      borderRadius: '9999px',
+                      textTransform: 'none',
+                      fontSize: 13,
                     }}
                   >
-                    <div>
+                    {label}
+                  </Button>
+                );
+              }
+            )}
+          </div>
+        </Paper>
+
+        {/* Activity list */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2.5, md: 3 },
+            borderRadius: 2,
+            border: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+          }}
+        >
+          <h2 className="mm-h3 mb-3">Recent activity</h2>
+
+          {filteredLogs.length === 0 ? (
+            <p className="mm-muted-sm">No records found for this filter.</p>
+          ) : (
+            <ul className="space-y-3 text-sm">
+              {filteredLogs.map((log) => (
+                <Box
+                  key={log.id}
+                  component="li"
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    pb: 2,
+                    borderBottom: '1px solid',
+                    borderColor: 'divider',
+                    '&:last-of-type': {
+                      borderBottom: 'none',
+                      pb: 0,
+                    },
+                  }}
+                >
+                  <div>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 600,
+                        color: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? theme.palette.text.primary
+                            : '#382110',
+                      }}
+                    >
+                      {ACTIVITY_LABELS[log.activityType]}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      className="mm-muted-sm"
+                      sx={{ fontSize: 13, mt: 0.25 }}
+                    >
+                      by{' '}
+                      <Box
+                        component="span"
+                        sx={{ color: '#D17D45', fontWeight: 500 }}
+                      >
+                        {log.user?.name || 'Someone'}
+                      </Box>
+                    </Typography>
+                    {log.notes && (
                       <Typography
                         variant="body2"
                         sx={{
-                          fontWeight: 600,
-                          color: (theme) =>
-                            theme.palette.mode === 'dark'
-                              ? theme.palette.text.primary
-                              : '#382110',
+                          mt: 1,
+                          fontSize: 12,
+                          color: 'text.secondary',
                         }}
                       >
-                        {ACTIVITY_LABELS[log.activityType]}
+                        {log.notes}
                       </Typography>
-                      <Typography
-                        variant="body2"
-                        className="mm-muted-sm"
-                        sx={{ fontSize: 13, mt: 0.25 }}
-                      >
-                        by{' '}
-                        <Box
-                          component="span"
-                          sx={{ color: '#D17D45', fontWeight: 500 }}
-                        >
-                          {log.user?.name || 'Someone'}
-                        </Box>
-                      </Typography>
-                      {log.notes && (
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            mt: 1,
-                            fontSize: 12,
-                            color: 'text.secondary',
-                          }}
-                        >
-                          {log.notes}
-                        </Typography>
-                      )}
-                    </div>
-                    <Typography
-                      variant="caption"
-                      className="mm-meta"
-                      sx={{ whiteSpace: 'nowrap', color: 'text.secondary' }}
-                    >
-                      {formatDateTime(log.createdAt)}
-                    </Typography>
-                  </Box>
-                ))}
-              </ul>
-            )}
-          </div>
-        </section>
-      </main>
-    </div>
+                    )}
+                  </div>
+                  <Typography
+                    variant="caption"
+                    className="mm-meta"
+                    sx={{ whiteSpace: 'nowrap', color: 'text.secondary' }}
+                  >
+                    {formatDateTime(log.createdAt)}
+                  </Typography>
+                </Box>
+              ))}
+            </ul>
+          )}
+        </Paper>
+      </Stack>
+    </Container>
   );
 }

@@ -115,7 +115,10 @@ export default async function CareCirclePage() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 5 }}>
+    <Container
+      maxWidth="lg"
+      sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}
+    >
       <Stack spacing={4}>
         <CareCircleHeroSection user={data.user} />
         <CareCircleCaregiversSection caregivers={data.caregivers} />
