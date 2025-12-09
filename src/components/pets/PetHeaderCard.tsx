@@ -42,6 +42,7 @@ type PetHeaderCardProps = {
 };
 
 export default function PetHeaderCard({ pet }: PetHeaderCardProps) {
+  // Derives a friendly age label from the birth date while guarding against invalid dates.
   const ageLabel = React.useMemo(() => {
     if (!pet.birthDate) return null;
     const parsed = new Date(pet.birthDate);
@@ -63,6 +64,7 @@ export default function PetHeaderCard({ pet }: PetHeaderCardProps) {
         ? 'Female'
         : null;
 
+  // Collects available metadata into a single line for compact display under the heading.
   const metaLine = [
     pet.breed || null,
     genderLabel,
@@ -77,7 +79,7 @@ export default function PetHeaderCard({ pet }: PetHeaderCardProps) {
   return (
     <Paper
       elevation={0}
-      className="mm-card"
+      // MUI Paper handles the card shell styling; Tailwind card class removed to avoid duplication.
       sx={{
         mt: 2,
         p: { xs: 2.5, md: 3 },
@@ -93,6 +95,7 @@ export default function PetHeaderCard({ pet }: PetHeaderCardProps) {
         spacing={{ xs: 2.5, md: 3 }}
         alignItems={{ xs: 'center', md: 'flex-start' }}
       >
+        {/* Left column keeps avatar and its label aligned with consistent spacing. */}
         <Stack
           spacing={1}
           alignItems={{ xs: 'center', md: 'flex-start' }}
@@ -108,6 +111,7 @@ export default function PetHeaderCard({ pet }: PetHeaderCardProps) {
           </Typography>
         </Stack>
 
+        {/* Right column flows primary pet details and characteristics, stretching to fill space. */}
         <Stack spacing={1.25} flex={1}>
           <Typography component="h1" variant="h5" sx={{ fontWeight: 700 }}>
             {pet.name}

@@ -103,6 +103,7 @@ export default function ActivityLogPage() {
 
   // Loading / error states -------------------------------------
 
+  // Keep the loading view lightweight since no data has been fetched yet.
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--mm-bg)] flex items-center justify-center">
@@ -111,6 +112,7 @@ export default function ActivityLogPage() {
     );
   }
 
+  // Surface a clear error state so the user can retry navigation if fetch fails.
   if (error) {
     return (
       <div className="min-h-screen bg-[var(--mm-bg)] flex flex-col items-center justify-center gap-4">
@@ -131,6 +133,7 @@ export default function ActivityLogPage() {
 
   // Main layout ------------------------------------------------
 
+  // Use MUI containers and stacks for consistent spacing and responsive gutters.
   return (
     <Container
       maxWidth="lg"
@@ -138,6 +141,7 @@ export default function ActivityLogPage() {
     >
       <Stack spacing={3}>
         {/* Back + header card */}
+        {/* Group the back control and header card to align vertical rhythm. */}
         <Stack spacing={2}>
           <Button
             type="button"
@@ -155,6 +159,7 @@ export default function ActivityLogPage() {
             ← Back
           </Button>
 
+          {/* Let Paper own the card shell and spacing instead of Tailwind. */}
           <Paper
             elevation={0}
             sx={{
@@ -186,16 +191,24 @@ export default function ActivityLogPage() {
                 >
                   <PetAvatar name={petName} size="md" />
                 </Box>
-                <div>
-                  <h1 className="mm-h2">{petName}</h1>
-                  <p className="mm-muted-sm">Activity log</p>
-                </div>
+                <Box>
+                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                    {petName}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: 'text.secondary', mt: 0.25 }}
+                  >
+                    Activity log
+                  </Typography>
+                </Box>
               </Box>
             </Box>
           </Paper>
         </Stack>
 
         {/* Filters */}
+        {/* Keep filters inside Paper so spacing matches other cards without Tailwind shells. */}
         <Paper
           elevation={0}
           sx={{
@@ -206,7 +219,7 @@ export default function ActivityLogPage() {
             bgcolor: 'background.paper',
           }}
         >
-          <div className="flex flex-wrap gap-2">
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             {(['ALL', 'FEED', 'WALK', 'MEDICATE', 'ACCIDENT'] as const).map(
               (type) => {
                 const isAll = type === 'ALL';
@@ -235,10 +248,11 @@ export default function ActivityLogPage() {
                 );
               }
             )}
-          </div>
+          </Box>
         </Paper>
 
         {/* Activity list */}
+        {/* Wrap the log list in Paper so typography and borders stay consistent with the header card. */}
         <Paper
           elevation={0}
           sx={{
@@ -249,12 +263,26 @@ export default function ActivityLogPage() {
             bgcolor: 'background.paper',
           }}
         >
-          <h2 className="mm-h3 mb-3">Recent activity</h2>
+          <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 700 }}>
+            Recent activity
+          </Typography>
 
           {filteredLogs.length === 0 ? (
-            <p className="mm-muted-sm">No records found for this filter.</p>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              No records found for this filter.
+            </Typography>
           ) : (
-            <ul className="space-y-3 text-sm">
+            <Box
+              component="ul"
+              sx={{
+                listStyle: 'none',
+                p: 0,
+                m: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.5,
+              }}
+            >
               {filteredLogs.map((log) => (
                 <Box
                   key={log.id}
@@ -287,8 +315,7 @@ export default function ActivityLogPage() {
                     </Typography>
                     <Typography
                       variant="body2"
-                      className="mm-muted-sm"
-                      sx={{ fontSize: 13, mt: 0.25 }}
+                      sx={{ fontSize: 13, mt: 0.25, color: 'text.secondary' }}
                     >
                       by{' '}
                       <Box
@@ -313,14 +340,13 @@ export default function ActivityLogPage() {
                   </div>
                   <Typography
                     variant="caption"
-                    className="mm-meta"
                     sx={{ whiteSpace: 'nowrap', color: 'text.secondary' }}
                   >
                     {formatDateTime(log.createdAt)}
                   </Typography>
                 </Box>
               ))}
-            </ul>
+            </Box>
           )}
         </Paper>
       </Stack>
