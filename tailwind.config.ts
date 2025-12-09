@@ -10,7 +10,7 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      // Brand-aware semantic colors for Mimamori, derived from the Option 3 style guide.
+      // Brand-aware semantic colors for AttentHive, derived from the Option 3 style guide.
       // These are intentionally flat HEX values (no CSS variables yet) so we keep the
       // system simple while we rebuild the UI.
       colors: {

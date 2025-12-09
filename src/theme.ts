@@ -1,5 +1,5 @@
 // src/theme.ts
-// Material UI theme for the Mimamori app, wired to the Option 3 brand palette.
+// Material UI theme for the AttentHive app, wired to the Option 3 brand palette.
 // This centralizes colors, typography, and shape so we can keep the UI consistent
 // while supporting both light and dark modes via a small factory.
 
