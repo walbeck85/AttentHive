@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import BreedSelect from './BreedSelect';
 import { alpha, useTheme } from '@mui/material/styles';
+import Typography from '@mui/material/Typography';
 import {
   PET_CHARACTERISTICS,
   type PetCharacteristicId,
@@ -260,10 +261,12 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
       </button>
 
       <h2
-        className="mb-4 text-lg font-semibold tracking-[0.16em] uppercase"
-        style={{ color: textSecondary }}
+        className="mb-4 font-semibold tracking-[0.16em] uppercase"
+        style={{ color: textSecondary, letterSpacing: '0.16em' }}
       >
-        Add New Pet
+        <Typography variant="overline" component="span">
+          Add New Pet
+        </Typography>
       </h2>
 
       {error && (
@@ -283,12 +286,14 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {/* Name */}
           <div>
-            <label
-              className="mb-1 block text-[11px] font-semibold tracking-[0.12em] uppercase"
+            <Typography
+              component="label"
+              variant="overline"
+              className="mb-1 block font-semibold"
               style={labelStyles}
             >
               Name
-            </label>
+            </Typography>
             <input
               type="text"
               value={formData.name}
@@ -298,20 +303,27 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
               placeholder="e.g. Truffle"
             />
             {fieldErrors.name && (
-              <p className="mt-1 text-[11px]" style={{ color: theme.palette.error.main }}>
+              <Typography
+                variant="caption"
+                color="error"
+                className="mt-1 block"
+                component="p"
+              >
                 {fieldErrors.name}
-              </p>
+              </Typography>
             )}
           </div>
 
           {/* Type */}
           <div>
-            <label
-              className="mb-1 block text-[11px] font-semibold tracking-[0.12em] uppercase"
+            <Typography
+              component="label"
+              variant="overline"
+              className="mb-1 block font-semibold"
               style={labelStyles}
             >
               Type
-            </label>
+            </Typography>
             <div className="flex gap-4 text-sm" style={{ color: textPrimary }}>
               <label className="flex cursor-pointer items-center gap-2">
                 <input
@@ -342,12 +354,14 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
 
           {/* Breed */}
           <div>
-            <label
-              className="mb-1 block text-[11px] font-semibold tracking-[0.12em] uppercase"
+            <Typography
+              component="label"
+              variant="overline"
+              className="mb-1 block font-semibold"
               style={labelStyles}
             >
               Breed
-            </label>
+            </Typography>
             {/* Using the shared BreedSelect so dogs and cats get type-specific, searchable lists without changing the backend schema or validation rules. */}
             <BreedSelect
               petType={formData.type}
@@ -356,20 +370,27 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
               required
             />
             {fieldErrors.breed && (
-              <p className="mt-1 text-[11px]" style={{ color: theme.palette.error.main }}>
+              <Typography
+                variant="caption"
+                color="error"
+                className="mt-1 block"
+                component="p"
+              >
                 {fieldErrors.breed}
-              </p>
+              </Typography>
             )}
           </div>
 
           {/* Gender */}
           <div>
-            <label
-              className="mb-1 block text-[11px] font-semibold tracking-[0.12em] uppercase"
+            <Typography
+              component="label"
+              variant="overline"
+              className="mb-1 block font-semibold"
               style={labelStyles}
             >
               Gender
-            </label>
+            </Typography>
             <select
               value={formData.gender}
               onChange={(e) =>
@@ -385,12 +406,14 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
 
           {/* Birth Date */}
           <div>
-            <label
-              className="mb-1 block text-[11px] font-semibold tracking-[0.12em] uppercase"
+            <Typography
+              component="label"
+              variant="overline"
+              className="mb-1 block font-semibold"
               style={labelStyles}
             >
               Birth Date
-            </label>
+            </Typography>
             <input
               type="date"
               value={formData.birthDate}
@@ -399,20 +422,27 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
               style={{ ...inputStyles, ...focusRingStyle }}
             />
             {fieldErrors.birthDate && (
-              <p className="mt-1 text-[11px]" style={{ color: theme.palette.error.main }}>
+              <Typography
+                variant="caption"
+                color="error"
+                className="mt-1 block"
+                component="p"
+              >
                 {fieldErrors.birthDate}
-              </p>
+              </Typography>
             )}
           </div>
 
           {/* Weight + Unit */}
           <div>
-            <label
-              className="mb-1 block text-[11px] font-semibold tracking-[0.12em] uppercase"
+            <Typography
+              component="label"
+              variant="overline"
+              className="mb-1 block font-semibold"
               style={labelStyles}
             >
               Weight
-            </label>
+            </Typography>
             <div className="flex gap-2">
               <input
                 type="number"
@@ -439,23 +469,35 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
               </select>
             </div>
             {fieldErrors.weight && (
-              <p className="mt-1 text-[11px]" style={{ color: theme.palette.error.main }}>
+              <Typography
+                variant="caption"
+                color="error"
+                className="mt-1 block"
+                component="p"
+              >
                 {fieldErrors.weight}
-              </p>
+              </Typography>
             )}
           </div>
 
           {/* Characteristics */}
           <div className="md:col-span-2">
-            <label
-              className="mb-1 block text-[11px] font-semibold tracking-[0.12em] uppercase"
+            <Typography
+              component="label"
+              variant="overline"
+              className="mb-1 block font-semibold"
               style={labelStyles}
             >
               Characteristics
-            </label>
-            <p className="mb-2 text-[12px]" style={{ color: textSecondary }}>
-              Add any safety or accessibility notes that should be visible on the pet card.
-            </p>
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              className="mb-2 block"
+            >
+              Add any safety or accessibility notes that should be visible on the
+              pet card.
+            </Typography>
             <div className="flex flex-wrap gap-2">
               {PET_CHARACTERISTICS.map((option) => {
                 const isSelected = formData.characteristics.includes(option.id);

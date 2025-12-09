@@ -89,7 +89,7 @@ export default function PetPhotoProfileCard({
     },
   } as const;
 
-  const labelColorSx = { color: textMuted };
+  const labelColorSx = { color: textMuted, letterSpacing: '0.12em' };
 
   return (
     <Box component="section" className="mm-section">
@@ -202,13 +202,16 @@ export default function PetPhotoProfileCard({
                     className="space-y-4"
                   >
                     <div
-                      className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs uppercase tracking-wide"
-                      style={{ color: textMuted }}
+                      className="grid grid-cols-2 gap-y-3 gap-x-4"
                     >
                       <div>
-                        <label className="mb-1 block" style={labelColorSx}>
+                        <Typography
+                          component="label"
+                          variant="overline"
+                          sx={{ display: 'block', mb: 0.5, ...labelColorSx }}
+                        >
                           Name
-                        </label>
+                        </Typography>
                         <Box
                           component="input"
                           type="text"
@@ -217,20 +220,26 @@ export default function PetPhotoProfileCard({
                           sx={inputSx}
                         />
                         {editFieldErrors.name && (
-                          <p
-                            className="mt-1 text-[11px]"
-                            style={{ color: theme.palette.error.main }}
+                          <Typography
+                            variant="caption"
+                            color="error"
+                            component="p"
+                            sx={{ mt: 0.5 }}
                           >
                             {editFieldErrors.name}
-                          </p>
+                          </Typography>
                         )}
                       </div>
 
                       <div>
-                        <label className="mb-1 block" style={labelColorSx}>
+                        <Typography
+                          component="label"
+                          variant="overline"
+                          sx={{ display: 'block', mb: 0.5, ...labelColorSx }}
+                        >
                           Type
-                        </label>
-                        <div className="flex gap-3 text-[13px]">
+                        </Typography>
+                        <div className="flex gap-3">
                           <label className="flex cursor-pointer items-center gap-1.5">
                             <input
                               type="radio"
@@ -246,7 +255,9 @@ export default function PetPhotoProfileCard({
                               className="focus:ring-0"
                               style={{ accentColor: focusColor }}
                             />
-                            <span>Dog</span>
+                            <Typography variant="body2" component="span">
+                              Dog
+                            </Typography>
                           </label>
                           <label className="flex cursor-pointer items-center gap-1.5">
                             <input
@@ -263,15 +274,21 @@ export default function PetPhotoProfileCard({
                               className="focus:ring-0"
                               style={{ accentColor: focusColor }}
                             />
-                            <span>Cat</span>
+                            <Typography variant="body2" component="span">
+                              Cat
+                            </Typography>
                           </label>
                         </div>
                       </div>
 
                       <div>
-                        <label className="mb-1 block" style={labelColorSx}>
+                        <Typography
+                          component="label"
+                          variant="overline"
+                          sx={{ display: 'block', mb: 0.5, ...labelColorSx }}
+                        >
                           Breed
-                        </label>
+                        </Typography>
                         <BreedSelect
                           petType={editForm.type}
                           value={editForm.breed}
@@ -279,19 +296,25 @@ export default function PetPhotoProfileCard({
                           required
                         />
                         {editFieldErrors.breed && (
-                          <p
-                            className="mt-1 text-[11px]"
-                            style={{ color: theme.palette.error.main }}
+                          <Typography
+                            variant="caption"
+                            color="error"
+                            component="p"
+                            sx={{ mt: 0.5 }}
                           >
                             {editFieldErrors.breed}
-                          </p>
+                          </Typography>
                         )}
                       </div>
 
                       <div>
-                        <label className="mb-1 block" style={labelColorSx}>
+                        <Typography
+                          component="label"
+                          variant="overline"
+                          sx={{ display: 'block', mb: 0.5, ...labelColorSx }}
+                        >
                           Sex
-                        </label>
+                        </Typography>
                         <Box
                           component="select"
                           value={editForm.gender}
@@ -309,9 +332,13 @@ export default function PetPhotoProfileCard({
                       </div>
 
                       <div>
-                        <label className="mb-1 block" style={labelColorSx}>
+                        <Typography
+                          component="label"
+                          variant="overline"
+                          sx={{ display: 'block', mb: 0.5, ...labelColorSx }}
+                        >
                           Birth Date
-                        </label>
+                        </Typography>
                         <Box
                           component="input"
                           type="date"
@@ -320,19 +347,25 @@ export default function PetPhotoProfileCard({
                           sx={inputSx}
                         />
                         {editFieldErrors.birthDate && (
-                          <p
-                            className="mt-1 text-[11px]"
-                            style={{ color: theme.palette.error.main }}
+                          <Typography
+                            variant="caption"
+                            color="error"
+                            component="p"
+                            sx={{ mt: 0.5 }}
                           >
                             {editFieldErrors.birthDate}
-                          </p>
+                          </Typography>
                         )}
                       </div>
 
                       <div>
-                        <label className="mb-1 block" style={labelColorSx}>
+                        <Typography
+                          component="label"
+                          variant="overline"
+                          sx={{ display: 'block', mb: 0.5, ...labelColorSx }}
+                        >
                           Weight (lbs)
-                        </label>
+                        </Typography>
                         <Box
                           component="input"
                           type="number"
@@ -342,19 +375,25 @@ export default function PetPhotoProfileCard({
                           sx={inputSx}
                         />
                         {editFieldErrors.weight && (
-                          <p
-                            className="mt-1 text-[11px]"
-                            style={{ color: theme.palette.error.main }}
+                          <Typography
+                            variant="caption"
+                            color="error"
+                            component="p"
+                            sx={{ mt: 0.5 }}
                           >
                             {editFieldErrors.weight}
-                          </p>
+                          </Typography>
                         )}
                       </div>
 
                       <div className="col-span-2">
-                        <label className="mb-2 block" style={labelColorSx}>
+                        <Typography
+                          component="label"
+                          variant="overline"
+                          sx={{ display: 'block', mb: 0.75, ...labelColorSx }}
+                        >
                           Characteristics
-                        </label>
+                        </Typography>
                         <div className="space-y-2">
                           {PET_CHARACTERISTICS.map((item) => {
                             const isSelected = editForm.characteristics.includes(item.id);
@@ -363,7 +402,7 @@ export default function PetPhotoProfileCard({
                                 key={item.id}
                                 type="button"
                                 onClick={() => onToggleCharacteristic(item.id)}
-                                className="flex w-full items-center justify-between rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors"
+                                className="flex w-full items-center justify-between rounded-full px-3 py-1.5 font-semibold uppercase tracking-[0.08em] transition-colors"
                                 style={{
                                   border: '1px solid',
                                   borderColor: isSelected ? focusColor : borderSubtle,
