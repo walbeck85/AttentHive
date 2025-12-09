@@ -14,18 +14,18 @@ export function RemoveCaregiverButton({
   membershipId,
   petName,
 }: RemoveCaregiverButtonProps) {
-  const theme = useTheme();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const router = useRouter();
+  const theme = useTheme(); // Pull palette tokens so colors track light and dark modes automatically
+  const [isSubmitting, setIsSubmitting] = useState(false); // Disable interactions while the removal request runs
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); // Show API errors inline without changing the page
+  const router = useRouter(); // Refresh server components after removal to keep lists in sync
 
-  const dangerBorder = alpha(theme.palette.error.main, 0.35);
-  const dangerBg = alpha(theme.palette.error.main, 0.12);
-  const dangerHoverBg = alpha(theme.palette.error.main, 0.2);
-  const dangerText = theme.palette.error.dark ?? theme.palette.error.main;
+  const dangerBorder = alpha(theme.palette.error.main, 0.35); // Soft error border so the button matches the theme divider weight
+  const dangerBg = alpha(theme.palette.error.main, 0.12); // Subtle background tint that reads correctly in both modes
+  const dangerHoverBg = alpha(theme.palette.error.main, 0.2); // Slightly stronger hover tint to show affordance without changing behavior
+  const dangerText = theme.palette.error.dark ?? theme.palette.error.main; // Use semantic error text color with a darker fallback for contrast
 
   async function handleClick() {
-    // Simple confirmation so owners do not accidentally nuke access
+    // Simple confirmation to prevent accidental caregiver removal
     const confirmed = window.confirm(
       `Remove this person from ${petName}'s Care Circle? They will lose access immediately.`
     );
@@ -64,6 +64,7 @@ export function RemoveCaregiverButton({
 
   return (
     <Box
+      /* Keep layout responsive so the warning label aligns with the button without changing copy or spacing */
       sx={{
         display: "flex",
         flexDirection: { xs: "column", sm: "row" },
@@ -72,6 +73,7 @@ export function RemoveCaregiverButton({
       }}
     >
       <Button
+        /* Use an outlined error style that leans on theme tokens for consistent light and dark rendering */
         type="button"
         onClick={handleClick}
         disabled={isSubmitting}
@@ -99,6 +101,7 @@ export function RemoveCaregiverButton({
       </Button>
       {errorMessage && (
         <Typography
+          /* Pair the error text color with the button styling so feedback reads as one unit */
           variant="caption"
           sx={{
             color: dangerText,

@@ -106,28 +106,59 @@ export default function ActivityLogPage() {
   // Keep the loading view lightweight since no data has been fetched yet.
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--mm-bg)] flex items-center justify-center">
-        <p className="mm-muted">Loading activity…</p>
-      </div>
+      // Use palette-backed surface and text so the spinner view adapts to mode without manual checks.
+      <Box
+        sx={{
+          minHeight: '100vh',
+          bgcolor: 'background.default',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+          Loading activity…
+        </Typography>
+      </Box>
     );
   }
 
   // Surface a clear error state so the user can retry navigation if fetch fails.
   if (error) {
     return (
-      <div className="min-h-screen bg-[var(--mm-bg)] flex flex-col items-center justify-center gap-4">
-        <p className="text-[#382110] text-lg font-semibold">
+      // Use themed surfaces and typography to keep the error view legible across themes while matching the rest of the layout.
+      <Box
+        sx={{
+          minHeight: '100vh',
+          bgcolor: 'background.default',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2,
+        }}
+      >
+        <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 600 }}>
           Failed to load activity history
-        </p>
-        <p className="mm-muted text-sm">{error}</p>
-        <button
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          {error}
+        </Typography>
+        <Button
           type="button"
           onClick={() => router.back()}
-          className="mm-chip mm-chip--solid-primary"
+          variant="contained"
+          size="small"
+          sx={{
+            borderRadius: '9999px',
+            textTransform: 'none',
+            px: 2,
+            py: 0.75,
+          }}
         >
           Back
-        </button>
-      </div>
+        </Button>
+      </Box>
     );
   }
 
@@ -305,10 +336,8 @@ export default function ActivityLogPage() {
                       variant="body2"
                       sx={{
                         fontWeight: 600,
-                        color: (theme) =>
-                          theme.palette.mode === 'dark'
-                            ? theme.palette.text.primary
-                            : '#382110',
+                        // Rely on text.primary so labels stay legible in both light and dark mode without manual mode checks.
+                        color: 'text.primary',
                       }}
                     >
                       {ACTIVITY_LABELS[log.activityType]}
@@ -320,7 +349,8 @@ export default function ActivityLogPage() {
                       by{' '}
                       <Box
                         component="span"
-                        sx={{ color: '#D17D45', fontWeight: 500 }}
+                        // Use a primary accent for the author to keep emphasis consistent with the theme.
+                        sx={{ color: 'primary.main', fontWeight: 500 }}
                       >
                         {log.user?.name || 'Someone'}
                       </Box>

@@ -1,32 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap'); /* Load the brand font before Tailwind layers apply. */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Minimal global theme reset for Mimamori.
-   We keep only the font, background, and text color here so that
-   individual components can use Tailwind classes without surprise overrides. */
+/* Theme-driven tokens keep globals aligned with the MUI palette so light and dark modes stay in sync. */
 :root {
-  --mm-bg: #F5F3EA;   /* warm background */
-  --mm-ink: #382110;  /* primary text color */
+  --mm-bg: var(--mm-surface-default); /* Surfaces map to palette.background.default, fed in by CssBaseline. */
+  --mm-ink: var(--mm-text-primary); /* Text color follows palette.text.primary for mode awareness. */
 }
 
 body {
   margin: 0;
   font-family: 'Nunito', system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', sans-serif;
+    'Segoe UI', sans-serif; /* Keep the same font stack the theme uses for consistency. */
   line-height: 1.5;
-  background-color: var(--mm-bg);
-  color: var(--mm-ink);
+  background-color: var(--mm-bg); /* Body background inherits the theme surface token instead of a hard-coded hex. */
+  color: var(--mm-ink); /* Base text inherits the theme ink token so both modes render correctly. */
 }
 
-/* Anchor defaults kept simple so Tailwind utilities can override easily. */
 a {
-  color: inherit;
+  color: inherit; /* Let anchors adopt the surrounding text color so palette tokens drive them too. */
   text-decoration: none;
 }
 
 a:hover {
-  text-decoration: underline;
+  text-decoration: underline; /* Minimal hover affordance that Tailwind utilities can override. */
 }

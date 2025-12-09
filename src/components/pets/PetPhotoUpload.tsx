@@ -2,7 +2,8 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { Box, Stack, Typography } from '@mui/material';
+import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 // For now we keep this component very self-contained so any issues with
 // Supabase or the API route are obvious in one place.
@@ -117,17 +118,17 @@ export default function PetPhotoUpload({
 
   return (
     <Stack
-      direction={{ xs: 'column', md: 'row' }}
-      spacing={{ xs: 2.5, sm: 3 }}
-      alignItems={{ xs: 'flex-start', md: 'flex-start' }}
+      direction="column"
+      spacing={{ xs: 2, sm: 2.5 }}
+      alignItems="center"
       sx={{ width: '100%', minWidth: 0 }}
     >
-      {/* Left: tightly bounded preview so this never turns into a hero banner. */}
+      {/* Photo preview kept to a reasonable size so it never dominates the page. */}
       <Stack
         spacing={1.5}
-        alignItems={{ xs: 'center', md: 'flex-start' }}
+        alignItems="center"
         sx={{
-          width: { xs: '100%', md: 'auto' },
+          width: { xs: '100%', sm: 'auto' },
           maxWidth: { xs: '100%', sm: 360, md: 360 },
           flexShrink: 0,
         }}
@@ -175,25 +176,28 @@ export default function PetPhotoUpload({
         )}
       </Stack>
 
-      {/* Right: upload controls and helper copy. */}
+      {/* Upload controls positioned below the photo. */}
       <Stack
         spacing={1}
-        flex={1}
         sx={{
-          minWidth: 0,
           width: '100%',
-          pt: { xs: 0, md: 2 },
-          pb: { md: 1 },
-          alignSelf: { md: 'stretch' },
-          justifyContent: { md: 'flex-end' },
+          maxWidth: 360,
+          alignItems: 'flex-start',
         }}
       >
-        <Typography variant="subtitle2" color="text.primary">
-          Pet photo
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Upload a clear photo so the care circle knows exactly who they&apos;re looking after.
-        </Typography>
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <Typography variant="subtitle2" color="text.primary">
+            Pet photo
+          </Typography>
+          <Tooltip title="Upload a clear photo so the care circle knows exactly who they're looking after.">
+            <IconButton
+              size="small"
+              aria-label="Upload a clear photo so the care circle knows exactly who they're looking after."
+            >
+              <InfoOutlinedIcon fontSize="inherit" />
+            </IconButton>
+          </Tooltip>
+        </Stack>
 
         <Box>
           <input
