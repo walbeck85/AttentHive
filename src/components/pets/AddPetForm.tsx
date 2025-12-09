@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import BreedSelect from './BreedSelect';
 import { alpha, useTheme } from '@mui/material/styles';
+import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import {
   PET_CHARACTERISTICS,
@@ -38,15 +39,12 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const borderColor = theme.palette.divider;
-  const surfaceColor = theme.palette.background.paper;
   const subtleSurface = isDarkMode
     ? theme.palette.background.default
     : theme.palette.action.hover;
   const textPrimary = theme.palette.text.primary;
   const textSecondary = theme.palette.text.secondary;
   const accent = theme.palette.primary.main;
-  const ctaBackground = isDarkMode ? alpha(accent, 0.14) : subtleSurface;
-  const ctaBorder = isDarkMode ? alpha(accent, 0.45) : borderColor;
 
   const inputStyles: CSSProperties = {
     backgroundColor: subtleSurface,
@@ -210,12 +208,15 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
   // -------- Collapsed CTA --------
   if (!isExpanded) {
     return (
-      <div
-        className="mm-card mb-6 border"
-        style={{
-          borderColor: ctaBorder,
-          backgroundColor: ctaBackground,
-          color: textPrimary,
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: 2,
+          border: 1,
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          p: { xs: 2.5, md: 3 },
+          mb: 3,
         }}
       >
         <button
@@ -234,18 +235,22 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
             ›
           </div>
         </button>
-      </div>
+      </Paper>
     );
   }
 
   // -------- Expanded form --------
   return (
-    <div
-      className="mm-card mb-6 border p-4 md:p-6 relative"
-      style={{
-        borderColor,
-        backgroundColor: surfaceColor,
-        color: textPrimary,
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: 2,
+        border: 1,
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
+        p: { xs: 2.5, md: 3 },
+        mb: 3,
+        position: 'relative',
       }}
     >
       <button
@@ -564,6 +569,6 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
           </button>
         </div>
       </form>
-    </div>
+    </Paper>
   );
 }

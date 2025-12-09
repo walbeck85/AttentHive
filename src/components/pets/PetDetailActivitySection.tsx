@@ -24,7 +24,7 @@ export default function PetDetailActivitySection({
 }: PetDetailActivitySectionProps) {
   return (
     // Semantic section keeps this card grouped logically on the detail page while preserving any page-level spacing utilities.
-    <Box component="section" className="mm-section">
+    <Box component="section">
       <Card
         elevation={0}
         sx={{

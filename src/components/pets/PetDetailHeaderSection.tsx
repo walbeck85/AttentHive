@@ -38,7 +38,7 @@ export default function PetDetailHeaderSection({
     .join(' · ');
 
   return (
-    <Box component="section" className="mm-section">
+    <Box component="section">
       <Button
         type="button"
         onClick={onBack}
@@ -49,7 +49,6 @@ export default function PetDetailHeaderSection({
           py: 0.5,
           borderRadius: 999,
           textTransform: 'none',
-          fontSize: 13,
         }}
       >
         ← Back
