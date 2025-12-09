@@ -4,6 +4,7 @@ import { Nunito } from "next/font/google";
 import Providers from "./providers";
 import RootShell from "@/components/RootShell";
 import MuiCacheProvider from "@/components/MuiCacheProvider";
+import { APP_NAME } from "@/config/appMeta";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -11,7 +12,7 @@ const nunito = Nunito({
 });
 
 export const metadata = {
-  title: "Mimamori",
+  title: APP_NAME,
   description: "Care coordination for pets, people, and plants",
 };
 

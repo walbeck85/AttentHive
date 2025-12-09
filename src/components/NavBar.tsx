@@ -27,6 +27,7 @@ import { alpha } from "@mui/material/styles";
 
 import { useThemeMode } from "@/components/ThemeModeProvider";
 import type { ThemePreference } from "@/theme";
+import { APP_NAME } from "@/config/appMeta";
 
 type NavLink = {
   label: string;
@@ -90,7 +91,7 @@ export default function NavBar({
       >
         <Box>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            Mimamori
+            {APP_NAME}
           </Typography>
           {isAuthed && session.user?.name && (
             <Typography
@@ -321,7 +322,7 @@ export default function NavBar({
               color: "text.primary",
             }}
           >
-            Mimamori
+            {APP_NAME}
           </Typography>
 
           {/* Spacer between brand and right side */}

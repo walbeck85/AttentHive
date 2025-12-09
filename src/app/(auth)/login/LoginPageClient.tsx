@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import AuthShell from "@/components/auth/AuthShell";
+import { APP_NAME } from "@/config/appMeta";
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -109,7 +110,7 @@ export default function LoginPageClient({
   return (
     <AuthShell
       title="Log in"
-      subtitle="Access your Mimamori care circle."
+      subtitle={`Access your ${APP_NAME} care circle.`}
     >
       {error && (
         <Alert severity="error">
