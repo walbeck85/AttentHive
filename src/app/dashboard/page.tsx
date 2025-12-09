@@ -131,7 +131,6 @@ export default async function DashboardPage() {
               letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: "text.secondary",
-              fontSize: 12,
             }}
           >
             Add new pet
@@ -176,9 +175,8 @@ export default async function DashboardPage() {
             Pets you own
             <Typography
               component="span"
-              variant="body2"
+              variant="caption"
               sx={{
-                fontSize: 12,
                 fontWeight: 500,
                 color: "text.secondary",
               }}
@@ -224,9 +222,8 @@ export default async function DashboardPage() {
             Pets you care for
             <Typography
               component="span"
-              variant="body2"
+              variant="caption"
               sx={{
-                fontSize: 12,
                 fontWeight: 500,
                 color: "text.secondary",
               }}

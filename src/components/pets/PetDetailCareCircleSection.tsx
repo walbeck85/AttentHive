@@ -23,7 +23,7 @@ export default function PetDetailCareCircleSection({
   initialMembers,
 }: PetDetailCareCircleSectionProps) {
   return (
-    <Box component="section" id="care-circle" className="mm-section">
+    <Box component="section" id="care-circle">
       <Card
         elevation={0}
         sx={{
@@ -37,12 +37,9 @@ export default function PetDetailCareCircleSection({
       >
         <CardHeader
           title="Shared with"
+          titleTypographyProps={{ variant: 'subtitle1', sx: { fontWeight: 600 } }}
           sx={{
             pb: 0,
-            '& .MuiCardHeader-title': {
-              fontSize: 16,
-              fontWeight: 600,
-            },
           }}
         />
         <CardContent sx={{ pt: 1, px: 0, pb: 0 }}>

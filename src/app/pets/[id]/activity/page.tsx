@@ -182,7 +182,6 @@ export default function ActivityLogPage() {
             sx={{
               borderRadius: '9999px',
               textTransform: 'none',
-              fontSize: 13,
               px: 1.75,
               py: 0.5,
             }}
@@ -271,7 +270,6 @@ export default function ActivityLogPage() {
                     sx={{
                       borderRadius: '9999px',
                       textTransform: 'none',
-                      fontSize: 13,
                     }}
                   >
                     {label}
@@ -344,7 +342,7 @@ export default function ActivityLogPage() {
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ fontSize: 13, mt: 0.25, color: 'text.secondary' }}
+                      sx={{ mt: 0.25, color: 'text.secondary' }}
                     >
                       by{' '}
                       <Box
@@ -357,10 +355,9 @@ export default function ActivityLogPage() {
                     </Typography>
                     {log.notes && (
                       <Typography
-                        variant="body2"
+                        variant="caption"
                         sx={{
                           mt: 1,
-                          fontSize: 12,
                           color: 'text.secondary',
                         }}
                       >

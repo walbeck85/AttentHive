@@ -134,7 +134,6 @@ export default function PetDetailPage({
           sx={{
             textTransform: 'uppercase',
             letterSpacing: '0.12em',
-            fontSize: 12,
             fontWeight: 600,
           }}
         >

@@ -168,7 +168,6 @@ export default function PetPhotoProfileCard({
                         borderRadius: 1,
                         textTransform: 'uppercase',
                         letterSpacing: '0.12em',
-                        fontSize: 11,
                         fontWeight: 600,
                         borderColor: borderSubtle,
                         color: textMuted,
@@ -194,11 +193,12 @@ export default function PetPhotoProfileCard({
                       color: theme.palette.error.main,
                       px: 1.5,
                       py: 1,
-                      fontSize: 12,
                     }}
                   >
                     {/* Inline alert styled via palette to avoid extra components */}
-                    {editError}
+                    <Typography variant="caption" component="p" sx={{ m: 0 }}>
+                      {editError}
+                    </Typography>
                   </Box>
                 )}
 
@@ -516,7 +516,6 @@ export default function PetPhotoProfileCard({
                         size="small"
                         sx={{
                           textTransform: 'none',
-                          fontSize: 12,
                           color: textMuted,
                           '&:hover': { bgcolor: hoverSurface },
                         }}
@@ -531,7 +530,6 @@ export default function PetPhotoProfileCard({
                         sx={{
                           textTransform: 'uppercase',
                           letterSpacing: '0.12em',
-                          fontSize: 11,
                           fontWeight: 600,
                         }}
                       >
