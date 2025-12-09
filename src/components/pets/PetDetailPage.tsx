@@ -90,7 +90,8 @@ export default function PetDetailPage({
           px: 2,
         }}
       >
-        <Typography variant="body2" color="text.secondary" className="mm-muted">
+        {/* Loading fallback keeps typography consistent via MUI variants while matching the subdued text tone. */}
+        <Typography variant="body2" color="text.secondary">
           Loading pet details…
         </Typography>
       </Box>
@@ -112,6 +113,7 @@ export default function PetDetailPage({
           px: 2,
         }}
       >
+        {/* Error header uses MUI typography for the emphasized message without relying on extra utility classes. */}
         <Typography variant="h6" sx={{ color: '#382110', fontWeight: 600 }}>
           Failed to load pet details
         </Typography>
@@ -119,7 +121,6 @@ export default function PetDetailPage({
           <Typography
             variant="body2"
             color="text.secondary"
-            className="mm-muted text-sm"
             sx={{ textAlign: 'center' }}
           >
             {error}
@@ -145,18 +146,22 @@ export default function PetDetailPage({
 
   return (
     <PetDetailShell>
+      {/* Header section stays separate so navigation and primary pet summary remain isolated from detail areas. */}
       <PetDetailHeaderSection
         pet={pet}
         onBack={() => router.back()}
       />
 
+      {/* Profile section manages editable pet fields while sharing the same pet state. */}
       <PetDetailProfileSection
         pet={pet}
         setPet={setPet}
       />
 
+      {/* Activity section is read-only; leaving layout to the child keeps this wrapper lightweight. */}
       <PetDetailActivitySection careLogs={pet.careLogs} />
 
+      {/* Care circle relies on the latest membership state; keeping it last mirrors the page stacking order. */}
       <PetDetailCareCircleSection
         recipientId={pet.id}
         isOwner={isOwner}

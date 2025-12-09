@@ -23,6 +23,7 @@ export default function PetDetailActivitySection({
   careLogs,
 }: PetDetailActivitySectionProps) {
   return (
+    // Semantic section keeps this card grouped logically on the detail page while preserving any page-level spacing utilities.
     <Box component="section" className="mm-section">
       <Card
         elevation={0}
@@ -34,6 +35,7 @@ export default function PetDetailActivitySection({
           overflow: 'hidden',
         }}
       >
+        {/* CardHeader handles the title typography and spacing so we do not rely on Tailwind for heading styles. */}
         <CardHeader
           title="Recent activity"
           sx={{
@@ -47,8 +49,10 @@ export default function PetDetailActivitySection({
           }}
         />
 
+        {/* CardContent manages padding; list and empty states sit inside without extra Tailwind wrappers. */}
         <CardContent sx={{ pt: 1, px: 0, pb: 0 }}>
           {careLogs.length === 0 && (
+            // Empty state uses muted MUI typography for clarity when no activity exists.
             <Box sx={{ px: 3, py: 2 }}>
               <Typography variant="body2" color="text.secondary">
                 No activity logged yet.
@@ -57,6 +61,7 @@ export default function PetDetailActivitySection({
           )}
 
           {careLogs.length > 0 && (
+            // Activity list relies on MUI List styling and dividers to align with the rest of the UI kit.
             <List disablePadding>
               {careLogs.map((log) => (
                 <ListItem
@@ -81,10 +86,10 @@ export default function PetDetailActivitySection({
                     primary={getActivityLabel(log.activityType)}
                     secondary={
                       <>
+                        {/* Attribution line stays small and muted through MUI color tokens instead of Tailwind text classes. */}
                         <Typography
                           variant="body2"
-                          className="mm-muted-sm"
-                          sx={{ fontSize: 13, mt: 0.25 }}
+                          sx={{ fontSize: 13, mt: 0.25, color: 'text.secondary' }}
                         >
                           by{' '}
                           <Box

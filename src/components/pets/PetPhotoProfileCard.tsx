@@ -35,6 +35,7 @@ type PetPhotoProfileCardProps = {
 };
 
 function calculateAge(birthDate: string): number {
+  // Normalize age calculation to UTC so UI does not vary by timezone
   const birth = new Date(birthDate);
   const today = new Date();
   let age = today.getUTCFullYear() - birth.getUTCFullYear();
@@ -44,6 +45,7 @@ function calculateAge(birthDate: string): number {
 }
 
 function getCharacteristicLabel(id: PetCharacteristicId): string {
+  // Prefer configured label when available, otherwise derive a readable fallback
   const meta = PET_CHARACTERISTICS.find((item) => item.id === id);
   return meta ? meta.label : id.toLowerCase().replace(/_/g, ' ');
 }
@@ -62,6 +64,7 @@ export default function PetPhotoProfileCard({
   onToggleCharacteristic,
   onPhotoUploaded,
 }: PetPhotoProfileCardProps) {
+  // Theme tokens used to keep spacing, borders, and focus states consistent with MUI
   const theme = useTheme();
 
   const borderSubtle = theme.palette.divider;
@@ -89,13 +92,14 @@ export default function PetPhotoProfileCard({
     },
   } as const;
 
+  // Shared overline styling so labels and metadata stay visually cohesive
   const labelColorSx = { color: textMuted, letterSpacing: '0.12em' };
 
   return (
-    <Box component="section" className="mm-section">
+    <Box component="section">
+      {/* Card shell uses MUI for spacing and borders to avoid Tailwind duplication */}
       <Card
         elevation={0}
-        className="mm-card"
         sx={{
           borderRadius: 2,
           border: '1px solid',
@@ -107,11 +111,11 @@ export default function PetPhotoProfileCard({
         <CardContent sx={{ px: { xs: 2.5, md: 3 }, py: { xs: 2.5, md: 3 } }}>
           <Grid container spacing={{ xs: 3, md: 4 }} alignItems="flex-start">
             <Grid size={{ xs: 12, md: 5 }}>
+              {/* Photo upload column stays narrow on desktop and full width on mobile */}
               <Typography
                 component="h2"
-                variant="subtitle1"
-                className="mm-h3"
-                sx={{ mb: 1.5 }}
+                variant="h6"
+                sx={{ mb: 1.5, fontWeight: 700 }}
               >
                 Photo
               </Typography>
@@ -138,16 +142,17 @@ export default function PetPhotoProfileCard({
                 <Box
                   sx={{
                     mb: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                     gap: 1.5,
                   }}
                 >
+                  {/* Heading and edit affordance keep visual hierarchy via MUI */}
                   <Typography
                     component="h2"
-                    variant="subtitle1"
-                    className="mm-h3"
+                    variant="h6"
+                    sx={{ fontWeight: 700 }}
                   >
                     Profile
                   </Typography>
@@ -187,9 +192,10 @@ export default function PetPhotoProfileCard({
                       color: theme.palette.error.main,
                       px: 1.5,
                       py: 1,
+                      fontSize: 12,
                     }}
-                    className="text-xs"
                   >
+                    {/* Inline alert styled via palette to avoid extra components */}
                     {editError}
                   </Box>
                 )}
@@ -198,11 +204,21 @@ export default function PetPhotoProfileCard({
                   <Box
                     component="form"
                     onSubmit={onProfileSave}
-                    sx={{ mt: 1.5 }}
-                    className="space-y-4"
+                    sx={{
+                      mt: 1.5,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 2,
+                    }}
                   >
-                    <div
-                      className="grid grid-cols-2 gap-y-3 gap-x-4"
+                    {/* Two column grid on desktop keeps inputs compact while remaining fluid */}
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                        columnGap: 2,
+                        rowGap: 1.5,
+                      }}
                     >
                       <div>
                         <Typography
@@ -239,9 +255,19 @@ export default function PetPhotoProfileCard({
                         >
                           Type
                         </Typography>
-                        <div className="flex gap-3">
-                          <label className="flex cursor-pointer items-center gap-1.5">
-                            <input
+                        {/* Native radios with accentColor keep semantics and MUI focus styling */}
+                        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                          <Box
+                            component="label"
+                            sx={{
+                              display: 'inline-flex',
+                              cursor: 'pointer',
+                              alignItems: 'center',
+                              gap: 0.75,
+                            }}
+                          >
+                            <Box
+                              component="input"
                               type="radio"
                               name="edit-type"
                               value="DOG"
@@ -252,33 +278,46 @@ export default function PetPhotoProfileCard({
                                   e.target.value as EditFormState['type'],
                                 )
                               }
-                              className="focus:ring-0"
-                              style={{ accentColor: focusColor }}
+                              sx={{
+                                accentColor: focusColor,
+                                '&:focus-visible': { outline: 'none' },
+                              }}
                             />
                             <Typography variant="body2" component="span">
                               Dog
                             </Typography>
-                          </label>
-                          <label className="flex cursor-pointer items-center gap-1.5">
-                            <input
+                          </Box>
+                          <Box
+                            component="label"
+                            sx={{
+                              display: 'inline-flex',
+                              cursor: 'pointer',
+                              alignItems: 'center',
+                              gap: 0.75,
+                            }}
+                          >
+                            <Box
+                              component="input"
                               type="radio"
                               name="edit-type"
                               value="CAT"
                               checked={editForm.type === 'CAT'}
                               onChange={(e) =>
                                 onUpdateEditField(
-                                'type',
-                                e.target.value as EditFormState['type'],
-                              )
-                            }
-                              className="focus:ring-0"
-                              style={{ accentColor: focusColor }}
+                                  'type',
+                                  e.target.value as EditFormState['type'],
+                                )
+                              }
+                              sx={{
+                                accentColor: focusColor,
+                                '&:focus-visible': { outline: 'none' },
+                              }}
                             />
                             <Typography variant="body2" component="span">
                               Cat
                             </Typography>
-                          </label>
-                        </div>
+                          </Box>
+                        </Box>
                       </div>
 
                       <div>
@@ -386,7 +425,7 @@ export default function PetPhotoProfileCard({
                         )}
                       </div>
 
-                      <div className="col-span-2">
+                      <Box sx={{ gridColumn: '1 / -1' }}>
                         <Typography
                           component="label"
                           variant="overline"
@@ -394,43 +433,70 @@ export default function PetPhotoProfileCard({
                         >
                           Characteristics
                         </Typography>
-                        <div className="space-y-2">
+                        {/* Characteristic chips stay MUI-styled for consistent focus, hover, and selection */}
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                           {PET_CHARACTERISTICS.map((item) => {
                             const isSelected = editForm.characteristics.includes(item.id);
                             return (
-                              <button
+                              <Box
                                 key={item.id}
                                 type="button"
                                 onClick={() => onToggleCharacteristic(item.id)}
-                                className="flex w-full items-center justify-between rounded-full px-3 py-1.5 font-semibold uppercase tracking-[0.08em] transition-colors"
-                                style={{
+                                component="button"
+                                sx={{
+                                  display: 'flex',
+                                  width: '100%',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  borderRadius: '999px',
+                                  px: 1.5,
+                                  py: 0.75,
+                                  fontWeight: 600,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.08em',
                                   border: '1px solid',
                                   borderColor: isSelected ? focusColor : borderSubtle,
-                                  backgroundColor: isSelected ? selectedSurface : quietSurface,
+                                  bgcolor: isSelected ? selectedSurface : quietSurface,
                                   color: isSelected ? selectedText : textMuted,
+                                  cursor: 'pointer',
+                                  transition:
+                                    'background-color 150ms ease, color 150ms ease, border-color 150ms ease',
                                 }}
                               >
                                 <span>{getCharacteristicLabel(item.id)}</span>
-                                <span
-                                  className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors"
-                                  style={{
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    position: 'relative',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    height: 20,
+                                    width: 36,
+                                    borderRadius: '999px',
+                                    transition: 'background-color 150ms ease',
                                     backgroundColor: isSelected ? focusColor : borderSubtle,
                                   }}
                                 >
-                                  <span
-                                    className={[
-                                      'inline-block h-4 w-4 transform rounded-full shadow transition-transform',
-                                      isSelected ? 'translate-x-4' : 'translate-x-0.5',
-                                    ].join(' ')}
-                                    style={{ backgroundColor: theme.palette.background.paper }}
+                                  <Box
+                                    component="span"
+                                    sx={{
+                                      display: 'inline-block',
+                                      height: 16,
+                                      width: 16,
+                                      borderRadius: '50%',
+                                      boxShadow: theme.shadows[1],
+                                      transition: 'transform 150ms ease',
+                                      transform: `translateX(${isSelected ? 16 : 2}px)`,
+                                      backgroundColor: theme.palette.background.paper,
+                                    }}
                                   />
-                                </span>
-                              </button>
+                                </Box>
+                              </Box>
                             );
                           })}
-                        </div>
-                      </div>
-                    </div>
+                        </Box>
+                      </Box>
+                    </Box>
 
                     <Divider sx={{ mt: 2, mb: 1.5, borderColor: borderSubtle }} />
 
@@ -441,6 +507,7 @@ export default function PetPhotoProfileCard({
                         gap: 1.5,
                       }}
                     >
+                      {/* Action row aligns with form spacing and preserves MUI button sizing */}
                       <Button
                         type="button"
                         onClick={onCancelEditProfile}
@@ -471,29 +538,60 @@ export default function PetPhotoProfileCard({
                     </Box>
                   </Box>
                 ) : (
-                  <dl
-                    className="grid grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-6 text-xs uppercase tracking-wide"
-                    style={{ color: textMuted }}
+                  /* Read-only summary mirrors form spacing using MUI grid primitives */
+                  <Box
+                    component="dl"
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: {
+                        xs: 'repeat(2, minmax(0, 1fr))',
+                        md: 'repeat(3, minmax(0, 1fr))',
+                      },
+                      columnGap: 3,
+                      rowGap: 1.5,
+                      fontSize: '0.75rem',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: textMuted,
+                    }}
                   >
-                    <div>
-                      <dt>Age</dt>
-                      <dd className="mt-1 font-medium normal-case">
+                    <Box component="div">
+                      <Typography component="dt" variant="subtitle2" sx={{ fontSize: 'inherit' }}>
+                        Age
+                      </Typography>
+                      <Typography
+                        component="dd"
+                        variant="body2"
+                        sx={{ mt: 0.5, fontWeight: 600, textTransform: 'none', color: 'text.primary' }}
+                      >
                         {calculateAge(pet.birthDate)} yrs
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Weight</dt>
-                      <dd className="mt-1 font-medium normal-case">
+                      </Typography>
+                    </Box>
+                    <Box component="div">
+                      <Typography component="dt" variant="subtitle2" sx={{ fontSize: 'inherit' }}>
+                        Weight
+                      </Typography>
+                      <Typography
+                        component="dd"
+                        variant="body2"
+                        sx={{ mt: 0.5, fontWeight: 600, textTransform: 'none', color: 'text.primary' }}
+                      >
                         {pet.weight} lbs
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Sex</dt>
-                      <dd className="mt-1 font-medium normal-case">
+                      </Typography>
+                    </Box>
+                    <Box component="div">
+                      <Typography component="dt" variant="subtitle2" sx={{ fontSize: 'inherit' }}>
+                        Sex
+                      </Typography>
+                      <Typography
+                        component="dd"
+                        variant="body2"
+                        sx={{ mt: 0.5, fontWeight: 600, textTransform: 'none', color: 'text.primary' }}
+                      >
                         {pet.gender === 'MALE' ? 'Male' : 'Female'}
-                      </dd>
-                    </div>
-                  </dl>
+                      </Typography>
+                    </Box>
+                  </Box>
                 )}
               </Box>
             </Grid>
