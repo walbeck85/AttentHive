@@ -1,8 +1,10 @@
-# Mimamori – Pet Care Coordination Platform
+# AttentHive – Pet Care Coordination Platform
 
-**Mimamori** (見守り) loosely means “watching over” in Japanese. This app helps families, roommates, and pet‑sitting networks coordinate pet care without the anxious text-message loop, “Did anyone feed the dog?”
+**AttentHive** is a shared hub for coordinating pet care. It helps families, roommates, and pet‑sitting networks coordinate pet care without the anxious text-message loop, “Did anyone feed the dog?”
 
-Mimamori gives you a shared source of truth for **who did what, when, and for which pet**.
+AttentHive gives you a shared source of truth for **who did what, when, and for which pet**.
+
+Earlier iterations of this project used the working title **Mimamori** (見守り, “watching over” in Japanese); you may still see that name referenced in commit history or older documentation.
 
 ---
 
@@ -246,7 +248,7 @@ mimamori/
 
 ## Architecture & UI Overview
 
-Over the course of the capstone, Mimamori’s internals evolved from a simple “pages + components” layout into a more opinionated app shell with consistent patterns for data loading, navigation, and visual design.
+Over the course of the capstone, AttentHive’s internals evolved from a simple “pages + components” layout into a more opinionated app shell with consistent patterns for data loading, navigation, and visual design.
 
 At a high level, the app now follows these core ideas:
 
@@ -294,7 +296,7 @@ Loom Video Recording: https://www.loom.com/share/2f9e712bbaa04bffa2f44a4734fd019
 
 ### Local Setup (TL;DR)
 
-If you already have Node and a PostgreSQL database (or Supabase) ready, this is the fastest way to get Mimamori running locally:
+If you already have Node and a PostgreSQL database (or Supabase) ready, this is the fastest way to get AttentHive running locally:
 
 ```bash
 # 1. Clone the repo and install dependencies
@@ -322,7 +324,7 @@ If you are new to any of the tools in this stack (Next.js, Prisma, Supabase, etc
 
 ### Requirements
 
-Before you run Mimamori locally, you will need:
+Before you run AttentHive locally, you will need:
 
 - **Node.js 18+**
 - **npm** (bundled with Node)  
@@ -348,7 +350,7 @@ npm install
 
 ### Database Setup
 
-You can run Mimamori with either a local PostgreSQL instance or a hosted Supabase database.
+You can run AttentHive with either a local PostgreSQL instance or a hosted Supabase database.
 
 #### Option A: Local PostgreSQL
 
@@ -595,7 +597,7 @@ If you run into issues or have feature requests:
 - Open an issue in the GitHub repository
 - Describe the problem, steps to reproduce, and your environment (OS, Node version, database choice)
 
-Formal support channels (email, chat, etc.) are still to be determined for early versions of Mimamori.
+Formal support channels (email, chat, etc.) are still to be determined for early versions of AttentHive.
 
 ---
 
@@ -609,6 +611,6 @@ Planned enhancements include:
 - Dashboard metrics for households with multiple pets
 - Improved onboarding for shared households and pet-sitters
 
-If you have ideas that would make Mimamori more useful for your household or care network, please open an issue or submit a PR.
+If you have ideas that would make AttentHive more useful for your household or care network, please open an issue or submit a PR.
 
 ---
