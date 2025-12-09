@@ -342,23 +342,13 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
                   variant="h6"
                   component="h3"
                   color="text.primary"
-                  sx={{
-                    fontFamily: 'serif',
-                    fontWeight: 700,
-                    lineHeight: 1.1,
-                  }}
                 >
                   {pet.name}
                 </Typography>
                 <Typography
-                  variant="body2"
-                  sx={{
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    fontWeight: 500,
-                    mt: 0.5,
-                    color: 'text.secondary',
-                  }}
+                  variant="subtitle2"
+                  sx={{ mt: 0.5 }}
+                  color="text.secondary"
                 >
                   <span>{pet.breed}</span>
                 </Typography>
@@ -382,20 +372,17 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
               display: 'grid',
               gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
               rowGap: 1,
-              fontSize: 12,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
               color: 'text.secondary',
             }}
           >
             <Box component="div">
-              <Typography component="dt" variant="caption">
+              <Typography component="dt" variant="overline">
                 Age
               </Typography>
               <Typography
                 component="dd"
-                variant="body2"
-                sx={{ mt: 0.5, fontWeight: 500, textTransform: 'none' }}
+                variant="subtitle2"
+                sx={{ mt: 0.5 }}
                 color="text.primary"
               >
                 {calculateAge(pet.birthDate)} yrs
@@ -403,13 +390,13 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
             </Box>
 
             <Box component="div">
-              <Typography component="dt" variant="caption">
+              <Typography component="dt" variant="overline">
                 Weight
               </Typography>
               <Typography
                 component="dd"
-                variant="body2"
-                sx={{ mt: 0.5, fontWeight: 500, textTransform: 'none' }}
+                variant="subtitle2"
+                sx={{ mt: 0.5 }}
                 color="text.primary"
               >
                 {pet.weight} lbs
@@ -417,13 +404,13 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
             </Box>
 
             <Box component="div">
-              <Typography component="dt" variant="caption">
+              <Typography component="dt" variant="overline">
                 Sex
               </Typography>
               <Typography
                 component="dd"
-                variant="body2"
-                sx={{ mt: 0.5, fontWeight: 500, textTransform: 'none' }}
+                variant="subtitle2"
+                sx={{ mt: 0.5 }}
                 color="text.primary"
               >
                 {pet.gender === 'MALE' ? 'Male' : 'Female'}
@@ -443,8 +430,8 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
               }}
             >
               <Typography
-                variant="body2"
-                sx={{ fontWeight: 600, display: 'inline' }}
+                variant="subtitle2"
+                component="span"
                 color="text.primary"
               >
                 {describeActivity(lastLog, currentUserName)}{' '}

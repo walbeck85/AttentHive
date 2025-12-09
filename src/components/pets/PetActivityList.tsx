@@ -38,7 +38,7 @@ export default function PetActivityList({ careLogs }: PetActivityListProps) {
         <Box
           component="ul"
           sx={{ listStyle: 'none', p: 0, m: 0 }}
-          className="space-y-3 text-sm"
+          className="space-y-3"
         >
           {careLogs.map((log) => (
             <Box
@@ -59,7 +59,7 @@ export default function PetActivityList({ careLogs }: PetActivityListProps) {
             >
               <Box>
                 <Typography
-                  variant="body2"
+                  variant="body1"
                   sx={{
                     fontWeight: 600,
                     // In light mode, keep the warm brand brown. In dark mode, switch to
@@ -76,7 +76,7 @@ export default function PetActivityList({ careLogs }: PetActivityListProps) {
                 <Typography
                   variant="body2"
                   className="mm-muted-sm"
-                  sx={{ fontSize: 13, mt: 0.25 }}
+                  sx={{ mt: 0.25 }}
                 >
                   by{' '}
                   <Box
@@ -91,7 +91,6 @@ export default function PetActivityList({ careLogs }: PetActivityListProps) {
                     variant="body2"
                     sx={{
                       mt: 0.5,
-                      fontSize: 12,
                       color: 'text.secondary',
                     }}
                   >

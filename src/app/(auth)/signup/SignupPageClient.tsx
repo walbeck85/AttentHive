@@ -171,8 +171,10 @@ export default function SignupPageClient({
         </Button>
 
         {/* Divider between OAuth and email/password form. */}
-        <Divider sx={{ fontSize: 12, color: "text.secondary" }}>
-          or continue with email
+        <Divider>
+          <Typography variant="caption" color="text.secondary">
+            or continue with email
+          </Typography>
         </Divider>
 
         {/* Email/password signup form – behavior unchanged, now using MUI fields. */}
