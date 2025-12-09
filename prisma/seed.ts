@@ -2,17 +2,17 @@ import { prisma } from "../src/lib/prisma";
 import bcrypt from "bcryptjs";
 
 async function main() {
-  console.log("🌱 Running Mimamori seed...");
+  console.log("🌱 Running AttentHive seed...");
 
   // Test users
   const users = [
     {
-      email: "test@mimamori.app",
+      email: "test@attenthive.com",
       name: "Test User",
       password: "password123",
     },
     {
-      email: "demo@mimamori.app",
+      email: "demo@attenthive.com",
       name: "Demo Account",
       password: "password123",
     },
