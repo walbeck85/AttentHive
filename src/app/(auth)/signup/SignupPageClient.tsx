@@ -1,8 +1,8 @@
-// src/app/(auth)/signup/SignupPageClient.tsx
 "use client";
 
 import Link from "next/link";
 import AuthShell from "@/components/auth/AuthShell";
+import { APP_NAME } from "@/config/appMeta";
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -143,7 +143,7 @@ export default function SignupPageClient({
   return (
     <AuthShell
       title="Sign up"
-      subtitle="Create your Mimamori account to coordinate care."
+      subtitle={`Create your ${APP_NAME} account to coordinate care.`}
     >
       {error && (
         <Alert severity="error">
