@@ -69,7 +69,10 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <Container maxWidth="lg" sx={{ py: 5 }}>
+    <Container
+      maxWidth="lg"
+      sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}
+    >
       <Stack spacing={4}>
         {/* Hero to mirror the Care Circle treatment */}
         <Paper

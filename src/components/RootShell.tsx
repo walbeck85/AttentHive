@@ -59,7 +59,18 @@ export default function RootShell({ children }: RootShellProps) {
         />
 
         {/* Main page content; existing .mm-page / .mm-shell classes still apply inside */}
-        <Box component="main" sx={{ px: { xs: 2, sm: 3 }, pb: 4, bgcolor: "background.default", color: "text.primary" }}>
+        <Box
+          component="main"
+          sx={{
+            maxWidth: (theme) => theme.breakpoints.values.lg,
+            mx: "auto",
+            width: "100%",
+            px: { xs: 2, sm: 3, md: 4 },
+            pb: 4,
+            bgcolor: "background.default",
+            color: "text.primary",
+          }}
+        >
           {children}
         </Box>
       </Box>
