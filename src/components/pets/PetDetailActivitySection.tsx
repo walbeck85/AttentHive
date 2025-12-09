@@ -94,7 +94,8 @@ export default function PetDetailActivitySection({
                           by{' '}
                           <Box
                             component="span"
-                            sx={{ color: '#D17D45', fontWeight: 500 }}
+                            // Accent uses theme primary color so it adapts in light and dark modes without manual checks.
+                            sx={{ color: 'primary.main', fontWeight: 500 }}
                           >
                             {log.user?.name || 'Someone'}
                           </Box>
@@ -117,10 +118,8 @@ export default function PetDetailActivitySection({
                       variant: 'body2',
                       sx: {
                         fontWeight: 600,
-                        color: (theme) =>
-                          theme.palette.mode === 'dark'
-                            ? theme.palette.text.primary
-                            : '#382110',
+                        // Primary text leverages the palette token so it respects the active theme automatically.
+                        color: 'text.primary',
                       },
                     }}
                     secondaryTypographyProps={{ component: 'div' }}

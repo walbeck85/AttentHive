@@ -67,6 +67,7 @@ export default function PetPhotoProfileCard({
   // Theme tokens used to keep spacing, borders, and focus states consistent with MUI
   const theme = useTheme();
 
+  // Palette-driven colors prevent hard-coded hex values and auto-adjust for light and dark modes
   const borderSubtle = theme.palette.divider;
   const textMuted = theme.palette.text.secondary;
   const focusColor = theme.palette.success.main;
@@ -75,6 +76,7 @@ export default function PetPhotoProfileCard({
   const selectedSurface = alpha(theme.palette.success.main, 0.18);
   const selectedText = theme.palette.success.dark || theme.palette.success.main;
 
+  // Input styling leans on palette tokens so focus and hover states remain legible across themes
   const inputSx = {
     width: '100%',
     borderRadius: 1,
@@ -202,21 +204,21 @@ export default function PetPhotoProfileCard({
 
                 {isEditingProfile && editForm ? (
                   <Box
-                    component="form"
-                    onSubmit={onProfileSave}
+                  component="form"
+                  onSubmit={onProfileSave}
+                  sx={{
+                    mt: 1.5,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                  }}
+                >
+                  {/* Two column grid on desktop keeps inputs compact while remaining fluid */}
+                  <Box
                     sx={{
-                      mt: 1.5,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 2,
-                    }}
-                  >
-                    {/* Two column grid on desktop keeps inputs compact while remaining fluid */}
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                        columnGap: 2,
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                      columnGap: 2,
                         rowGap: 1.5,
                       }}
                     >

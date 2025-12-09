@@ -86,15 +86,22 @@ export function getDesignTokens(mode: PaletteMode): ThemeOptions {
 
     components: {
       MuiCssBaseline: {
-        styleOverrides: {
+        styleOverrides: (theme) => ({
+          ":root": {
+            // Expose palette-driven CSS variables so global styles and Tailwind utilities
+            // can stay in sync with the current light/dark mode without manual checks.
+            "--mm-surface-default": theme.palette.background.default,
+            "--mm-surface-paper": theme.palette.background.paper,
+            "--mm-text-primary": theme.palette.text.primary,
+          },
           "html, body": {
             margin: 0,
             padding: 0,
             minHeight: "100%",
           },
           body: {
-            backgroundColor: isDark ? "#020617" : "#FCFCFC",
-            color: isDark ? "#F9FAFB" : "#1A2340",
+            backgroundColor: theme.palette.background.default,
+            color: theme.palette.text.primary,
             fontFamily:
               "'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           },
@@ -103,7 +110,7 @@ export function getDesignTokens(mode: PaletteMode): ThemeOptions {
             display: "flex",
             flexDirection: "column",
           },
-        },
+        }),
       },
 
       // Preserve existing button styling (pill-shaped CTAs).

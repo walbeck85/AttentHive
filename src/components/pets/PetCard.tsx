@@ -62,7 +62,7 @@ type Props = {
 };
 
 // Helpers ------------------------------------------------------
-// Calculates age in years from birth date
+// Calculates age in years from birth date so age stays current without storing redundant derived data.
 function calculateAge(birthDate: string): number {
   const birth = new Date(birthDate);
   const today = new Date();
@@ -72,7 +72,7 @@ function calculateAge(birthDate: string): number {
   return age;
 }
 
-// Formats a date string into a human-readable "time ago" format
+// Formats a date string into a human-readable "time ago" format to keep the feed readable at a glance.
 function formatTimeAgo(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -87,7 +87,7 @@ function formatTimeAgo(dateString: string): string {
   return `${diffDays}d ago`;
 }
 
-// Returns the appropriate noun for an activity type
+// Returns the appropriate noun for an activity type so logs read naturally when rendered.
 function getActivityNoun(type: ActionType): string {
   switch (type) {
     case 'FEED':
@@ -133,7 +133,8 @@ function getCharacteristicLabel(id: PetCharacteristicId | string): string {
 }
 
 // Helper: map each characteristic to a distinct visual style so the most
-// important safety flags stand out without overwhelming the card.
+// important safety flags stand out without overwhelming the card. Palette tokens
+// keep the badges legible in both light and dark mode without manual checks.
 function getCharacteristicStyles(theme: Theme, id: PetCharacteristicId | string) {
   switch (id) {
     case 'AGGRESSIVE':
@@ -209,6 +210,7 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
   // Centralized handler that *actually* logs the activity
   const persistQuickAction = async (action: ActionType) => {
     try {
+      // Using fetch keeps this aligned with the rest of the app's API layer without introducing another client.
       const res = await fetch('/api/care-logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -264,7 +266,8 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
   return (
     <>
       {/* Card wraps the entire pet block so we can lean on theme radius, background,
-          and spacing instead of hand-tuning each dashboard card. */}
+          and spacing instead of hand-tuning each dashboard card. Theme surfaces
+          and dividers handle light/dark switching without hex colors. */}
       <Card
         component="article"
         className="group"
@@ -299,7 +302,8 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
         >
           <Stack spacing={2}>
             {/* Characteristics badges – surfaced at the top so safety / behavior
-                flags are visible before anything else. */}
+                flags are visible before anything else. Theme colors keep them
+                readable regardless of mode. */}
             {pet.characteristics && pet.characteristics.length > 0 && (
               <Box className="flex flex-wrap gap-2">
                 {pet.characteristics.map((id) => (
@@ -350,7 +354,7 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
                   sx={{ mt: 0.5 }}
                   color="text.secondary"
                 >
-                  <span>{pet.breed}</span>
+                  <span>{pet.breed}</span> {/* Secondary text keeps breed de-emphasized on both modes. */}
                 </Typography>
               </Box>
             </Stack>
@@ -361,16 +365,18 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
         {/* CardContent gives us consistent internal padding and keeps the card
             mobile-first without hard-coded widths. */}
         <CardContent
+        sx={{
+          px: 2.5,
+          py: 2,
+        }}
+      >
+        {/* Stats grid uses CSS grid so the three attributes stay aligned on desktop
+            and wrap cleanly on small screens without hard-coded widths. */}
+        <Box
+          component="dl"
           sx={{
-            px: 2.5,
-            py: 2,
-          }}
-        >
-          <Box
-            component="dl"
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
               rowGap: 1,
               color: 'text.secondary',
             }}
@@ -429,6 +435,7 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
                 color: 'text.secondary',
               }}
             >
+              {/* Inline typography here keeps the sentence flowing while still applying semantic emphasis. */}
               <Typography
                 variant="subtitle2"
                 component="span"
@@ -468,25 +475,26 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
               justifyContent: 'center',
               gap: 1.5,
             }}
-          >
-            {/* Quick actions left */}
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: 'repeat(2, minmax(0, 1fr))',
-                  sm: 'repeat(4, auto)',
-                },
-                gap: 1,
-                width: '100%',
-                justifyItems: 'center',
-              }}
             >
-              <Button
-                onClick={() => handleRequestQuickAction('FEED')}
-                variant="outlined"
-                size="small"
+              {/* Quick actions left */}
+              <Box
                 sx={{
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: 'repeat(2, minmax(0, 1fr))',
+                    sm: 'repeat(4, auto)',
+                  },
+                  gap: 1,
+                  width: '100%',
+                  justifyItems: 'center',
+                }}
+              >
+                {/* Outlined buttons here keep the action set lightweight while staying legible across modes. */}
+                <Button
+                  onClick={() => handleRequestQuickAction('FEED')}
+                  variant="outlined"
+                  size="small"
+                  sx={{
                   textTransform: 'none',
                   width: { xs: '100%', sm: 'auto' },
                   px: { xs: 1, sm: 2 },
@@ -494,12 +502,12 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
                   minHeight: { xs: 34, sm: 40 },
                   fontSize: { xs: 12, sm: 14 },
                 }}
-              >
-                Feed
-              </Button>
+                >
+                  Feed
+                </Button>
 
-              <Button
-                onClick={() => handleRequestQuickAction('WALK')}
+                <Button
+                  onClick={() => handleRequestQuickAction('WALK')}
                 variant="outlined"
                 size="small"
                 sx={{

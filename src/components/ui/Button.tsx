@@ -23,6 +23,7 @@ export interface ButtonProps
 type ButtonStyleObject = SystemStyleObject<Theme>;
 
 function getVariantStyles(theme: Theme, variant: ButtonVariant): ButtonStyleObject {
+  // Use theme palette tokens so colors adapt automatically to light and dark modes.
   const primaryMain = theme.palette.primary.main;
   const primaryDark = theme.palette.primary.dark;
   const hoverTint = alpha(primaryMain, 0.08);
@@ -63,6 +64,7 @@ function getVariantStyles(theme: Theme, variant: ButtonVariant): ButtonStyleObje
 }
 
 function getSizeStyles(size: ButtonSize): ButtonStyleObject {
+  // Size styles stick to spacing scale for consistent rhythm across variants.
   switch (size) {
     case 'sm':
       return { px: 1.5, py: 0.75, fontSize: '0.875rem' };
@@ -82,9 +84,11 @@ export default function Button({
   children,
   ...props
 }: ButtonProps) {
+  // Theme hook provides palette-aware tokens instead of hard-coded colors.
   const theme = useTheme();
 
   const sx: SxProps<Theme> = [
+    // Base button styling that all variants inherit.
     {
       display: 'inline-flex',
       alignItems: 'center',
@@ -101,6 +105,7 @@ export default function Button({
       ),
       '&:focus-visible': {
         outline: 'none',
+        // Dual ring keeps focus visible on any surface without custom hex values.
         boxShadow: `0 0 0 2px ${theme.palette.background.paper}, 0 0 0 4px ${theme.palette.primary.main}`,
       },
       '&:disabled': {

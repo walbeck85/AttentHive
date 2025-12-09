@@ -62,18 +62,12 @@ export default function PetActivityList({ careLogs }: PetActivityListProps) {
             >
               {/* Each item stacks details and timestamp while the divider separates entries for quick scanning */}
               <Box>
-                {/* Activity label leans on typography weight and theme-aware color to keep it prominent in either mode */}
+                {/* Activity label leans on typography weight and the primary text token so it stays prominent in both modes */}
                 <Typography
                   variant="body1"
                   sx={{
                     fontWeight: 600,
-                    // In light mode, keep the warm brand brown. In dark mode, switch to
-                    // the primary text color so activity labels remain clearly legible
-                    // against the navy background.
-                    color: (theme) =>
-                      theme.palette.mode === 'dark'
-                        ? theme.palette.common.white
-                        : '#382110',
+                    color: (theme) => theme.palette.text.primary,
                   }}
                 >
                   {getActivityLabel(log.activityType)}
@@ -83,9 +77,13 @@ export default function PetActivityList({ careLogs }: PetActivityListProps) {
                   sx={{ mt: 0.25, color: 'text.secondary' }}
                 >
                   by{' '}
+                  {/* User name leans on the primary accent so it pops while staying mode-aware */}
                   <Box
                     component="span"
-                    sx={{ color: '#D17D45', fontWeight: 500 }}
+                    sx={{
+                      color: (theme) => theme.palette.primary.main,
+                      fontWeight: 500,
+                    }}
                   >
                     {log.user?.name || 'Someone'}
                   </Box>

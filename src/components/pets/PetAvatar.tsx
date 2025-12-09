@@ -13,6 +13,7 @@ type Props = {
   className?: string;
 };
 
+// Map the supported sizes to exact pixel dimensions so avatars stay consistent across the app.
 const DIMENSIONS: Record<Size, number> = {
   sm: 32, // 2rem
   md: 40, // 2.5rem
@@ -27,6 +28,7 @@ export default function PetAvatar({
   className = '',
 }: Props) {
   const theme = useTheme();
+  // Memoize initials so re-renders do not repeat the parsing work, and handle empty names gracefully.
   const initials = React.useMemo(() => {
     const trimmed = name?.trim();
     if (!trimmed) return '?';
@@ -45,6 +47,7 @@ export default function PetAvatar({
   return (
     <Box
       className={className}
+      // Center the avatar inside any parent container while allowing custom class overrides.
       sx={{
         display: 'flex',
         alignItems: 'center',
@@ -54,6 +57,7 @@ export default function PetAvatar({
       <Avatar
         src={imageUrl || undefined}
         alt={name ? `${name} photo` : 'Pet photo'}
+        // Use theme tokens so colors adapt to light and dark modes without manual checks.
         sx={{
           width: dimension,
           height: dimension,

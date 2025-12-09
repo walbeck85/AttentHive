@@ -113,8 +113,8 @@ export default function PetDetailPage({
           px: 2,
         }}
       >
-        {/* Error header uses MUI typography for the emphasized message without relying on extra utility classes. */}
-        <Typography variant="h6" sx={{ color: '#382110', fontWeight: 600 }}>
+        {/* Error header leans on the theme text color so it adapts automatically in both light and dark palettes. */}
+        <Typography variant="h6" color="text.primary" sx={{ fontWeight: 600 }}>
           Failed to load pet details
         </Typography>
         {error && (
