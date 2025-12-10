@@ -15,7 +15,7 @@ import { alpha, type Theme, useTheme } from '@mui/material/styles';
 // MUI imports --------------------------------------------------
 // I’m using MUI here for the structural shell (Card, Box, Stack, Typography)
 // so dashboard cards can share theme-based spacing/shape, while keeping
-// existing Tailwind tokens like mm-card/mm-chip as visual scaffolding for now.
+// existing Tailwind tokens like app-card/app-chip as visual scaffolding for now.
 import {
   Box,
   Button,

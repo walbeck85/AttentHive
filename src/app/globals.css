@@ -6,8 +6,8 @@
 
 /* Theme-driven tokens keep globals aligned with the MUI palette so light and dark modes stay in sync. */
 :root {
-  --mm-bg: var(--mm-surface-default); /* Surfaces map to palette.background.default, fed in by CssBaseline. */
-  --mm-ink: var(--mm-text-primary); /* Text color follows palette.text.primary for mode awareness. */
+  --app-bg: var(--app-surface-default); /* Surfaces map to palette.background.default, fed in by CssBaseline. */
+  --app-ink: var(--app-text-primary); /* Text color follows palette.text.primary for mode awareness. */
 }
 
 body {
@@ -15,8 +15,8 @@ body {
   font-family: 'Nunito', system-ui, -apple-system, BlinkMacSystemFont,
     'Segoe UI', sans-serif; /* Keep the same font stack the theme uses for consistency. */
   line-height: 1.5;
-  background-color: var(--mm-bg); /* Body background inherits the theme surface token instead of a hard-coded hex. */
-  color: var(--mm-ink); /* Base text inherits the theme ink token so both modes render correctly. */
+  background-color: var(--app-bg); /* Body background inherits the theme surface token instead of a hard-coded hex. */
+  color: var(--app-ink); /* Base text inherits the theme ink token so both modes render correctly. */
 }
 
 a {

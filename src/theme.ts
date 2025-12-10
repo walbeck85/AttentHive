@@ -90,9 +90,9 @@ export function getDesignTokens(mode: PaletteMode): ThemeOptions {
           ":root": {
             // Expose palette-driven CSS variables so global styles and Tailwind utilities
             // can stay in sync with the current light/dark mode without manual checks.
-            "--mm-surface-default": theme.palette.background.default,
-            "--mm-surface-paper": theme.palette.background.paper,
-            "--mm-text-primary": theme.palette.text.primary,
+            "--app-surface-default": theme.palette.background.default,
+            "--app-surface-paper": theme.palette.background.paper,
+            "--app-text-primary": theme.palette.text.primary,
           },
           "html, body": {
             margin: 0,

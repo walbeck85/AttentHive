@@ -58,7 +58,7 @@ export default function RootShell({ children }: RootShellProps) {
           drawerWidth={DRAWER_WIDTH}
         />
 
-        {/* Main page content; existing .mm-page / .mm-shell classes still apply inside */}
+        {/* Main page content; existing .app-page / .app-shell classes still apply inside */}
         <Box
           component="main"
           sx={{

@@ -47,10 +47,16 @@
 
 ## 4. Phase Checklist
 
-- [ ] Phase 0 – Pre-flight complete
-- [ ] Phase 1 – Repo-wide audit of "Mimamori"
-- [ ] Phase 2 – Introduce APP_NAME constant
-- [ ] Phase 3 – Core app + docs rename
+- [x] Phase 0 – Pre-flight complete
+- [x] Phase 1 – Repo-wide audit of "Mimamori"
+- [x] Phase 2 – Introduce APP_NAME constant
+- [x] Phase 3 – Core app + docs rename
+- [x] Phase 4 – Theme & Design Tokens
+- [ ] Phase 5 – Env vars & config surface
+- [ ] Phase 6 – Vercel project & domains
+- [ ] Phase 7 – Supabase / Prisma review
+- [ ] Phase 8 – OAuth & third-party branding
+- [ ] Phase 9 – QA, smoke tests, rollout
 
 ## Phase 1 – Audit of "Mimamori"
 
