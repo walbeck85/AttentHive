@@ -52,11 +52,18 @@
 - [x] Phase 2 – Introduce APP_NAME constant
 - [x] Phase 3 – Core app + docs rename
 - [ ] Phase 4 – Theme & Design Tokens
-- [ ] Phase 5 – Env vars & config surface
+- [x] Phase 5 – Env vars & config surface
 - [ ] Phase 6 – Vercel project & domains
 - [ ] Phase 7 – Supabase / Prisma review
 - [ ] Phase 8 – OAuth & third-party branding
 - [ ] Phase 9 – QA, smoke tests, rollout
+
+## Phase 5 – Env vars & config surface (Summary)
+
+- Introduced APP_PRIMARY_DOMAIN and APP_CANONICAL_URL in `src/config/appMeta.ts` to centralize host configuration.
+- Added branding-related env examples to `.env.example` (`NEXT_PUBLIC_APP_NAME`, `NEXTAUTH_URL`).
+- Migrated theme mode localStorage key from "mimamori-theme-mode" to "attenthive-theme-mode" with backward-compatible migration logic in `src/components/ThemeModeProvider.tsx`.
+- Updated Prisma seed logs and seed emails to AttentHive branding in `prisma/seed.ts`.
 
 ## Phase 1 – Audit of "Mimamori"
 
