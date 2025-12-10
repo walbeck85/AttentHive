@@ -8,6 +8,32 @@ import type { Theme } from "@mui/material/styles";
 
 import { createAppTheme, type ThemePreference } from "@/theme";
 
+type ThemeMode = ThemePreference;
+
+const THEME_STORAGE_KEY = "attenthive-theme-mode";
+const LEGACY_THEME_STORAGE_KEY = "mimamori-theme-mode";
+
+function readStoredTheme(): ThemeMode | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const current = window.localStorage.getItem(THEME_STORAGE_KEY);
+  const legacy = window.localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
+
+  if (current) {
+    return current as ThemeMode;
+  }
+
+  if (!current && legacy) {
+    window.localStorage.setItem(THEME_STORAGE_KEY, legacy);
+    window.localStorage.removeItem(LEGACY_THEME_STORAGE_KEY);
+    return legacy as ThemeMode;
+  }
+
+  return null;
+}
+
 type ThemeModeContextValue = {
   /** User preference: light, dark, or system */
   mode: ThemePreference;
@@ -22,8 +48,6 @@ type ThemeModeContextValue = {
 export const ThemeModeContext = React.createContext<
   ThemeModeContextValue | undefined
 >(undefined);
-
-const STORAGE_KEY = "mimamori-theme-mode";
 
 export function useThemeModeController(): ThemeModeContextValue {
   // Respect OS-level preference when in "system" mode.
@@ -47,12 +71,9 @@ export function useThemeModeController(): ThemeModeContextValue {
   // On first client render, hydrate from localStorage.
   React.useEffect(() => {
     if (typeof window === "undefined") return;
-
     setHasHydrated(true);
 
-    const stored = window.localStorage.getItem(STORAGE_KEY) as
-      | ThemePreference
-      | null;
+    const stored = readStoredTheme();
 
     if (stored === "light" || stored === "dark" || stored === "system") {
       setModeState(stored);
@@ -63,7 +84,7 @@ export function useThemeModeController(): ThemeModeContextValue {
     setModeState(next);
 
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, next);
+      window.localStorage.setItem(THEME_STORAGE_KEY, next);
     }
   }, []);
 
