@@ -10,9 +10,9 @@
 ## 2. Scope
 
 - Do **now**:
-  - [ ] App name in UI
-  - [ ] Metadata (titles, descriptions, manifest)
-  - [ ] README + top-level docs
+  - [x] App name in UI
+  - [x] Metadata (titles, descriptions, manifest)
+  - [x] README + top-level docs
   - [ ] Central APP_NAME constant
   - [ ] Environment variable *values* where name appears in emails / templates
   - [ ] OAuth branding (Google app name + screen copy)

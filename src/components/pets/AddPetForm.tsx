@@ -45,6 +45,21 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
   const textPrimary = theme.palette.text.primary;
   const textSecondary = theme.palette.text.secondary;
   const accent = theme.palette.primary.main;
+  const accentContrast = theme.palette.getContrastText(accent);
+
+  const CTA_BG_ALPHA_DARK = 0.32;
+  const CTA_BG_ALPHA_LIGHT = 0.12;
+  const CTA_BORDER_ALPHA_DARK = 0.9;
+  const CTA_BORDER_ALPHA_LIGHT = 0.5;
+
+  const collapsedCtaBackground = alpha(
+    accent,
+    isDarkMode ? CTA_BG_ALPHA_DARK : CTA_BG_ALPHA_LIGHT
+  );
+  const collapsedCtaBorder = alpha(
+    accent,
+    isDarkMode ? CTA_BORDER_ALPHA_DARK : CTA_BORDER_ALPHA_LIGHT
+  );
 
   const inputStyles: CSSProperties = {
     backgroundColor: subtleSurface,
@@ -222,17 +237,39 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
         <button
           type="button"
           onClick={() => setIsExpanded(true)}
-          className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-transparent"
-          style={{ color: textPrimary }}
+          className="group flex w-full items-center justify-between rounded-full px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.12em] transition-colors duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+          style={{
+            ...focusRingStyle,
+            backgroundColor: collapsedCtaBackground,
+            borderColor: collapsedCtaBorder,
+            color: isDarkMode ? theme.palette.common.white : accentContrast,
+            borderWidth: 1,
+            borderStyle: 'solid',
+          }}
+          aria-expanded={isExpanded}
         >
-          <p
-            className="text-sm font-semibold uppercase tracking-[0.12em]"
-            style={{ color: isDarkMode ? textPrimary : textSecondary }}
-          >
+          <p className="truncate">
             Open add pet form
           </p>
-          <div className="ml-4 text-xl font-semibold" style={{ color: accent }}>
-            ›
+          <div
+            className="ml-4 flex items-center text-xl font-semibold transition-transform group-hover:translate-x-0.5"
+            aria-hidden="true"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M6 3L11 8L6 13"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
         </button>
       </Paper>
@@ -259,8 +296,21 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
           resetForm();
           setIsExpanded(false);
         }}
-        className="absolute top-3 right-3 text-sm transition-colors"
-        style={{ color: textSecondary }}
+        className="absolute top-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-full text-sm transition-colors hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+        style={{
+          ...focusRingStyle,
+          color: isDarkMode ? theme.palette.common.white : textSecondary,
+          backgroundColor: isDarkMode
+            ? alpha(theme.palette.common.white, 0.08)
+            : alpha(textSecondary, 0.06),
+          borderColor: alpha(
+            isDarkMode ? theme.palette.common.white : textSecondary,
+            isDarkMode ? 0.4 : 0.3
+          ),
+          borderWidth: 1,
+          borderStyle: 'solid',
+        }}
+        aria-label="Close add pet form"
       >
         ✕
       </button>
@@ -269,7 +319,11 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
         className="mb-4 font-semibold tracking-[0.16em] uppercase"
         style={{ color: textSecondary, letterSpacing: '0.16em' }}
       >
-        <Typography variant="overline" component="span">
+        <Typography
+          variant="overline"
+          component="span"
+          sx={{ color: accent }}
+        >
           Add New Pet
         </Typography>
       </h2>
