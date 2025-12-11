@@ -26,6 +26,8 @@ const createPetSchema = z.object({
   // We keep this loose here and enforce the canonical values via
   // `sanitizeCharacteristics` so the schema stays simple.
   characteristics: z.array(z.string()).optional(),
+  description: z.string().max(500, 'Description too long').optional(),
+  specialNotes: z.string().max(500, 'Special notes too long').optional(),
 });
 
 // Helper: normalize and validate any incoming characteristics array against
@@ -116,6 +118,8 @@ export async function POST(request: NextRequest) {
     const {
       birthDate,
       characteristics: rawCharacteristics,
+      description,
+      specialNotes,
       ...rest
     } = petData;
 
@@ -130,6 +134,8 @@ export async function POST(request: NextRequest) {
         birthDate: new Date(birthDate),
         weight: rest.weight,
         characteristics,
+        description,
+        specialNotes,
         ownerId: dbUser.id, // ✅ use real DB user id, not session.user.id
       },
     });

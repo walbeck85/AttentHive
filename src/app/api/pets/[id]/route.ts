@@ -92,6 +92,8 @@ const updatePetSchema = z.object({
   // Optional multi-select flags; if present we sanitize and persist them,
   // and if omitted we leave existing values untouched.
   characteristics: z.array(z.string()).optional(),
+  description: z.string().max(500, 'Description too long').optional(),
+  specialNotes: z.string().max(500, 'Special notes too long').optional(),
 });
 
 // Helper: ensure there is a Prisma User row for the current session user.
@@ -357,6 +359,8 @@ export async function PATCH(
     const {
       birthDate,
       characteristics: rawCharacteristics,
+      description,
+      specialNotes,
       ...rest
     } = updateData;
 
@@ -375,6 +379,9 @@ export async function PATCH(
         ...(birthDate ? { birthDate: new Date(birthDate) } : {}),
         // Only update characteristics when the client actually sent them.
         ...(characteristics !== undefined ? { characteristics } : {}),
+        // Only update description/specialNotes when explicitly sent.
+        ...(description !== undefined ? { description } : {}),
+        ...(specialNotes !== undefined ? { specialNotes } : {}),
       },
     });
 
