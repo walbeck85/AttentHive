@@ -134,8 +134,9 @@ export async function POST(request: NextRequest) {
         birthDate: new Date(birthDate),
         weight: rest.weight,
         characteristics,
-        description,
-        specialNotes,
+        // Only include description/specialNotes if they have values
+        ...(description !== undefined ? { description } : {}),
+        ...(specialNotes !== undefined ? { specialNotes } : {}),
         ownerId: dbUser.id, // ✅ use real DB user id, not session.user.id
       },
     });

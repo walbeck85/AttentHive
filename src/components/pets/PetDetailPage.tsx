@@ -28,6 +28,8 @@ export type EditFormState = {
   gender: 'MALE' | 'FEMALE';
   birthDate: string;
   weight: string;
+  description: string;
+  specialNotes: string;
   characteristics: PetCharacteristicId[];
 };
 

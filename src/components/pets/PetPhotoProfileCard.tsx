@@ -427,6 +427,102 @@ export default function PetPhotoProfileCard({
                         )}
                       </div>
 
+                      {/* Description */}
+                      <Box sx={{ gridColumn: '1 / -1' }}>
+                        <Typography
+                          component="label"
+                          variant="overline"
+                          sx={{ display: 'block', mb: 0.5, ...labelColorSx }}
+                        >
+                          Description (Optional)
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: 'block', mb: 0.75 }}
+                        >
+                          Tell us about your pet&apos;s personality, history, or background.
+                        </Typography>
+                        <Box
+                          component="textarea"
+                          value={editForm.description}
+                          onChange={(e) => onUpdateEditField('description', e.target.value)}
+                          rows={3}
+                          maxLength={500}
+                          placeholder="e.g. Rescued in 2020, loves tennis balls, scared of thunder..."
+                          sx={{
+                            ...inputSx,
+                            resize: 'vertical',
+                            fontFamily: 'inherit',
+                          }}
+                        />
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: 'block', mt: 0.5, textAlign: 'right' }}
+                        >
+                          {editForm.description.length}/500 characters
+                        </Typography>
+                        {editFieldErrors.description && (
+                          <Typography
+                            variant="caption"
+                            color="error"
+                            component="p"
+                            sx={{ mt: 0.5 }}
+                          >
+                            {editFieldErrors.description}
+                          </Typography>
+                        )}
+                      </Box>
+
+                      {/* Special Notes */}
+                      <Box sx={{ gridColumn: '1 / -1' }}>
+                        <Typography
+                          component="label"
+                          variant="overline"
+                          sx={{ display: 'block', mb: 0.5, ...labelColorSx }}
+                        >
+                          Special Notes (Optional)
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: 'block', mb: 0.75 }}
+                        >
+                          Important instructions for caregivers (medication schedules, routines, etc.).
+                        </Typography>
+                        <Box
+                          component="textarea"
+                          value={editForm.specialNotes}
+                          onChange={(e) => onUpdateEditField('specialNotes', e.target.value)}
+                          rows={3}
+                          maxLength={500}
+                          placeholder="e.g. Give insulin at 8am/6pm, use harness not collar..."
+                          sx={{
+                            ...inputSx,
+                            resize: 'vertical',
+                            fontFamily: 'inherit',
+                          }}
+                        />
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: 'block', mt: 0.5, textAlign: 'right' }}
+                        >
+                          {editForm.specialNotes.length}/500 characters
+                        </Typography>
+                        {editFieldErrors.specialNotes && (
+                          <Typography
+                            variant="caption"
+                            color="error"
+                            component="p"
+                            sx={{ mt: 0.5 }}
+                          >
+                            {editFieldErrors.specialNotes}
+                          </Typography>
+                        )}
+                      </Box>
+
                       <Box sx={{ gridColumn: '1 / -1' }}>
                         <Typography
                           component="label"
@@ -539,58 +635,155 @@ export default function PetPhotoProfileCard({
                   </Box>
                 ) : (
                   /* Read-only summary mirrors form spacing using MUI grid primitives */
-                  <Box
-                    component="dl"
-                    sx={{
-                      display: 'grid',
-                      gridTemplateColumns: {
-                        xs: 'repeat(2, minmax(0, 1fr))',
-                        md: 'repeat(3, minmax(0, 1fr))',
-                      },
-                      columnGap: 3,
-                      rowGap: 1.5,
-                      fontSize: '0.75rem',
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      color: textMuted,
-                    }}
-                  >
-                    <Box component="div">
-                      <Typography component="dt" variant="subtitle2" sx={{ fontSize: 'inherit' }}>
-                        Age
-                      </Typography>
-                      <Typography
-                        component="dd"
-                        variant="body2"
-                        sx={{ mt: 0.5, fontWeight: 600, textTransform: 'none', color: 'text.primary' }}
-                      >
-                        {calculateAge(pet.birthDate)} yrs
-                      </Typography>
+                  <Box>
+                    <Box
+                      component="dl"
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: {
+                          xs: 'repeat(2, minmax(0, 1fr))',
+                          md: 'repeat(3, minmax(0, 1fr))',
+                        },
+                        columnGap: 3,
+                        rowGap: 1.5,
+                        fontSize: '0.75rem',
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        color: textMuted,
+                      }}
+                    >
+                      <Box component="div">
+                        <Typography component="dt" variant="subtitle2" sx={{ fontSize: 'inherit' }}>
+                          Age
+                        </Typography>
+                        <Typography
+                          component="dd"
+                          variant="body2"
+                          sx={{ mt: 0.5, fontWeight: 600, textTransform: 'none', color: 'text.primary' }}
+                        >
+                          {calculateAge(pet.birthDate)} yrs
+                        </Typography>
+                      </Box>
+                      <Box component="div">
+                        <Typography component="dt" variant="subtitle2" sx={{ fontSize: 'inherit' }}>
+                          Weight
+                        </Typography>
+                        <Typography
+                          component="dd"
+                          variant="body2"
+                          sx={{ mt: 0.5, fontWeight: 600, textTransform: 'none', color: 'text.primary' }}
+                        >
+                          {pet.weight} lbs
+                        </Typography>
+                      </Box>
+                      <Box component="div">
+                        <Typography component="dt" variant="subtitle2" sx={{ fontSize: 'inherit' }}>
+                          Sex
+                        </Typography>
+                        <Typography
+                          component="dd"
+                          variant="body2"
+                          sx={{ mt: 0.5, fontWeight: 600, textTransform: 'none', color: 'text.primary' }}
+                        >
+                          {pet.gender === 'MALE' ? 'Male' : 'Female'}
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Box component="div">
-                      <Typography component="dt" variant="subtitle2" sx={{ fontSize: 'inherit' }}>
-                        Weight
-                      </Typography>
-                      <Typography
-                        component="dd"
-                        variant="body2"
-                        sx={{ mt: 0.5, fontWeight: 600, textTransform: 'none', color: 'text.primary' }}
-                      >
-                        {pet.weight} lbs
-                      </Typography>
-                    </Box>
-                    <Box component="div">
-                      <Typography component="dt" variant="subtitle2" sx={{ fontSize: 'inherit' }}>
-                        Sex
-                      </Typography>
-                      <Typography
-                        component="dd"
-                        variant="body2"
-                        sx={{ mt: 0.5, fontWeight: 600, textTransform: 'none', color: 'text.primary' }}
-                      >
-                        {pet.gender === 'MALE' ? 'Male' : 'Female'}
-                      </Typography>
-                    </Box>
+
+                    {/* Description */}
+                    {pet.description && (
+                      <Box sx={{ mt: 2.5 }}>
+                        <Typography
+                          variant="overline"
+                          sx={{
+                            display: 'block',
+                            mb: 0.75,
+                            fontSize: '0.75rem',
+                            ...labelColorSx,
+                          }}
+                        >
+                          Description
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: 'text.primary',
+                            lineHeight: 1.6,
+                            whiteSpace: 'pre-wrap',
+                          }}
+                        >
+                          {pet.description}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {/* Special Notes */}
+                    {pet.specialNotes && (
+                      <Box sx={{ mt: 2.5 }}>
+                        <Typography
+                          variant="overline"
+                          sx={{
+                            display: 'block',
+                            mb: 0.75,
+                            fontSize: '0.75rem',
+                            ...labelColorSx,
+                          }}
+                        >
+                          Special Notes
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: 'text.primary',
+                            lineHeight: 1.6,
+                            whiteSpace: 'pre-wrap',
+                          }}
+                        >
+                          {pet.specialNotes}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {/* Characteristics */}
+                    {pet.characteristics && pet.characteristics.length > 0 && (
+                      <Box sx={{ mt: 2.5 }}>
+                        <Typography
+                          variant="overline"
+                          sx={{
+                            display: 'block',
+                            mb: 0.75,
+                            fontSize: '0.75rem',
+                            ...labelColorSx,
+                          }}
+                        >
+                          Characteristics
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                          {pet.characteristics.map((id) => (
+                            <Box
+                              key={id}
+                              component="span"
+                              sx={{
+                                display: 'inline-block',
+                                px: 1.5,
+                                py: 0.5,
+                                borderRadius: '999px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.08em',
+                                border: '1px solid',
+                                borderColor: borderSubtle,
+                                bgcolor: quietSurface,
+                                color: textMuted,
+                              }}
+                            >
+                              {getCharacteristicLabel(id)}
+                            </Box>
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
                   </Box>
                 )}
               </Box>
