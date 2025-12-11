@@ -104,6 +104,9 @@ export default async function PetDetailsPage({ params }: Params) {
     characteristics: Array.isArray(dbPet.characteristics)
       ? (dbPet.characteristics as PetData["characteristics"])
       : undefined,
+    // Optional text fields for pet personality and caregiver notes
+    description: dbPet.description ?? undefined,
+    specialNotes: dbPet.specialNotes ?? undefined,
   };
 
   const careCircleMemberships = await getCareCircleMembersForPet(petId);
