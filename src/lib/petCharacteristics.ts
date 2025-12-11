@@ -5,17 +5,16 @@
 // - We can evolve the list in one place without touching the DB schema.
 
 export const PET_CHARACTERISTICS = [
-  // Behavior-related flags that help set expectations for handlers.
+  // Sorted alphabetically for consistent display across the app.
   { id: "AGGRESSIVE", label: "Aggressive" },
-  { id: "REACTIVE", label: "Reactive" },
-  { id: "SHY", label: "Shy" },
-
-  // Accessibility / health cues for quick safety scanning.
-  { id: "MOBILITY_ISSUES", label: "Mobility Issues" },
+  { id: "ALLERGIES", label: "Allergies" },
   { id: "BLIND", label: "Blind" },
   { id: "DEAF", label: "Deaf" },
-
-  // Room to grow later if we want more nuance (e.g. "Needs Meds", "Separation Anxiety").
+  { id: "MEDICATIONS", label: "Medications" },
+  { id: "MOBILITY_ISSUES", label: "Mobility Issues" },
+  { id: "REACTIVE", label: "Reactive" },
+  { id: "SEPARATION_ANXIETY", label: "Separation Anxiety" },
+  { id: "SHY", label: "Shy" },
 ] as const;
 
 // Strongly typed ID union so the rest of the app can rely on these values
