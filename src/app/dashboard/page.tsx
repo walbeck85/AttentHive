@@ -9,6 +9,10 @@ import AddPetForm from "@/components/pets/AddPetForm";
 // geometry aligned with the global theme instead of hand-tuned Tailwind margins.
 import { Container, Paper, Stack, Typography } from "@mui/material";
 
+// Force this page to always be dynamically rendered and never cached,
+// so pet updates (including characteristics) are immediately visible.
+export const dynamic = 'force-dynamic';
+
 // Server-rendered dashboard. This page always runs on the server, so it can
 // talk directly to Prisma and NextAuth without shipping any of that to the client.
 export default async function DashboardPage() {

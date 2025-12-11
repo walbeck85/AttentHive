@@ -13,6 +13,10 @@ import type {
   PetData,
 } from "@/components/pets/petDetailTypes"; // Route shapes Prisma data into these view models so the client can stay dumb and predictable.
 
+// Force this page to always be dynamically rendered and never cached,
+// so pet updates (including characteristics) are immediately visible.
+export const dynamic = 'force-dynamic';
+
 type Params =
   | {
       params: { id: string };
