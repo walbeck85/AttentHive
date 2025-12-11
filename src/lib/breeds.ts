@@ -578,7 +578,6 @@ export const CAT_BREEDS = [
     "American Shorthair",
     "American Wirehair",
     "Aphrodite",
-    "Aphrodite",
     "Arabian Mau",
     "Asian",
     "Australian Mist",

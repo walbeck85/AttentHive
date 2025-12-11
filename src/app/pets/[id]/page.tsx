@@ -13,6 +13,10 @@ import type {
   PetData,
 } from "@/components/pets/petDetailTypes"; // Route shapes Prisma data into these view models so the client can stay dumb and predictable.
 
+// Force this page to always be dynamically rendered and never cached,
+// so pet updates (including characteristics) are immediately visible.
+export const dynamic = 'force-dynamic';
+
 type Params =
   | {
       params: { id: string };
@@ -104,6 +108,9 @@ export default async function PetDetailsPage({ params }: Params) {
     characteristics: Array.isArray(dbPet.characteristics)
       ? (dbPet.characteristics as PetData["characteristics"])
       : undefined,
+    // Optional text fields for pet personality and caregiver notes
+    description: dbPet.description ?? undefined,
+    specialNotes: dbPet.specialNotes ?? undefined,
   };
 
   const careCircleMemberships = await getCareCircleMembersForPet(petId);

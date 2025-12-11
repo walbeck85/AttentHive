@@ -28,6 +28,14 @@ function validateEditForm(data: EditFormState): EditFieldErrors {
     }
   }
 
+  // Validate optional text fields for length
+  if (data.description.length > 500) {
+    errors.description = 'Description is too long (max 500 characters).';
+  }
+  if (data.specialNotes.length > 500) {
+    errors.specialNotes = 'Special notes are too long (max 500 characters).';
+  }
+
   return errors;
 }
 
@@ -60,6 +68,8 @@ export default function PetDetailProfileSection({
       gender: (pet.gender as 'MALE' | 'FEMALE') ?? 'MALE',
       birthDate,
       weight: pet.weight.toString(),
+      description: pet.description ?? '',
+      specialNotes: pet.specialNotes ?? '',
       characteristics: Array.isArray(pet.characteristics)
         ? pet.characteristics
         : [],
@@ -117,19 +127,32 @@ export default function PetDetailProfileSection({
 
     const numericWeight = parseFloat(editForm.weight);
 
+    // Build the payload, only including optional fields if they have values
+    const payload: Record<string, unknown> = {
+      name: editForm.name.trim(),
+      type: editForm.type,
+      breed: editForm.breed.trim(),
+      gender: editForm.gender,
+      birthDate: editForm.birthDate,
+      weight: numericWeight,
+      characteristics: editForm.characteristics,
+    };
+
+    const trimmedDescription = editForm.description.trim();
+    if (trimmedDescription) {
+      payload.description = trimmedDescription;
+    }
+
+    const trimmedSpecialNotes = editForm.specialNotes.trim();
+    if (trimmedSpecialNotes) {
+      payload.specialNotes = trimmedSpecialNotes;
+    }
+
     try {
       const res = await fetch(`/api/pets/${pet.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: editForm.name.trim(),
-          type: editForm.type,
-          breed: editForm.breed.trim(),
-          gender: editForm.gender,
-          birthDate: editForm.birthDate,
-          weight: numericWeight,
-          characteristics: editForm.characteristics,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();

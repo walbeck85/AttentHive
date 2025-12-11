@@ -179,6 +179,27 @@ function getCharacteristicStyles(theme: Theme, id: PetCharacteristicId | string)
         backgroundColor: alpha(theme.palette.secondary.main, 0.2),
         color: theme.palette.text.primary,
       };
+    case 'ALLERGIES':
+      // Health condition: warm orange pill.
+      return {
+        borderColor: alpha(theme.palette.warning.main, 0.5),
+        backgroundColor: alpha(theme.palette.warning.main, 0.15),
+        color: theme.palette.warning.dark ?? theme.palette.warning.main,
+      };
+    case 'MEDICATIONS':
+      // Medical note: professional teal pill.
+      return {
+        borderColor: alpha(theme.palette.info.main, 0.5),
+        backgroundColor: alpha(theme.palette.info.main, 0.15),
+        color: theme.palette.info.dark ?? theme.palette.info.main,
+      };
+    case 'SEPARATION_ANXIETY':
+      // Behavioral health: calming purple pill.
+      return {
+        borderColor: alpha(theme.palette.secondary.main, 0.6),
+        backgroundColor: alpha(theme.palette.secondary.light, 0.18),
+        color: theme.palette.secondary.dark ?? theme.palette.secondary.main,
+      };
     default:
       // Fallback for any future flags we add.
       return {

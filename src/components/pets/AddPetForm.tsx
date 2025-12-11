@@ -24,6 +24,8 @@ type FormState = {
   birthDate: string;
   weight: string;
   weightUnit: 'lbs' | 'kg';
+  description: string;
+  specialNotes: string;
   // Multi-select flags that surface as badges on the pet card.
   // Kept in sync with the canonical list so the payload stays predictable.
   characteristics: PetCharacteristicId[];
@@ -86,6 +88,8 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
     birthDate: '',
     weight: '',
     weightUnit: 'lbs',
+    description: '',
+    specialNotes: '',
     // Start with no flags selected; this mirrors the DB default of [].
     characteristics: [],
   });
@@ -101,6 +105,8 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
       birthDate: '',
       weight: '',
       weightUnit: 'lbs',
+      description: '',
+      specialNotes: '',
       characteristics: [],
     });
     setFieldErrors({});
@@ -146,20 +152,35 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
       const weightInLbs =
         formData.weightUnit === 'kg' ? numericWeight * 2.20462 : numericWeight;
 
+      // Build the payload, only including optional fields if they have values
+      const payload: Record<string, unknown> = {
+        name: formData.name.trim(),
+        type: formData.type,
+        breed: formData.breed.trim(),
+        gender: formData.gender,
+        birthDate: formData.birthDate,
+        weight: weightInLbs,
+        // Pass through the selected characteristic IDs so the API
+        // can validate and persist them to the Recipient record.
+        characteristics: formData.characteristics,
+      };
+
+      // Only include description if it has content
+      const trimmedDescription = formData.description.trim();
+      if (trimmedDescription) {
+        payload.description = trimmedDescription;
+      }
+
+      // Only include specialNotes if it has content
+      const trimmedSpecialNotes = formData.specialNotes.trim();
+      if (trimmedSpecialNotes) {
+        payload.specialNotes = trimmedSpecialNotes;
+      }
+
       const res = await fetch('/api/pets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name.trim(),
-          type: formData.type,
-          breed: formData.breed.trim(),
-          gender: formData.gender,
-          birthDate: formData.birthDate,
-          weight: weightInLbs,
-          // Pass through the selected characteristic IDs so the API
-          // can validate and persist them to the Recipient record.
-          characteristics: formData.characteristics,
-        }),
+        body: JSON.stringify(payload),
       });
 // Parse response
       const data = await res.json();
@@ -537,6 +558,76 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
                 {fieldErrors.weight}
               </Typography>
             )}
+          </div>
+
+          {/* Description */}
+          <div className="md:col-span-2">
+            <Typography
+              component="label"
+              variant="overline"
+              className="mb-1 block font-semibold"
+              style={labelStyles}
+            >
+              Description (Optional)
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              className="mb-2 block"
+            >
+              Tell us about your pet&apos;s personality, history, or background.
+            </Typography>
+            <textarea
+              value={formData.description}
+              onChange={(e) => updateField('description', e.target.value)}
+              rows={3}
+              maxLength={500}
+              className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
+              style={{ ...inputStyles, ...focusRingStyle }}
+              placeholder="e.g. Rescued in 2020, loves tennis balls, scared of thunder..."
+            />
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              className="mt-1 block text-right"
+            >
+              {formData.description.length}/500 characters
+            </Typography>
+          </div>
+
+          {/* Special Notes */}
+          <div className="md:col-span-2">
+            <Typography
+              component="label"
+              variant="overline"
+              className="mb-1 block font-semibold"
+              style={labelStyles}
+            >
+              Special Notes (Optional)
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              className="mb-2 block"
+            >
+              Important instructions for caregivers (medication schedules, routines, etc.).
+            </Typography>
+            <textarea
+              value={formData.specialNotes}
+              onChange={(e) => updateField('specialNotes', e.target.value)}
+              rows={3}
+              maxLength={500}
+              className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
+              style={{ ...inputStyles, ...focusRingStyle }}
+              placeholder="e.g. Give insulin at 8am/6pm, use harness not collar..."
+            />
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              className="mt-1 block text-right"
+            >
+              {formData.specialNotes.length}/500 characters
+            </Typography>
           </div>
 
           {/* Characteristics */}

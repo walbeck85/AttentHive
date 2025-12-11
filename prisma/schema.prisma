@@ -8,43 +8,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model User {
-  id           String       @id @default(cuid())
-  email        String       @unique
-  name         String
-  passwordHash String
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  address      String?
-  phone        String?
-  careCircles  CareCircle[]
-  careLogs     CareLog[]
-  ownedPets    Recipient[]  @relation("PetOwner")
-}
-
-model Recipient {
-  id           String       @id @default(cuid())
-  name         String
-  type         PetType
-  breed        String
-  birthDate    DateTime
-  weight       Float
-  specialNeeds String?
-  // Behavior / needs flags surfaced as badges on the recipient card.
-  // String[] keeps this flexible so we can evolve the canonical list without further schema changes.
-  characteristics String[]    @default([])
-  ownerId      String
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  gender       Gender
-  imageUrl     String?      // Keeping this nullable so existing recipients don't break while we roll out photo uploads gradually.
-  careCircles  CareCircle[]
-  careLogs     CareLog[]
-  owner        User         @relation("PetOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-
-  @@index([ownerId])
-}
-
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model CareCircle {
   id          String     @id @default(cuid())
   recipientId String
@@ -59,6 +23,7 @@ model CareCircle {
   @@index([userId])
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model CareLog {
   id           String       @id @default(cuid())
   recipientId  String
@@ -74,20 +39,45 @@ model CareLog {
   @@index([createdAt])
 }
 
-enum PetType {
-  DOG
-  CAT
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Recipient {
+  id              String       @id @default(cuid())
+  name            String
+  type            PetType
+  breed           String
+  birthDate       DateTime
+  weight          Float
+  specialNeeds    String?
+  description     String?
+  specialNotes    String?
+  // Behavior / needs flags surfaced as badges on the recipient card.
+  // String[] keeps this flexible so we can evolve the canonical list without further schema changes.
+  characteristics String[]     @default([])
+  ownerId         String
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  gender          Gender
+  imageUrl        String? // Keeping this nullable so existing recipients don't break while we roll out photo uploads gradually.
+  careCircles     CareCircle[]
+  careLogs        CareLog[]
+  owner           User         @relation("PetOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
 }
 
-enum Gender {
-  MALE
-  FEMALE
-}
-
-enum CircleRole {
-  OWNER
-  CAREGIVER
-  VIEWER
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  address      String?
+  phone        String?
+  careCircles  CareCircle[]
+  careLogs     CareLog[]
+  ownedPets    Recipient[]  @relation("PetOwner")
 }
 
 enum ActivityType {
@@ -97,4 +87,32 @@ enum ActivityType {
   BATHROOM
   ACCIDENT
   VOMIT
+}
+
+enum CircleRole {
+  OWNER
+  CAREGIVER
+  VIEWER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum PetCharacteristic {
+  AGGRESSIVE
+  ALLERGIES
+  BLIND
+  DEAF
+  MEDICATIONS
+  MOBILITY_ISSUES
+  REACTIVE
+  SEPARATION_ANXIETY
+  SHY
+}
+
+enum PetType {
+  DOG
+  CAT
 }

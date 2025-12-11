@@ -36,4 +36,6 @@ export type PetData = {
   ownerId?: string;
   imageUrl?: string | null;
   characteristics?: PetCharacteristicId[];
+  description?: string;
+  specialNotes?: string;
 };
