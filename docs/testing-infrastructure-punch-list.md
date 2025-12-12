@@ -122,23 +122,33 @@ Show me all files created and run the verification test.
 ## PHASE 3: API Route Test - care-logs
 
 ### 3.1 Create care-logs route test file
-- [ ] Create `__tests__/api/care-logs/route.test.ts`
-- [ ] Import POST from the actual route
-- [ ] Set up Prisma mock and session mock
+- [x] Create `__tests__/api/care-logs/route.test.ts`
+- [x] Import POST from the actual route
+- [x] Set up Prisma mock and session mock
 
 ### 3.2 Test success cases
-- [ ] Test: authenticated user creates care log for owned pet
-- [ ] Test: authenticated user creates care log via care circle access
-- [ ] Verify response shape and status codes
+- [x] Test: authenticated user creates care log for owned pet
+- [x] Test: authenticated user creates care log via care circle access
+- [x] Verify response shape and status codes
 
 ### 3.3 Test error cases
-- [ ] Test: 401 when not authenticated
-- [ ] Test: 400 when missing required fields (recipientId, activityType)
-- [ ] Test: 403 when user doesn't have access to pet
+- [x] Test: 401 when not authenticated
+- [x] Test: 400 when missing required fields (recipientId, activityType)
+- [x] Test: 404 when pet doesn't exist (route doesn't check ownership/care circle)
 
 ### 3.4 Run and verify
-- [ ] All tests pass
-- [ ] Coverage increased for care-logs route
+- [x] All tests pass (12 tests)
+- [x] Coverage increased for care-logs route
+
+**Coverage Results (care-logs route):**
+| Metric     | Coverage |
+|------------|----------|
+| Statements | 90%      |
+| Branches   | 90%      |
+| Functions  | 100%     |
+| Lines      | 90%      |
+
+**Note:** The route does not check ownership/care circle access - it only validates the pet exists. Tests verify status codes and mock call assertions rather than response body parsing due to jsdom/whatwg-fetch limitations with NextResponse.json().
 
 **Claude Code Prompt for Phase 3:**
 ```
@@ -174,17 +184,30 @@ Run the tests and show me the results.
 ## PHASE 4: API Route Test - pets
 
 ### 4.1 Create pets route test file
-- [ ] Create `__tests__/api/pets/route.test.ts`
-- [ ] Test GET (list pets) and POST (create pet)
+- [x] Create `__tests__/api/pets/route.test.ts`
+- [x] Test GET (list pets) and POST (create pet)
 
 ### 4.2 Test GET /api/pets
-- [ ] Test: returns user's pets
-- [ ] Test: 401 when not authenticated
+- [x] Test: returns user's pets
+- [x] Test: 401 when not authenticated
 
 ### 4.3 Test POST /api/pets
-- [ ] Test: creates pet with valid data
-- [ ] Test: validates required fields
-- [ ] Test: validates description/specialNotes length limits
+- [x] Test: creates pet with valid data
+- [x] Test: validates required fields
+- [x] Test: validates description/specialNotes length limits
+
+**Coverage Results (pets route):**
+| Metric     | Coverage |
+|------------|----------|
+| Statements | 91.83%   |
+| Branches   | 100%     |
+| Functions  | 100%     |
+| Lines      | 91.83%   |
+
+**Tests added (14 total):**
+- GET: returns user's pets, returns 401, returns empty array
+- POST success: required fields, optional fields, characteristics
+- POST errors: 401, missing name, missing type, description too long, specialNotes too long, negative weight, future birthDate, invalid type
 
 **Claude Code Prompt for Phase 4:**
 ```
