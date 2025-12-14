@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import AuthShell from "@/components/auth/AuthShell";
-import { APP_NAME } from "@/config/appMeta";
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -143,7 +142,7 @@ export default function SignupPageClient({
   return (
     <AuthShell
       title="Sign up"
-      subtitle={`Create your ${APP_NAME} account to coordinate care.`}
+      subtitle="Sign Up to Build Your Hive for the Ones You Care For."
     >
       {error && (
         <Alert severity="error">

@@ -91,15 +91,15 @@ export default async function DashboardPage() {
           }}
         >
           <Typography
-            variant="overline"
+            variant="body2"
             sx={{
               display: "block",
               mb: 1,
-              letterSpacing: "0.2em",
-              opacity: 0.9,
+              fontStyle: "italic",
+              opacity: 0.85,
             }}
           >
-            Dashboard
+            Welcome to Your Hive for the Ones You Care For
           </Typography>
 
           <Typography variant="h4" component="h1" sx={{ mb: 1.5 }}>

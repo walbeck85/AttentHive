@@ -67,19 +67,25 @@ Earlier iterations of this project used the working title **Mimamori** (見守�
 
 - **User authentication**
   - Sign up, login, logout, session handling
-- **Pet profiles (full CRUD)**  
+- **Pet profiles (full CRUD)**
   - Create, view, update, and delete pets with ownership validation
-- **Care activity logging**  
-  - Track feeding, walking, medication, bathroom, and accident events
-- **Activity timeline**  
+  - Profile fields: name, type, breed, birth date, weight, gender
+  - Extended fields: description, special notes for caregivers
+  - Characteristics/badges: allergies, medications, separation anxiety, mobility issues, etc.
+- **Pet photo upload**
+  - Upload profile photos (JPEG, PNG, WebP; max 5 MB)
+  - Photos stored in Supabase Storage
+- **Care activity logging**
+  - Track feeding, walking, medication, bathroom, accident, and vomit events
+- **Activity timeline**
   - See who did what, when, for each pet
-- **Mobile‑responsive UI**  
+- **Mobile‑responsive UI**
   - Designed to work cleanly on phones, tablets, and desktops
-- **Shared pet access via CareCircle**  
+- **Shared pet access via CareCircle**
   - Many‑to‑many relationship between users and pets for shared households
-- **Role‑based permissions**  
+- **Role‑based permissions**
   - Owner, caregiver, viewer roles with different capabilities
-- **Activity filtering**  
+- **Activity filtering**
   - Filter by type (feed, walk, medicate, etc.) and by date range
 
 > Note: An initial version of CareCircle sharing, shared pet access, and activity filtering is now implemented and used throughout the dashboard and pet detail flows. 
@@ -89,7 +95,7 @@ Earlier iterations of this project used the working title **Mimamori** (見守�
 ## Project Structure
 
 ```bash
-mimamori/
+AttentHive/
 .
 ├── eslint.config.mjs              # ESLint configuration for code quality rules
 ├── jest.config.cjs                # Jest configuration for unit/integration tests
@@ -300,8 +306,8 @@ If you already have Node and a PostgreSQL database (or Supabase) ready, this is 
 
 ```bash
 # 1. Clone the repo and install dependencies
-git clone https://github.com/walbeck85/mimamori.git
-cd mimamori
+git clone https://github.com/walbeck85/AttentHive.git
+cd AttentHive
 npm install
 
 # 2. Copy env template and fill in values
@@ -339,8 +345,8 @@ Before you run AttentHive locally, you will need:
 
 ```bash
 # Clone the repository
-git clone <https://github.com/walbeck85/mimamori>
-cd mimamori
+git clone https://github.com/walbeck85/AttentHive.git
+cd AttentHive
 
 # Install dependencies
 npm install
@@ -361,7 +367,7 @@ brew install postgresql
 
 # Create the database
 psql -d postgres
-CREATE DATABASE mimamori_db;
+CREATE DATABASE attenthive_db;
 \q
 ```
 
@@ -509,17 +515,29 @@ npm run format
 
 # Lint code
 npm run lint
-
-# Run tests (if configured)
-npm test
 ```
 
-> Before opening a PR, it is a good idea to at least run:
+### Testing
 
-> ```bash
-> npm run lint
-> npm test
-> ```
+The project uses Jest with React Testing Library. Tests live in `src/__tests__/`.
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Full pre-PR check (lint + typecheck + test)
+npm run check
+```
+
+Coverage reports are generated in the `coverage/` directory. Open `coverage/lcov-report/index.html` to view the HTML report.
+
+> Before opening a PR, run `npm run check` to ensure lint, types, and tests all pass.
 
 ---
 
@@ -527,32 +545,45 @@ npm test
 
 ### Authentication Routes
 
-- `POST /api/auth/signup` – Create a new user account
-- `POST /api/auth/signin` – Login
-- `POST /api/auth/signout` – Logout
-- `GET /api/auth/session` – Check current session
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/auth/signup` | POST | Create a new user account |
+| `/api/auth/[...nextauth]` | GET/POST | NextAuth.js handlers (signin, signout, session, etc.) |
 
 ### Pet Routes
 
-- `GET /api/pets` – List user’s pets (owned + shared)
-- `POST /api/pets` – Create a new pet
-- `GET /api/pets/[id]` – Get pet details
-- `PATCH /api/pets/[id]` – Update pet (owner only)
-- `DELETE /api/pets/[id]` – Delete pet (owner only)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/pets` | GET | List user's pets (owned + shared) |
+| `/api/pets` | POST | Create a new pet |
+| `/api/pets/[id]` | GET | Get pet details |
+| `/api/pets/[id]` | PATCH | Update pet (owner only) |
+| `/api/pets/[id]` | POST | Alternative create/update |
+| `/api/pets/[id]/photo` | POST | Upload or update pet photo URL |
+| `/api/pets/[id]/care-logs` | GET | Get care logs for a specific pet |
 
 ### Care Log Routes
 
-- `GET /api/carelogs?recipientId=[id]` – Get activity logs for a pet
-- `POST /api/carelogs` – Log a new activity
-- `DELETE /api/carelogs/[id]` – Delete an activity log
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/care-logs` | GET | Get activity logs (filter by `recipientId` query param) |
+| `/api/care-logs` | POST | Log a new care activity |
 
-### Care Circle Routes (Stretch)
+### Care Circle Routes
 
-These routes are part of the planned **CareCircle** feature and may not be fully implemented yet:
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/care-circles/shared-pets` | GET | List pets shared with the current user |
+| `/api/care-circles/members` | GET | List members of a care circle |
+| `/api/care-circles/members` | DELETE | Remove a member from a care circle |
+| `/api/care-circles/invite` | POST | Invite a user to join a care circle |
 
-- `GET /api/carecircles?recipientId=[id]` – Get shared users for a pet
-- `POST /api/carecircles` – Share a pet with another user
-- `DELETE /api/carecircles/[id]` – Revoke access
+### User Routes
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/user/profile` | GET | Get current user's profile |
+| `/api/user/profile` | PATCH | Update current user's profile |
 
 ---
 
