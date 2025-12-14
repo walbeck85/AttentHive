@@ -80,6 +80,7 @@ export default async function PetDetailsPage({ params }: Params) {
     activityType: log.activityType as CareLog["activityType"],
     createdAt: log.createdAt.toISOString(),
     notes: log.notes,
+    metadata: (log as unknown as { metadata?: CareLog["metadata"] }).metadata ?? null,
     user: { name: log.user?.name ?? null },
   }));
 
