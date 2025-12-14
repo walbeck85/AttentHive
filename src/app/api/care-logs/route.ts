@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { ActivityType } from "@prisma/client";
+import { ActivityType, Prisma } from "@prisma/client";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+// Metadata type for WALK activities with timer and bathroom tracking
+type WalkMetadata = {
+  durationSeconds: number;
+  bathroomEvents: Array<{
+    type: "URINATION" | "DEFECATION";
+    occurredAt: string;
+    minutesIntoWalk: number;
+  }>;
+};
 
 // Central helper: resolve the Prisma user backing the current session.
 // - If no session: return { session: null, dbUser: null }.
@@ -124,6 +134,7 @@ export async function POST(request: NextRequest) {
       petId?: string;
       activityType?: string;
       notes?: string;
+      metadata?: WalkMetadata;
     };
 
     const recipientId = body.petId;
@@ -175,6 +186,7 @@ export async function POST(request: NextRequest) {
         userId: dbUser.id,
         activityType,
         notes: body.notes ?? null,
+        metadata: body.metadata ?? Prisma.JsonNull,
       },
     });
 

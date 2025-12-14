@@ -5,6 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import ConfirmActionModal from './ConfirmActionModal';
+import WalkTimerModal from './WalkTimerModal';
 import PetAvatar from './PetAvatar';
 import {
   PET_CHARACTERISTICS,
@@ -219,6 +220,7 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
   // Modal state: which action is waiting for confirmation?
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isWalkTimerOpen, setIsWalkTimerOpen] = useState(false);
 
   // We gate time-based formatting behind a "mounted" flag so the server and
   // client don't disagree about relative times and trigger hydration warnings.
@@ -259,6 +261,11 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
 
   // When a button is clicked, we *open the modal* instead of logging immediately.
   const handleRequestQuickAction = (action: ActionType) => {
+    if (action === 'WALK') {
+      // Walk gets the timer modal instead of simple confirmation
+      setIsWalkTimerOpen(true);
+      return;
+    }
     setPendingAction(action);
     setIsConfirmOpen(true);
   };
@@ -273,6 +280,47 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
   const handleCancelAction = () => {
     setIsConfirmOpen(false);
     setPendingAction(null);
+  };
+
+  // Walk timer handlers
+  const handleWalkComplete = async (metadata: {
+    durationSeconds: number;
+    bathroomEvents: Array<{
+      type: 'URINATION' | 'DEFECATION';
+      occurredAt: string;
+      minutesIntoWalk: number;
+    }>;
+  }) => {
+    try {
+      const res = await fetch('/api/care-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          petId: pet.id,
+          activityType: 'WALK',
+          metadata,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error('Failed to log walk', data);
+        throw new Error(data.error || 'Failed to log walk');
+      }
+
+      if (onQuickAction) {
+        onQuickAction(pet.id, pet.name, 'WALK');
+      }
+    } catch (err) {
+      console.error('Error while logging walk', err);
+    } finally {
+      setIsWalkTimerOpen(false);
+    }
+  };
+
+  const handleWalkCancel = () => {
+    setIsWalkTimerOpen(false);
   };
 
   const pendingLabel = pendingAction ? ACTION_LABELS[pendingAction] : '';
@@ -631,6 +679,14 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
         cancelLabel="Never mind"
         onConfirm={handleConfirmAction}
         onCancel={handleCancelAction}
+      />
+
+      <WalkTimerModal
+        isOpen={isWalkTimerOpen}
+        petId={pet.id}
+        petName={pet.name}
+        onComplete={handleWalkComplete}
+        onCancel={handleWalkCancel}
       />
     </>
   );

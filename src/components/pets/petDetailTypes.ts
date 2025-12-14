@@ -1,6 +1,6 @@
 // src/components/pets/petDetailTypes.ts
 import type { PetCharacteristicId } from '@/lib/petCharacteristics';
-import type { ActionType } from '@/components/pets/petActivityUtils';
+import type { ActionType, WalkMetadata } from '@/components/pets/petActivityUtils';
 
 // Shared view models for the pet detail screen.
 // Keeping these types here lets the server loader and UI evolve together
@@ -19,6 +19,7 @@ export type CareLog = {
   activityType: ActionType;
   createdAt: string;
   notes?: string | null;
+  metadata?: WalkMetadata | null;
   user: { name: string | null };
 };
 
