@@ -5,6 +5,8 @@ import { Box, Typography } from '@mui/material';
 import {
   formatDateTime,
   getActivityLabel,
+  formatWalkDetails,
+  type WalkMetadata,
 } from '@/components/pets/petActivityUtils';
 import type { CareLog } from '@/components/pets/PetDetailPage';
 
@@ -70,7 +72,9 @@ export default function PetActivityList({ careLogs }: PetActivityListProps) {
                     color: (theme) => theme.palette.text.primary,
                   }}
                 >
-                  {getActivityLabel(log.activityType)}
+                  {log.activityType === 'WALK'
+                    ? formatWalkDetails(log.metadata as WalkMetadata | null)
+                    : getActivityLabel(log.activityType)}
                 </Typography>
                 <Typography
                   variant="body2"

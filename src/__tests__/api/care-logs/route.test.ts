@@ -1,5 +1,6 @@
 import { POST, GET } from '../../../app/api/care-logs/route';
 import { getServerSession } from 'next-auth';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { createMockUser, createMockRecipient, createMockCareLog } from '../../utils/test-factories';
 
@@ -98,6 +99,7 @@ describe('POST /api/care-logs', () => {
           userId: 'user-1',
           activityType: 'FEED',
           notes: 'Morning feeding',
+          metadata: Prisma.JsonNull,
         },
       });
     });
@@ -133,6 +135,7 @@ describe('POST /api/care-logs', () => {
           userId: 'caregiver-1',
           activityType: 'WALK',
           notes: null,
+          metadata: Prisma.JsonNull,
         },
       });
     });
@@ -169,6 +172,88 @@ describe('POST /api/care-logs', () => {
           userId: 'user-1',
           activityType: 'MEDICATE',
           notes: null,
+          metadata: Prisma.JsonNull,
+        },
+      });
+    });
+
+    it('creates walk care log with metadata', async () => {
+      const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
+      const mockPet = createMockRecipient({ id: 'pet-1', ownerId: 'user-1' });
+      const walkMetadata = {
+        durationSeconds: 900,
+        bathroomEvents: [
+          { type: 'URINATION', occurredAt: '2024-01-15T10:05:00Z', minutesIntoWalk: 5 },
+          { type: 'DEFECATION', occurredAt: '2024-01-15T10:10:00Z', minutesIntoWalk: 10 },
+        ],
+      };
+      const mockCareLog = createMockCareLog({
+        id: 'log-4',
+        recipientId: 'pet-1',
+        userId: 'user-1',
+        activityType: 'WALK',
+        metadata: walkMetadata,
+      });
+
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'user@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue(mockPet);
+      (prisma.careLog.create as jest.Mock).mockResolvedValue(mockCareLog);
+
+      const req = createRequest({
+        petId: 'pet-1',
+        activityType: 'WALK',
+        metadata: walkMetadata,
+      });
+
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+      expect(prisma.careLog.create).toHaveBeenCalledWith({
+        data: {
+          recipientId: 'pet-1',
+          userId: 'user-1',
+          activityType: 'WALK',
+          notes: null,
+          metadata: walkMetadata,
+        },
+      });
+    });
+
+    it('creates walk care log without metadata (backward compatible)', async () => {
+      const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
+      const mockPet = createMockRecipient({ id: 'pet-1', ownerId: 'user-1' });
+      const mockCareLog = createMockCareLog({
+        id: 'log-5',
+        recipientId: 'pet-1',
+        userId: 'user-1',
+        activityType: 'WALK',
+      });
+
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'user@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue(mockPet);
+      (prisma.careLog.create as jest.Mock).mockResolvedValue(mockCareLog);
+
+      const req = createRequest({
+        petId: 'pet-1',
+        activityType: 'WALK',
+      });
+
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+      expect(prisma.careLog.create).toHaveBeenCalledWith({
+        data: {
+          recipientId: 'pet-1',
+          userId: 'user-1',
+          activityType: 'WALK',
+          notes: null,
+          metadata: Prisma.JsonNull,
         },
       });
     });

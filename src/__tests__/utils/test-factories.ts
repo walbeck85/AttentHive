@@ -61,6 +61,7 @@ export function createMockCareLog(overrides?: Partial<CareLog>): CareLog {
     userId: generateId(),
     activityType: 'FEED' as ActivityType,
     notes: null,
+    metadata: null,
     createdAt: now,
     ...overrides,
   };
