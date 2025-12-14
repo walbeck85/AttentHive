@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import PetAvatar from '@/components/pets/PetAvatar';
 import { Box, Button, Container, Paper, Stack, Typography } from '@mui/material';
+import { formatWalkDetails, type WalkMetadata } from '@/components/pets/petActivityUtils';
 
 // Types --------------------------------------------------------
 
@@ -16,6 +17,7 @@ type CareLog = {
   id: string;
   activityType: ActivityType;
   notes: string | null;
+  metadata?: WalkMetadata | null;
   createdAt: string;
   user: {
     id: string;
@@ -338,7 +340,9 @@ export default function ActivityLogPage() {
                         color: 'text.primary',
                       }}
                     >
-                      {ACTIVITY_LABELS[log.activityType]}
+                      {log.activityType === 'WALK'
+                        ? formatWalkDetails(log.metadata)
+                        : ACTIVITY_LABELS[log.activityType]}
                     </Typography>
                     <Typography
                       variant="body2"
