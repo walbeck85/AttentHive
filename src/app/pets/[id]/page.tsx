@@ -5,7 +5,7 @@ import { notFound, redirect } from "next/navigation";
 
 import PetDetailPage from "@/components/pets/PetDetailPage";
 import { authOptions } from "@/lib/auth";
-import { getCareCircleMembersForPet } from "@/lib/carecircle";
+import { getHiveMembersForPet } from "@/lib/hive";
 import { prisma } from "@/lib/prisma";
 import type {
   CareCircleMember,
@@ -114,7 +114,7 @@ export default async function PetDetailsPage({ params }: Params) {
     specialNotes: dbPet.specialNotes ?? undefined,
   };
 
-  const careCircleMemberships = await getCareCircleMembersForPet(petId);
+  const careCircleMemberships = await getHiveMembersForPet(petId);
 
   // Determine whether the current user is allowed to see this pet.
   // Owners always have access. Non-owners must appear in the Care Circle

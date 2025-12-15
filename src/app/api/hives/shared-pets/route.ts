@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { getSharedPetsForUser } from '@/lib/carecircle';
+import { getSharedPetsForUser } from '@/lib/hive';
 
-// GET /api/care-circles/shared-pets
-// Returns all pets where the current user has CareCircle access.
+// GET /api/hives/shared-pets
+// Returns all pets where the current user has Hive access.
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -36,7 +36,7 @@ export async function GET() {
     // - attach a role marker so the frontend knows the access level
     const sharedPets = memberships.map((membership) => ({
       ...membership.recipient,
-      _careCircleRole: membership.role,
+      _hiveRole: membership.role,
     }));
 
     return NextResponse.json(
@@ -47,7 +47,7 @@ export async function GET() {
       { status: 200 },
     );
   } catch (error) {
-    console.error('❌ Error in GET /api/care-circles/shared-pets:', error);
+    console.error('❌ Error in GET /api/hives/shared-pets:', error);
 
     return NextResponse.json(
       { error: 'Failed to fetch shared pets' },

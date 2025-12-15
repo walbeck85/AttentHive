@@ -5,7 +5,7 @@ import type { Recipient } from "@prisma/client";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getSharedPetsForUser } from "@/lib/carecircle";
+import { getSharedPetsForUser } from "@/lib/hive";
 
 // Keeping this type local to the account surface so we don't leak Prisma's
 // entire User shape into the UI layer. This gives us a stable contract even

@@ -1,5 +1,5 @@
-// src/lib/carecircle.ts
-// Domain logic for CareCircle (shared pet access)
+// src/lib/hive.ts
+// Domain logic for Hive (shared pet access)
 
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -54,7 +54,7 @@ export async function inviteCaregiverToPet(recipientId: string, email: string) {
   }
 
   // Upsert so this is idempotent: re-inviting someone just updates their role.
-  const membership = await prisma.careCircle.upsert({
+  const membership = await prisma.hive.upsert({
     where: {
       recipientId_userId: {
         recipientId,
@@ -78,25 +78,25 @@ export async function inviteCaregiverToPet(recipientId: string, email: string) {
 /**
  * Placeholder for a real invitation flow.
  *
- * Your current CareCircle schema does not track "pending" vs "accepted" vs "declined".
+ * Your current Hive schema does not track "pending" vs "accepted" vs "declined".
  * Once you add a status field, this function can be wired up properly.
  */
 /**
- * TODO(WA): Wire this up after adding a CareCircleStatus enum to the Prisma schema.
+ * TODO(WA): Wire this up after adding a HiveStatus enum to the Prisma schema.
  * This will handle accept/decline of invitations instead of granting access immediately.
  */
 export async function respondToInvitation(
-  careCircleId: string,
+  hiveId: string,
   action: 'accept' | 'decline',
 ) {
   // Using the parameters here so ESLint doesn't complain about unused vars.
   console.warn('respondToInvitation called before implementation', {
-    careCircleId,
+    hiveId,
     action,
   });
 
   throw new Error(
-    'respondToInvitation is not implemented yet – see REMAINING_FEATURES.md under "CareCircle invitations".',
+    'respondToInvitation is not implemented yet – see REMAINING_FEATURES.md under "Hive invitations".',
   );
 }
 
@@ -118,8 +118,8 @@ export async function removeCaregiverFromPet(
     throw new Error('Not authorized to remove caregivers for this pet');
   }
 
-  // Hard delete the CareCircle entry for this user + pet
-  return prisma.careCircle.deleteMany({
+  // Hard delete the Hive entry for this user + pet
+  return prisma.hive.deleteMany({
     where: {
       recipientId,
       userId: caregiverUserId,
@@ -130,14 +130,14 @@ export async function removeCaregiverFromPet(
 }
 
 /**
- * Get all CareCircle members for a given pet (recipient).
- * This returns CareCircle rows + the associated User records.
+ * Get all Hive members for a given pet (recipient).
+ * This returns Hive rows + the associated User records.
  *
  * NOTE: This does NOT include the owner by default; the owner lives on Recipient.ownerId.
- * On the UI side you can fetch the Recipient and combine owner + care circle members.
+ * On the UI side you can fetch the Recipient and combine owner + hive members.
  */
-export async function getCareCircleMembersForPet(recipientId: string) {
-  const memberships = await prisma.careCircle.findMany({
+export async function getHiveMembersForPet(recipientId: string) {
+  const memberships = await prisma.hive.findMany({
     where: { recipientId },
     include: { user: true },
   });
@@ -146,18 +146,18 @@ export async function getCareCircleMembersForPet(recipientId: string) {
 }
 
 /**
- * Get all pets that are shared with a given user (i.e., where they are in the CareCircle).
+ * Get all pets that are shared with a given user (i.e., where they are in the Hive).
  *
  * This is what you'll use for:
  * - Account → "Shared Pets"
  * - Dashboard → mixing owned + shared pets
  */
 export async function getSharedPetsForUser(userId: string) {
-  const memberships = await prisma.careCircle.findMany({
+  const memberships = await prisma.hive.findMany({
     where: {
       userId,
       // We treat CAREGIVER and VIEWER as "shared" access.
-      // If you later add OWNER rows to CareCircle, you can decide whether to include/exclude them here.
+      // If you later add OWNER rows to Hive, you can decide whether to include/exclude them here.
       role: {
         in: ['CAREGIVER', 'VIEWER'],
       },

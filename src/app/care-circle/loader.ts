@@ -81,7 +81,7 @@ export async function loadCareCirclePageData(): Promise<CareCirclePageData | nul
 
   // 2) People caring for your pets (you are the owner).
   // This mirrors the original grouping logic so behavior stays identical.
-  const caregiverMemberships = await prisma.careCircle.findMany({
+  const caregiverMemberships = await prisma.hive.findMany({
     where: {
       recipient: { ownerId: dbUser.id },
       role: { in: ["CAREGIVER", "VIEWER"] },
@@ -126,7 +126,7 @@ export async function loadCareCirclePageData(): Promise<CareCirclePageData | nul
   // 3) Pets you care for (someone else is the owner).
   // We explicitly exclude pets you own so they only appear in the
   // "Pets you own" section, even if you also have a caregiver record.
-  const petsYouCareForMemberships = await prisma.careCircle.findMany({
+  const petsYouCareForMemberships = await prisma.hive.findMany({
     where: {
       userId: dbUser.id,
       role: { in: ["CAREGIVER", "VIEWER"] },

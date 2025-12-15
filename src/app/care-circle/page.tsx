@@ -61,7 +61,7 @@ export async function removeCaregiverMembership(formData: FormData) {
   }
 
   try {
-    const membership = await prisma.careCircle.findUnique({
+    const membership = await prisma.hive.findUnique({
       where: { id: membershipId },
       include: {
         recipient: {
@@ -86,7 +86,7 @@ export async function removeCaregiverMembership(formData: FormData) {
       return;
     }
 
-    await prisma.careCircle.delete({
+    await prisma.hive.delete({
       where: { id: membershipId },
     });
 
