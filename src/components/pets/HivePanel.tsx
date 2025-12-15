@@ -15,17 +15,17 @@ import {
   Typography,
 } from "@mui/material";
 
-type CareCircleMember = {
+type HiveMember = {
   id: string;
   userName: string | null;
   userEmail: string;
   role: "OWNER" | "CAREGIVER" | "VIEWER";
 };
 
-type CareCircleMembersApiResponse = {
+type HiveMembersApiResponse = {
   members?: {
     id: string;
-    role: CareCircleMember["role"];
+    role: HiveMember["role"];
     user?: {
       name: string | null;
       email: string;
@@ -33,28 +33,28 @@ type CareCircleMembersApiResponse = {
   }[];
 };
 
-type CareCirclePanelProps = {
+type HivePanelProps = {
   recipientId: string;
   isOwner: boolean;
-  initialMembers: CareCircleMember[];
+  initialMembers: HiveMember[];
 };
 
 /**
- * CareCirclePanel
+ * HivePanel
  *
- * Server passes down the current CareCircle members; this component:
+ * Server passes down the current Hive members; this component:
  * - Renders a "Shared with" list
  * - Shows an invite form if the viewer is the owner
- * - Handles invites via /api/care-circles/invite
- * - Refreshes the member list from /api/care-circles/members after a successful invite
- * - Allows owners to remove existing caregivers/viewers via /api/care-circles/members (DELETE)
+ * - Handles invites via /api/hives/invite
+ * - Refreshes the member list from /api/hives/members after a successful invite
+ * - Allows owners to remove existing caregivers/viewers via /api/hives/members (DELETE)
  */
-export default function CareCirclePanel({
+export default function HivePanel({
   recipientId,
   isOwner,
   initialMembers,
-}: CareCirclePanelProps) {
-  const [members, setMembers] = useState<CareCircleMember[]>(initialMembers);
+}: HivePanelProps) {
+  const [members, setMembers] = useState<HiveMember[]>(initialMembers);
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -75,7 +75,7 @@ export default function CareCirclePanel({
     setSuccessMessage(null);
 
     try {
-      const inviteResponse = await fetch("/api/care-circles/invite", {
+      const inviteResponse = await fetch("/api/hives/invite", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -95,7 +95,7 @@ export default function CareCirclePanel({
       }
 
       const membersResponse = await fetch(
-        `/api/care-circles/members?recipientId=${encodeURIComponent(
+        `/api/hives/members?recipientId=${encodeURIComponent(
           recipientId,
         )}`,
       );
@@ -105,9 +105,9 @@ export default function CareCirclePanel({
       }
 
       const data =
-        (await membersResponse.json()) as CareCircleMembersApiResponse;
+        (await membersResponse.json()) as HiveMembersApiResponse;
 
-      const refreshedMembers: CareCircleMember[] = (data.members ?? []).map(
+      const refreshedMembers: HiveMember[] = (data.members ?? []).map(
         (membership) => ({
           id: membership.id,
           role: membership.role,
@@ -137,7 +137,7 @@ export default function CareCirclePanel({
     setRemovingId(memberId);
 
     try {
-      const response = await fetch("/api/care-circles/members", {
+      const response = await fetch("/api/hives/members", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -151,7 +151,7 @@ export default function CareCirclePanel({
       if (!response.ok) {
         const body = await response.json().catch(() => null);
         const message =
-          body?.error ?? "Failed to remove caregiver from care circle.";
+          body?.error ?? "Failed to remove caregiver from hive.";
         throw new Error(message);
       }
 

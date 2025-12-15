@@ -27,7 +27,7 @@ export function RemoveCaregiverButton({
   async function handleClick() {
     // Simple confirmation to prevent accidental caregiver removal
     const confirmed = window.confirm(
-      `Remove this person from ${petName}'s Care Circle? They will lose access immediately.`
+      `Remove this person from ${petName}'s Hive? They will lose access immediately.`
     );
     if (!confirmed) return;
 
@@ -36,7 +36,7 @@ export function RemoveCaregiverButton({
 
     try {
       const res = await fetch(
-        `/api/care-circles/members?membershipId=${encodeURIComponent(
+        `/api/hives/members?membershipId=${encodeURIComponent(
           membershipId
         )}`,
         { method: "DELETE" }

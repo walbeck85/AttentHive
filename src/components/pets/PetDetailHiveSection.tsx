@@ -1,4 +1,4 @@
-// src/components/pets/PetDetailCareCircleSection.tsx
+// src/components/pets/PetDetailHiveSection.tsx
 import React from 'react';
 import {
   Box,
@@ -6,24 +6,24 @@ import {
   CardContent,
   CardHeader,
 } from '@mui/material';
-import CareCirclePanel from '@/components/pets/CareCirclePanel';
-import type { CareCircleMember } from '@/components/pets/petDetailTypes';
+import HivePanel from '@/components/pets/HivePanel';
+import type { HiveMember } from '@/components/pets/petDetailTypes';
 
-type PetDetailCareCircleSectionProps = {
+type PetDetailHiveSectionProps = {
   recipientId: string;
   isOwner: boolean;
-  initialMembers: CareCircleMember[];
+  initialMembers: HiveMember[];
 };
 
-// This section wraps the CareCirclePanel so the main detail page stays focused
+// This section wraps the HivePanel so the main detail page stays focused
 // on wiring data and permissions instead of repeating layout markup.
-export default function PetDetailCareCircleSection({
+export default function PetDetailHiveSection({
   recipientId,
   isOwner,
   initialMembers,
-}: PetDetailCareCircleSectionProps) {
+}: PetDetailHiveSectionProps) {
   return (
-    <Box component="section" id="care-circle">
+    <Box component="section" id="hive">
       <Card
         elevation={0}
         sx={{
@@ -43,7 +43,7 @@ export default function PetDetailCareCircleSection({
           }}
         />
         <CardContent sx={{ pt: 1, px: 0, pb: 0 }}>
-          <CareCirclePanel
+          <HivePanel
             recipientId={recipientId}
             isOwner={isOwner}
             initialMembers={initialMembers}

@@ -5,12 +5,15 @@ import type { ActionType, WalkMetadata } from '@/components/pets/petActivityUtil
 // Shared view models for the pet detail screen.
 // Keeping these types here lets the server loader and UI evolve together
 // without having to chase Prisma changes in multiple places.
-export type CareCircleMember = {
+export type HiveMember = {
   id: string;
   userName: string | null;
   userEmail: string;
   role: 'OWNER' | 'CAREGIVER' | 'VIEWER';
 };
+
+// Backwards compatibility alias during rebrand transition
+export type CareCircleMember = HiveMember;
 
 // View-friendly version of a care log used across the detail screen.
 // I am normalizing timestamps and enum types here so the UI can stay simple.
