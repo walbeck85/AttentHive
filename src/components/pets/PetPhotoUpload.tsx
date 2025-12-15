@@ -5,6 +5,9 @@ import React, { useRef, useState } from 'react';
 import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
+// Client-side limit matches the server to give users instant feedback.
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+
 // For now we keep this component very self-contained so any issues with
 // Supabase or the API route are obvious in one place.
 type Props = {
@@ -46,6 +49,16 @@ export default function PetPhotoUpload({
       setError('Please choose an image file (JPEG, PNG, etc.).');
       setStatus('No photo');
       // Clear the input so they can try again.
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    // Reject oversized files immediately so users don't wait for an upload to fail.
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setError('File is too large. Maximum size is 5 MB.');
+      setStatus('No photo');
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
