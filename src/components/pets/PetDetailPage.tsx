@@ -39,7 +39,7 @@ export type EditFieldErrors = Partial<Record<keyof EditFormState, string>>;
 // This keeps the UI focused on rendering instead of reshaping server data.
 type PetDetailPageProps = {
   pet: PetData;
-  careCircleMembers: HiveMember[];
+  hiveMembers: HiveMember[];
   // This flags whether the current user owns the pet so we can gate owner-only actions.
   isOwner?: boolean;
 };
@@ -47,7 +47,7 @@ type PetDetailPageProps = {
 // page --------------------------------------------------------
 export default function PetDetailPage({
   pet: petProp,
-  careCircleMembers: careCircleMembersProp,
+  hiveMembers: hiveMembersProp,
   isOwner: isOwnerProp = false,
 }: PetDetailPageProps) {
   const router = useRouter();
@@ -57,8 +57,8 @@ export default function PetDetailPage({
   const [pet, setPet] = useState<PetData | null>(petProp ?? null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [careCircleMembers, setCareCircleMembers] = useState<HiveMember[]>(
-    Array.isArray(careCircleMembersProp) ? careCircleMembersProp : [],
+  const [hiveMembers, setHiveMembers] = useState<HiveMember[]>(
+    Array.isArray(hiveMembersProp) ? hiveMembersProp : [],
   );
   const [isOwner, setIsOwner] = useState<boolean>(Boolean(isOwnerProp));
 
@@ -70,10 +70,10 @@ export default function PetDetailPage({
   }, [petProp]);
 
   useEffect(() => {
-    setCareCircleMembers(
-      Array.isArray(careCircleMembersProp) ? careCircleMembersProp : [],
+    setHiveMembers(
+      Array.isArray(hiveMembersProp) ? hiveMembersProp : [],
     );
-  }, [careCircleMembersProp]);
+  }, [hiveMembersProp]);
 
   useEffect(() => {
     setIsOwner(Boolean(isOwnerProp));
@@ -166,7 +166,7 @@ export default function PetDetailPage({
       <PetDetailHiveSection
         recipientId={pet.id}
         isOwner={isOwner}
-        initialMembers={careCircleMembers}
+        initialMembers={hiveMembers}
       />
     </PetDetailShell>
   );

@@ -115,7 +115,7 @@ AttentHive/
 │   │   ├── 20251120115220_add_gender_to_pets
 │   │   │   └── migration.sql      # Adds gender to Pet model
 │   │   ├── 20251129194214_add_user_contact_fields
-│   │   │   └── migration.sql      # Adds user contact fields for CareCircle invites
+│   │   │   └── migration.sql      # Adds user contact fields for Hive invites
 │   │   ├── 20251202204455_add_image_url_to_recipient
 │   │   │   └── migration.sql      # Adds imageUrl for recipient/pet-like entities
 │   │   ├── 20251204221553_add_pet_characteristics

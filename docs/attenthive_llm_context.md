@@ -14,7 +14,7 @@ Core outcomes:
 
 **Brand positioning:**
 - Name: **AttentHive**
-- CareCircle → **Hive**
+- Formerly CareCircle → **Hive**
 - Tagline: **“Your Hive for the Ones You Care For.”**
 
 ---
@@ -37,7 +37,7 @@ Conventions:
 ### Entities
 - **User**
 - **Recipient** (pets → generalizable)
-- **CareCircle/Hive** (role-based sharing)
+- **Hive** (role-based sharing, formerly CareCircle)
 - **CareLog** (activity events)
 
 ### ActivityType

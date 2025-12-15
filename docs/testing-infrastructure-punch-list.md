@@ -43,9 +43,9 @@ Setting up proper Prisma mocking and coverage reporting to unblock API route tes
 
 **Files with 0% coverage (API routes):**
 - `src/app/api/auth/signup/route.ts`
-- `src/app/api/care-circles/invite/route.ts`
-- `src/app/api/care-circles/members/route.ts`
-- `src/app/api/care-circles/shared-pets/route.ts`
+- `src/app/api/hives/invite/route.ts`
+- `src/app/api/hives/members/route.ts`
+- `src/app/api/hives/shared-pets/route.ts`
 - `src/app/api/care-logs/route.ts`
 - `src/app/api/pets/route.ts`
 - `src/app/api/pets/[id]/care-logs/route.ts`

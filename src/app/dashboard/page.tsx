@@ -59,7 +59,7 @@ export default async function DashboardPage() {
     },
   });
 
-  // Fetch pets shared with this user via CareCircle
+  // Fetch pets shared with this user via Hive
   const sharedMemberships = await getSharedPetsForUser(dbUser.id);
 
   const ownedPetsWithFlag = ownedPets.map((pet) => ({
@@ -78,7 +78,7 @@ export default async function DashboardPage() {
       sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}
     >
       <Stack spacing={4}>
-        {/* Hero to mirror the Care Circle treatment */}
+        {/* Hero to mirror the Hive treatment */}
         <Paper
           elevation={0}
           sx={{

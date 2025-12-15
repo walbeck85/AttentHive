@@ -8,7 +8,7 @@ import { authOptions } from "@/lib/auth";
 import { getHiveMembersForPet } from "@/lib/hive";
 import { prisma } from "@/lib/prisma";
 import type {
-  CareCircleMember,
+  HiveMember,
   CareLog,
   PetData,
 } from "@/components/pets/petDetailTypes"; // Route shapes Prisma data into these view models so the client can stay dumb and predictable.
@@ -114,24 +114,24 @@ export default async function PetDetailsPage({ params }: Params) {
     specialNotes: dbPet.specialNotes ?? undefined,
   };
 
-  const careCircleMemberships = await getHiveMembersForPet(petId);
+  const hiveMemberships = await getHiveMembersForPet(petId);
 
   // Determine whether the current user is allowed to see this pet.
-  // Owners always have access. Non-owners must appear in the Care Circle
+  // Owners always have access. Non-owners must appear in the Hive
   // membership list (e.g. as CAREGIVER or VIEWER) for this specific pet.
   const isOwner = dbPet.ownerId === dbUser.id;
 
-  const hasCareCircleAccess =
+  const hasHiveAccess =
     isOwner ||
-    careCircleMemberships.some((membership) => membership.userId === dbUser.id);
+    hiveMemberships.some((membership) => membership.userId === dbUser.id);
 
-  if (!hasCareCircleAccess) {
-    // If the user is neither the owner nor a member of the pet's Care Circle,
+  if (!hasHiveAccess) {
+    // If the user is neither the owner nor a member of the pet's Hive,
     // we fail with a 404 so we do not leak the existence of the pet ID.
     notFound();
   }
 
-  const careCircleMembers: CareCircleMember[] = careCircleMemberships.map(
+  const hiveMembers: HiveMember[] = hiveMemberships.map(
     (membership) => ({
       id: membership.id,
       userName: membership.user?.name ?? null,
@@ -143,7 +143,7 @@ export default async function PetDetailsPage({ params }: Params) {
   return (
     <PetDetailPage
       pet={petForView}
-      careCircleMembers={careCircleMembers}
+      hiveMembers={hiveMembers}
       isOwner={isOwner}
     />
   );
