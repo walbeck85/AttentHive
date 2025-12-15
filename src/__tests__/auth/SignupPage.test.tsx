@@ -69,10 +69,10 @@ describe("SignupPage callbackUrl handling", () => {
   it("redirects already-authenticated users to a safe callbackUrl", async () => {
     mockSession("authenticated");
 
-    render(<SignupPage searchParams={{ callbackUrl: "/care-circle" }} />);
+    render(<SignupPage searchParams={{ callbackUrl: "/hive" }} />);
 
     await waitFor(() => {
-      expect(replaceMock).toHaveBeenCalledWith("/care-circle");
+      expect(replaceMock).toHaveBeenCalledWith("/hive");
     });
   });
 

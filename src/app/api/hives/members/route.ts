@@ -1,10 +1,10 @@
-// src/app/api/care-circles/members/route.ts
+// src/app/api/hives/members/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getCareCircleMembersForPet } from "@/lib/carecircle";
+import { getHiveMembersForPet } from "@/lib/hive";
 
 export async function GET(request: NextRequest) {
   // Ensure the caller is authenticated
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   if (!session || !session.user?.email) {
     return NextResponse.json(
-      { error: "You must be logged in to view care circle members" },
+      { error: "You must be logged in to view hive members" },
       { status: 401 }
     );
   }
@@ -47,8 +47,8 @@ export async function GET(request: NextRequest) {
 
   const isOwner = recipient?.ownerId === dbUser.id;
 
-  // Fetch CareCircle members for this recipient
-  const members = await getCareCircleMembersForPet(recipientId);
+  // Fetch Hive members for this recipient
+  const members = await getHiveMembersForPet(recipientId);
 
   return NextResponse.json(
     {
@@ -66,7 +66,7 @@ export async function DELETE(request: NextRequest) {
 
   if (!session || !session.user?.email) {
     return NextResponse.json(
-      { error: "You must be logged in to modify care circle members" },
+      { error: "You must be logged in to modify hive members" },
       { status: 401 }
     );
   }
@@ -103,14 +103,14 @@ export async function DELETE(request: NextRequest) {
 
   if (!membershipId) {
     return NextResponse.json(
-      { error: "membershipId is required to remove a care circle member" },
+      { error: "membershipId is required to remove a hive member" },
       { status: 400 }
     );
   }
 
   try {
-    // Look up the care circle membership and its recipient to verify ownership.
-    const membership = await prisma.careCircle.findUnique({
+    // Look up the hive membership and its recipient to verify ownership.
+    const membership = await prisma.hive.findUnique({
       where: { id: membershipId },
       include: {
         recipient: {
@@ -123,7 +123,7 @@ export async function DELETE(request: NextRequest) {
 
     if (!membership) {
       return NextResponse.json(
-        { error: "Care circle membership not found" },
+        { error: "Hive membership not found" },
         { status: 404 }
       );
     }
@@ -140,7 +140,7 @@ export async function DELETE(request: NextRequest) {
     // Only the owner of the recipient can remove caregivers/viewers.
     if (membership.recipient.ownerId !== dbUser.id) {
       return NextResponse.json(
-        { error: "You do not have permission to modify this care circle" },
+        { error: "You do not have permission to modify this hive" },
         { status: 403 }
       );
     }
@@ -148,12 +148,12 @@ export async function DELETE(request: NextRequest) {
     // Extra guardrail: do not allow removing the OWNER record.
     if (membership.role === "OWNER") {
       return NextResponse.json(
-        { error: "Owners cannot be removed from their own care circle" },
+        { error: "Owners cannot be removed from their own hive" },
         { status: 400 }
       );
     }
 
-    await prisma.careCircle.delete({
+    await prisma.hive.delete({
       where: { id: membershipId },
     });
 
@@ -164,9 +164,9 @@ export async function DELETE(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error removing care circle member:", error);
+    console.error("Error removing hive member:", error);
     return NextResponse.json(
-      { error: "Failed to remove care circle member" },
+      { error: "Failed to remove hive member" },
       { status: 500 }
     );
   }

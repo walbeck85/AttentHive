@@ -8,14 +8,14 @@ import { prisma } from '../src/lib/prisma';
 
 async function main() {
   // Simple sanity check to see if Prisma can talk to the DB at all
-  const [userCount, recipientCount, circleCount, logCount] = await Promise.all([
+  const [userCount, recipientCount, hiveCount, logCount] = await Promise.all([
     prisma.user.count(),
     prisma.recipient.count(),
-    prisma.careCircle.count(),
+    prisma.hive.count(),
     prisma.careLog.count(),
   ]);
 
-  console.log({ userCount, recipientCount, circleCount, logCount });
+  console.log({ userCount, recipientCount, hiveCount, logCount });
 }
 
 main()

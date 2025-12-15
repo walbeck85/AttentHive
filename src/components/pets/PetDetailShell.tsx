@@ -9,8 +9,8 @@ type PetDetailShellProps = {
 // This shell owns the outer layout for the pet detail page so the main component
 // can focus on composing sections instead of repeating Box/Container/Stack markup.
 export default function PetDetailShell({ children }: PetDetailShellProps) {
-  const [header, profile, activity, careCircle] = React.Children.toArray(children);
-  const sections = [header, profile, activity, careCircle].filter(Boolean);
+  const [header, profile, activity, hive] = React.Children.toArray(children);
+  const sections = [header, profile, activity, hive].filter(Boolean);
 
   return (
     <Box

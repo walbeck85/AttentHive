@@ -2,9 +2,9 @@ import type {
   User,
   Recipient,
   CareLog,
-  CareCircle,
+  Hive,
   ActivityType,
-  CircleRole,
+  HiveRole,
   Gender,
   PetType,
 } from '@prisma/client';
@@ -67,13 +67,13 @@ export function createMockCareLog(overrides?: Partial<CareLog>): CareLog {
   };
 }
 
-export function createMockCareCircle(overrides?: Partial<CareCircle>): CareCircle {
+export function createMockHive(overrides?: Partial<Hive>): Hive {
   const now = new Date();
   return {
     id: generateId(),
     recipientId: generateId(),
     userId: generateId(),
-    role: 'CAREGIVER' as CircleRole,
+    role: 'CAREGIVER' as HiveRole,
     grantedAt: now,
     ...overrides,
   };

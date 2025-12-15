@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { inviteCaregiverToPet } from '@/lib/carecircle';
+import { inviteCaregiverToPet } from '@/lib/hive';
 
 // Keep the payload tight so this endpoint doesn't drift over time
 const inviteSchema = z.object({
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     );
   } catch (error) {
-    console.error('❌ Error in POST /api/care-circles/invite:', error);
+    console.error('❌ Error in POST /api/hives/invite:', error);
 
     return NextResponse.json(
       {

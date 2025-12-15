@@ -1,4 +1,4 @@
-// src/app/care-circle/loader.ts
+// src/app/hive/loader.ts
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
@@ -30,7 +30,7 @@ export type OwnedPetSummary = {
   name: string;
 };
 
-export type CareCirclePageData = {
+export type HivePageData = {
   user: {
     name: string | null;
     email: string;
@@ -40,10 +40,10 @@ export type CareCirclePageData = {
   petsYouCareFor: PetYouCareFor[];
 };
 
-// Central loader for the Care Circle page.
+// Central loader for the Hive page.
 // I want this as the single source of truth so the page and any future callers
 // are all reading from the same data shape instead of copy-pasting queries.
-export async function loadCareCirclePageData(): Promise<CareCirclePageData | null> {
+export async function loadHivePageData(): Promise<HivePageData | null> {
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user?.email) {
@@ -81,7 +81,7 @@ export async function loadCareCirclePageData(): Promise<CareCirclePageData | nul
 
   // 2) People caring for your pets (you are the owner).
   // This mirrors the original grouping logic so behavior stays identical.
-  const caregiverMemberships = await prisma.careCircle.findMany({
+  const caregiverMemberships = await prisma.hive.findMany({
     where: {
       recipient: { ownerId: dbUser.id },
       role: { in: ["CAREGIVER", "VIEWER"] },
@@ -126,7 +126,7 @@ export async function loadCareCirclePageData(): Promise<CareCirclePageData | nul
   // 3) Pets you care for (someone else is the owner).
   // We explicitly exclude pets you own so they only appear in the
   // "Pets you own" section, even if you also have a caregiver record.
-  const petsYouCareForMemberships = await prisma.careCircle.findMany({
+  const petsYouCareForMemberships = await prisma.hive.findMany({
     where: {
       userId: dbUser.id,
       role: { in: ["CAREGIVER", "VIEWER"] },

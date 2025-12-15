@@ -9,14 +9,14 @@ datasource db {
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model CareCircle {
-  id          String     @id @default(cuid())
+model Hive {
+  id          String    @id @default(cuid())
   recipientId String
   userId      String
-  role        CircleRole @default(VIEWER)
-  grantedAt   DateTime   @default(now())
-  recipient   Recipient  @relation(fields: [recipientId], references: [id], onDelete: Cascade)
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        HiveRole  @default(VIEWER)
+  grantedAt   DateTime  @default(now())
+  recipient   Recipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([recipientId, userId])
   @@index([recipientId])
@@ -42,7 +42,7 @@ model CareLog {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Recipient {
-  id              String       @id @default(cuid())
+  id              String    @id @default(cuid())
   name            String
   type            PetType
   breed           String
@@ -53,32 +53,32 @@ model Recipient {
   specialNotes    String?
   // Behavior / needs flags surfaced as badges on the recipient card.
   // String[] keeps this flexible so we can evolve the canonical list without further schema changes.
-  characteristics String[]     @default([])
+  characteristics String[]  @default([])
   ownerId         String
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   gender          Gender
   imageUrl        String? // Keeping this nullable so existing recipients don't break while we roll out photo uploads gradually.
-  careCircles     CareCircle[]
+  hives           Hive[]
   careLogs        CareLog[]
-  owner           User         @relation("PetOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  owner           User      @relation("PetOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@index([ownerId])
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model User {
-  id           String       @id @default(cuid())
-  email        String       @unique
+  id           String      @id @default(cuid())
+  email        String      @unique
   name         String
   passwordHash String
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
   address      String?
   phone        String?
-  careCircles  CareCircle[]
+  hives        Hive[]
   careLogs     CareLog[]
-  ownedPets    Recipient[]  @relation("PetOwner")
+  ownedPets    Recipient[] @relation("PetOwner")
 }
 
 enum ActivityType {
@@ -90,7 +90,7 @@ enum ActivityType {
   VOMIT
 }
 
-enum CircleRole {
+enum HiveRole {
   OWNER
   CAREGIVER
   VIEWER

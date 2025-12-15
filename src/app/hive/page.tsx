@@ -1,4 +1,4 @@
-// src/app/care-circle/page.tsx
+// src/app/hive/page.tsx
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -17,8 +17,8 @@ import {
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
-  loadCareCirclePageData,
-  type CareCirclePageData,
+  loadHivePageData,
+  type HivePageData,
   type CaregiverGroup,
   type PetYouCareFor,
   type OwnedPetSummary,
@@ -61,7 +61,7 @@ export async function removeCaregiverMembership(formData: FormData) {
   }
 
   try {
-    const membership = await prisma.careCircle.findUnique({
+    const membership = await prisma.hive.findUnique({
       where: { id: membershipId },
       include: {
         recipient: {
@@ -86,12 +86,12 @@ export async function removeCaregiverMembership(formData: FormData) {
       return;
     }
 
-    await prisma.careCircle.delete({
+    await prisma.hive.delete({
       where: { id: membershipId },
     });
 
     // Refresh this page so the UI reflects the updated membership list.
-    revalidatePath("/care-circle");
+    revalidatePath("/hive");
 
     // Also refresh the pet details page if we know which pet this membership belonged to.
     if (typeof recipientId === "string" && recipientId.length > 0) {
@@ -107,11 +107,11 @@ export async function removeCaregiverMembership(formData: FormData) {
 // Coordinator: wire up data loader to sectional UI.
 // I want this component to stay boring on purpose so future changes
 // are clearly about data wiring or layout composition, not business logic.
-export default async function CareCirclePage() {
-  const data = await loadCareCirclePageData();
+export default async function HivePage() {
+  const data = await loadHivePageData();
 
   if (!data) {
-    redirect("/login?callbackUrl=/care-circle");
+    redirect("/login?callbackUrl=/hive");
   }
 
   return (
@@ -120,20 +120,20 @@ export default async function CareCirclePage() {
       sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}
     >
       <Stack spacing={4}>
-        <CareCircleHeroSection user={data.user} />
-        <CareCircleCaregiversSection caregivers={data.caregivers} />
-        <CareCirclePetsYouCareForSection pets={data.petsYouCareFor} />
-        <CareCircleOwnedPetsSection pets={data.ownedPets} />
+        <HiveHeroSection user={data.user} />
+        <HiveCaregiversSection caregivers={data.caregivers} />
+        <HivePetsYouCareForSection pets={data.petsYouCareFor} />
+        <HiveOwnedPetsSection pets={data.ownedPets} />
       </Stack>
     </Container>
   );
 }
 
 // SECTION: Hero / intro copy and user identity
-function CareCircleHeroSection({
+function HiveHeroSection({
   user,
 }: {
-  user: CareCirclePageData["user"];
+  user: HivePageData["user"];
 }) {
   return (
     <Paper
@@ -161,14 +161,14 @@ function CareCircleHeroSection({
           opacity: 0.9,
         }}
       >
-        CARE CIRCLE
+        HIVE
       </Typography>
       <Typography variant="h4" sx={{ mb: 1.5 }}>
-        Care Circle
+        Hive
       </Typography>
       <Typography variant="body2" sx={{ mb: 1.5, opacity: 0.9 }}>
-        See the people in your care circle and which pets they help with.
-        Removing someone from a pet&apos;s Care Circle immediately revokes
+        See the people in your hive and which pets they help with.
+        Removing someone from a pet&apos;s Hive immediately revokes
         their access.
       </Typography>
       <Typography variant="body2" sx={{ opacity: 0.9 }}>
@@ -179,7 +179,7 @@ function CareCircleHeroSection({
 }
 
 // SECTION: People caring for your pets (you are the owner)
-function CareCircleCaregiversSection({
+function HiveCaregiversSection({
   caregivers,
 }: {
   caregivers: CaregiverGroup[];
@@ -201,7 +201,7 @@ function CareCircleCaregiversSection({
       ) : (
         <Stack spacing={2}>
           {caregivers.map((person) => (
-            <CareCircleCaregiverCard
+            <HiveCaregiverCard
               key={person.caregiverId}
               caregiver={person}
             />
@@ -213,7 +213,7 @@ function CareCircleCaregiversSection({
 }
 
 // CARD: Single caregiver row with the pets they help with
-function CareCircleCaregiverCard({ caregiver }: { caregiver: CaregiverGroup }) {
+function HiveCaregiverCard({ caregiver }: { caregiver: CaregiverGroup }) {
   return (
     <Paper
       elevation={0}
@@ -276,7 +276,7 @@ function CareCircleCaregiverCard({ caregiver }: { caregiver: CaregiverGroup }) {
               <Link
                 href={`/pets/${pet.id}`}
                 className="nav-pill text-xs"
-                data-testid={`care-circle-view-pet-${pet.id}`}
+                data-testid={`hive-view-pet-${pet.id}`}
               >
                 View {pet.name}
               </Link>
@@ -310,7 +310,7 @@ function CareCircleCaregiverCard({ caregiver }: { caregiver: CaregiverGroup }) {
 }
 
 // SECTION: Pets you care for (someone else is the owner)
-export function CareCirclePetsYouCareForSection({
+export function HivePetsYouCareForSection({
   pets,
 }: {
   pets: PetYouCareFor[];
@@ -359,7 +359,7 @@ export function CareCirclePetsYouCareForSection({
                 <Link
                   href={`/pets/${pet.id}`}
                   className="nav-pill text-xs"
-                  data-testid={`care-circle-view-pet-${pet.id}`}
+                  data-testid={`hive-view-pet-${pet.id}`}
                 >
                   View pet
                 </Link>
@@ -373,7 +373,7 @@ export function CareCirclePetsYouCareForSection({
 }
 
 // SECTION: Lightweight list of pets you own
-function CareCircleOwnedPetsSection({
+function HiveOwnedPetsSection({
   pets,
 }: {
   pets: OwnedPetSummary[];

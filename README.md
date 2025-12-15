@@ -31,7 +31,7 @@ Earlier iterations of this project used the working title **Mimamori** (見守�
   - [Authentication Routes](#authentication-routes)
   - [Pet Routes](#pet-routes)
   - [Care Log Routes](#care-log-routes)
-  - [Care Circle Routes (Stretch)](#care-circle-routes-stretch)
+  - [Hive Routes](#hive-routes)
 - [Development Notes](#development-notes)
   - [Testing Authenticated API Routes](#testing-authenticated-api-routes)
   - [Database Migration Issues](#database-migration-issues)
@@ -81,14 +81,14 @@ Earlier iterations of this project used the working title **Mimamori** (見守�
   - See who did what, when, for each pet
 - **Mobile‑responsive UI**
   - Designed to work cleanly on phones, tablets, and desktops
-- **Shared pet access via CareCircle**
+- **Shared pet access via Hive**
   - Many‑to‑many relationship between users and pets for shared households
 - **Role‑based permissions**
   - Owner, caregiver, viewer roles with different capabilities
 - **Activity filtering**
   - Filter by type (feed, walk, medicate, etc.) and by date range
 
-> Note: An initial version of CareCircle sharing, shared pet access, and activity filtering is now implemented and used throughout the dashboard and pet detail flows. 
+> Note: An initial version of Hive sharing, shared pet access, and activity filtering is now implemented and used throughout the dashboard and pet detail flows. 
 
 ---
 
@@ -115,7 +115,7 @@ AttentHive/
 │   │   ├── 20251120115220_add_gender_to_pets
 │   │   │   └── migration.sql      # Adds gender to Pet model
 │   │   ├── 20251129194214_add_user_contact_fields
-│   │   │   └── migration.sql      # Adds user contact fields for CareCircle invites
+│   │   │   └── migration.sql      # Adds user contact fields for Hive invites
 │   │   ├── 20251202204455_add_image_url_to_recipient
 │   │   │   └── migration.sql      # Adds imageUrl for recipient/pet-like entities
 │   │   ├── 20251204221553_add_pet_characteristics
@@ -142,8 +142,8 @@ AttentHive/
 │   │   ├── auth                   # Auth screen tests
 │   │   │   ├── LoginPage.test.tsx      # Login page rendering and validation tests
 │   │   │   └── SignupPage.test.tsx     # Signup page rendering and validation tests
-│   │   ├── care-circle            # Care Circle tests
-│   │   │   └── CareCircleLinks.test.tsx   # Ensures Care Circle links navigate to pets
+│   │   ├── hive                   # Hive tests
+│   │   │   └── HiveLinks.test.tsx         # Ensures Hive links navigate to pets
 │   │   ├── Components             # Component-level unit tests
 │   │   │   └── PetCard.test.tsx   # PetCard behavior, quick actions, and links
 │   │   └── smoke.test.ts          # Basic smoke test to verify Jest wiring
@@ -163,12 +163,12 @@ AttentHive/
 │   │   │   │   ├── [...nextauth]
 │   │   │   │   │   └── route.ts         # NextAuth core handler (credentials + Google)
 │   │   │   │   └── signup
-│   │   │   │       └── route.ts         # Custom signup API (creates user + CareCircle)
-│   │   │   ├── care-circles
+│   │   │   │       └── route.ts         # Custom signup API (creates user + Hive)
+│   │   │   ├── hives
 │   │   │   │   ├── invite
-│   │   │   │   │   └── route.ts         # Invite members to a CareCircle
+│   │   │   │   │   └── route.ts         # Invite members to a Hive
 │   │   │   │   ├── members
-│   │   │   │   │   └── route.ts         # List/add/remove CareCircle members
+│   │   │   │   │   └── route.ts         # List/add/remove Hive members
 │   │   │   │   └── shared-pets
 │   │   │   │       └── route.ts         # Shared pet lookup for current user
 │   │   │   ├── care-logs
@@ -184,9 +184,9 @@ AttentHive/
 │   │   │   └── user
 │   │   │       └── profile
 │   │   │           └── route.ts         # Update and fetch user profile fields
-│   │   ├── care-circle
-│   │   │   ├── loader.ts                # Server-side loader for CareCircle dashboard
-│   │   │   └── page.tsx                 # CareCircle page shell and hero layout
+│   │   ├── hive
+│   │   │   ├── loader.ts                # Server-side loader for Hive dashboard
+│   │   │   └── page.tsx                 # Hive page shell and hero layout
 │   │   ├── dashboard
 │   │   │   └── page.tsx                 # Pet dashboard (grid of PetCards + quick actions)
 │   │   ├── dev
@@ -209,14 +209,14 @@ AttentHive/
 │   │   ├── pets
 │   │   │   ├── AddPetForm.tsx           # Controlled form for creating new pets
 │   │   │   ├── BreedSelect.tsx          # Reusable select component for pet breeds
-│   │   │   ├── CareCirclePanel.tsx      # "Shared with" card for CareCircle members
+│   │   │   ├── HivePanel.tsx            # "Shared with" card for Hive members
 │   │   │   ├── ConfirmActionModal.tsx   # Confirm dialog for destructive pet/care actions
 │   │   │   ├── PetActivityList.tsx      # Small recent-activity list component
 │   │   │   ├── petActivityUtils.ts      # Formatting/helpers for care log display
 │   │   │   ├── PetAvatar.tsx            # Avatar renderer for pets (photo or initials)
 │   │   │   ├── PetCard.tsx              # Summary card with quick actions for each pet
 │   │   │   ├── PetDetailActivitySection.tsx # Activity section on pet detail page
-│   │   │   ├── PetDetailCareCircleSection.tsx # CareCircle section on pet detail page
+│   │   │   ├── PetDetailHiveSection.tsx    # Hive section on pet detail page
 │   │   │   ├── PetDetailHeaderSection.tsx # Hero header card (avatar + identity + badges)
 │   │   │   ├── PetDetailPage.tsx        # Top-level composition for pet detail UI
 │   │   │   ├── PetDetailProfileSection.tsx # Editable profile fields for a pet
@@ -227,7 +227,7 @@ AttentHive/
 │   │   │   ├── PetPhotoProfileCard.tsx  # Card showing pet profile photo + metadata
 │   │   │   ├── PetPhotoUpload.tsx       # Controlled uploader for pet photos
 │   │   │   ├── QuickActions.tsx         # Grid of thumb-friendly care quick actions
-│   │   │   └── RemoveCaregiverButton.tsx # Button to remove a caregiver from CareCircle
+│   │   │   └── RemoveCaregiverButton.tsx # Button to remove a caregiver from Hive
 │   │   ├── RootShell.tsx                # App shell that shifts content with the Drawer
 │   │   ├── SessionProvider.tsx          # Wrapper around NextAuth SessionProvider
 │   │   ├── ThemeModeProvider.tsx        # Light/dark mode state and MUI theme wiring
@@ -239,7 +239,7 @@ AttentHive/
 │   │   ├── auth.ts                      # NextAuth server configuration and adapters
 │   │   ├── authRedirect.ts              # Safe callback URL handling to prevent open redirects
 │   │   ├── breeds.ts                    # Static breed list and helpers for BreedSelect
-│   │   ├── carecircle.ts                # CareCircle utility functions and role helpers
+│   │   ├── hive.ts                      # Hive utility functions and role helpers
 │   │   ├── petCharacteristics.ts        # Characteristic definitions and mapping utilities
 │   │   ├── prisma.ts                    # Prisma client singleton (avoids hot-reload issues)
 │   │   └── supabase-server.ts           # Helper for connecting to Supabase-hosted Postgres
@@ -266,7 +266,7 @@ At a high level, the app now follows these core ideas:
 - **Auth flows**
   - Login and signup live under the `(auth)` route group and are implemented as server wrappers with client components (`LoginPageClient`, `SignupPageClient`) to satisfy Next.js 16 `useSearchParams` + `Suspense` requirements.
   - Both screens share a dedicated `AuthShell` for consistent spacing, copy, and layout.
-  - Credentials auth and Google OAuth both normalize `callbackUrl` via a shared `getSafeCallbackUrl` helper to prevent open redirects and ensure deep-linking (e.g. `/pets/[id]`, `/care-circle`) remains stable.
+  - Credentials auth and Google OAuth both normalize `callbackUrl` via a shared `getSafeCallbackUrl` helper to prevent open redirects and ensure deep-linking (e.g. `/pets/[id]`, `/hive`) remains stable.
 
 - **Navigation & layout**
   - The global `NavBar` is now a MUI `AppBar` + `Drawer` combo that behaves the same on mobile and desktop.
@@ -275,8 +275,8 @@ At a high level, the app now follows these core ideas:
 
 - **Domain pages**
   - **Dashboard** shows a grid of `PetCard` components using a responsive CSS grid (`PetList`). Cards are now rectangular, with unified border radius, overflow rules, and thumb-friendly quick actions.
-  - **Pet detail** (`/pets/[id]`) uses `PetDetailShell` and is visually aligned with the Care Circle hero pattern: a single hero card with avatar, identity metadata, badges, and recent activity, followed by standard MUI cards for activity and sharing.
-  - **Care Circle** has its own loader and page shell, mirroring the same hero + detail card layout used for pets.
+  - **Pet detail** (`/pets/[id]`) uses `PetDetailShell` and is visually aligned with the Hive hero pattern: a single hero card with avatar, identity metadata, badges, and recent activity, followed by standard MUI cards for activity and sharing.
+  - **Hive** has its own loader and page shell, mirroring the same hero + detail card layout used for pets.
 
 - **Design system & cards**
   - MUI `Card` is the canonical card primitive across the app, with geometry (border radius, overflow, borders) defined in the theme instead of per-component overrides.
@@ -284,10 +284,10 @@ At a high level, the app now follows these core ideas:
   - Shared patterns for chips, buttons, and typography ensure dark-mode safety and consistent spacing.
 
 - **Testing**
-  - Jest/RTL tests cover core flows: smoke tests, auth screens, pet API routes, Care Circle links, and `PetCard` behavior.
+  - Jest/RTL tests cover core flows: smoke tests, auth screens, pet API routes, Hive links, and `PetCard` behavior.
   - All refactors keep `npm run check` (lint, typecheck, test) green as a precondition for merging.
 
-This architecture makes it easier to introduce new “care entities” (people, plants, places) while reusing the same hero card, detail shell, and CareCircle patterns that now power the pet experience.
+This architecture makes it easier to introduce new "care entities" (people, plants, places) while reusing the same hero card, detail shell, and Hive patterns that now power the pet experience.
 
 ---
 
@@ -458,7 +458,7 @@ From the pets section you can:
 - Edit an existing pet’s details
 - Delete a pet you own
 
-Ownership validation ensures that only the user who created a pet (or shared users, once CareCircle is implemented) can modify it.
+Ownership validation ensures that only the user who created a pet (or shared users via Hive) can modify it.
 
 ### Logging Care Activities
 
@@ -569,14 +569,14 @@ Coverage reports are generated in the `coverage/` directory. Open `coverage/lcov
 | `/api/care-logs` | GET | Get activity logs (filter by `recipientId` query param) |
 | `/api/care-logs` | POST | Log a new care activity |
 
-### Care Circle Routes
+### Hive Routes
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/care-circles/shared-pets` | GET | List pets shared with the current user |
-| `/api/care-circles/members` | GET | List members of a care circle |
-| `/api/care-circles/members` | DELETE | Remove a member from a care circle |
-| `/api/care-circles/invite` | POST | Invite a user to join a care circle |
+| `/api/hives/shared-pets` | GET | List pets shared with the current user |
+| `/api/hives/members` | GET | List members of a hive |
+| `/api/hives/members` | DELETE | Remove a member from a hive |
+| `/api/hives/invite` | POST | Invite a user to join a hive |
 
 ### User Routes
 
@@ -636,7 +636,7 @@ Formal support channels (email, chat, etc.) are still to be determined for early
 
 Planned enhancements include:
 
-- CareCircle sharing with role-based permissions
+- Hive sharing with role-based permissions
 - Richer filtering and reporting on activity history
 - Reminders/notifications for overdue care tasks
 - Dashboard metrics for households with multiple pets

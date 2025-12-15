@@ -39,9 +39,9 @@ describe("getSafeCallbackUrl", () => {
     expect(getSafeCallbackUrl("")).toBe(DEFAULT_AUTH_REDIRECT);
   });
 
-  it("allows internal paths like /pets/:id and /care-circle", () => {
+  it("allows internal paths like /pets/:id and /hive", () => {
     expect(getSafeCallbackUrl("/pets/abc123")).toBe("/pets/abc123");
-    expect(getSafeCallbackUrl("/care-circle")).toBe("/care-circle");
+    expect(getSafeCallbackUrl("/hive")).toBe("/hive");
   });
 
   it("rejects absolute URLs and protocol-relative URLs", () => {
@@ -83,23 +83,23 @@ describe("LoginPage callbackUrl handling", () => {
     });
   });
 
-  it("redirects to /care-circle when login succeeds with that callbackUrl", async () => {
+  it("redirects to /hive when login succeeds with that callbackUrl", async () => {
     mockSession("unauthenticated");
     (signIn as jest.Mock).mockResolvedValue({
       ok: true,
       error: null,
-      url: "/care-circle",
+      url: "/hive",
     });
 
     const user = userEvent.setup();
-    render(<LoginPage searchParams={{ callbackUrl: "/care-circle" }} />);
+    render(<LoginPage searchParams={{ callbackUrl: "/hive" }} />);
 
     await user.type(screen.getByLabelText(/email/i), "user@example.com");
     await user.type(screen.getByLabelText(/password/i), "password123");
     await user.click(screen.getByRole("button", { name: /log in/i }));
 
     await waitFor(() => {
-      expect(pushMock).toHaveBeenCalledWith("/care-circle");
+      expect(pushMock).toHaveBeenCalledWith("/hive");
     });
   });
 

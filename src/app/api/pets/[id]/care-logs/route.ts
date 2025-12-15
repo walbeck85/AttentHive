@@ -34,7 +34,7 @@ export async function GET(
         OR: [
           { ownerId: session.user.id },
           {
-            careCircles: {
+            hives: {
               some: { userId: session.user.id },
             },
           },

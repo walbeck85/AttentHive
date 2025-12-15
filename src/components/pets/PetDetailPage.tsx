@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import PetDetailShell from '@/components/pets/PetDetailShell';
 import PetDetailHeaderSection from '@/components/pets/PetDetailHeaderSection';
 import PetDetailActivitySection from '@/components/pets/PetDetailActivitySection';
-import PetDetailCareCircleSection from '@/components/pets/PetDetailCareCircleSection';
+import PetDetailHiveSection from '@/components/pets/PetDetailHiveSection';
 import PetDetailProfileSection from '@/components/pets/PetDetailProfileSection';
 import {
   Box,
@@ -14,10 +14,10 @@ import {
   Button,
 } from '@mui/material';
 import { type PetCharacteristicId } from '@/lib/petCharacteristics';
-import type { CareCircleMember, PetData } from './petDetailTypes'; // The detail page now consumes a fully-shaped view model instead of raw Prisma data.
+import type { HiveMember, PetData } from './petDetailTypes'; // The detail page now consumes a fully-shaped view model instead of raw Prisma data.
 
 // Re-exporting these so other components can keep importing view types from here if needed.
-export type { CareCircleMember, CareLog, PetData } from './petDetailTypes';
+export type { HiveMember, CareCircleMember, CareLog, PetData } from './petDetailTypes';
 
 // Edit form state is intentionally string-based so the inputs
 // stay in sync with what the user is typing.
@@ -39,7 +39,7 @@ export type EditFieldErrors = Partial<Record<keyof EditFormState, string>>;
 // This keeps the UI focused on rendering instead of reshaping server data.
 type PetDetailPageProps = {
   pet: PetData;
-  careCircleMembers: CareCircleMember[];
+  hiveMembers: HiveMember[];
   // This flags whether the current user owns the pet so we can gate owner-only actions.
   isOwner?: boolean;
 };
@@ -47,7 +47,7 @@ type PetDetailPageProps = {
 // page --------------------------------------------------------
 export default function PetDetailPage({
   pet: petProp,
-  careCircleMembers: careCircleMembersProp,
+  hiveMembers: hiveMembersProp,
   isOwner: isOwnerProp = false,
 }: PetDetailPageProps) {
   const router = useRouter();
@@ -57,8 +57,8 @@ export default function PetDetailPage({
   const [pet, setPet] = useState<PetData | null>(petProp ?? null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [careCircleMembers, setCareCircleMembers] = useState<CareCircleMember[]>(
-    Array.isArray(careCircleMembersProp) ? careCircleMembersProp : [],
+  const [hiveMembers, setHiveMembers] = useState<HiveMember[]>(
+    Array.isArray(hiveMembersProp) ? hiveMembersProp : [],
   );
   const [isOwner, setIsOwner] = useState<boolean>(Boolean(isOwnerProp));
 
@@ -70,10 +70,10 @@ export default function PetDetailPage({
   }, [petProp]);
 
   useEffect(() => {
-    setCareCircleMembers(
-      Array.isArray(careCircleMembersProp) ? careCircleMembersProp : [],
+    setHiveMembers(
+      Array.isArray(hiveMembersProp) ? hiveMembersProp : [],
     );
-  }, [careCircleMembersProp]);
+  }, [hiveMembersProp]);
 
   useEffect(() => {
     setIsOwner(Boolean(isOwnerProp));
@@ -162,11 +162,11 @@ export default function PetDetailPage({
       {/* Activity section is read-only; leaving layout to the child keeps this wrapper lightweight. */}
       <PetDetailActivitySection careLogs={pet.careLogs} />
 
-      {/* Care circle relies on the latest membership state; keeping it last mirrors the page stacking order. */}
-      <PetDetailCareCircleSection
+      {/* Hive relies on the latest membership state; keeping it last mirrors the page stacking order. */}
+      <PetDetailHiveSection
         recipientId={pet.id}
         isOwner={isOwner}
-        initialMembers={careCircleMembers}
+        initialMembers={hiveMembers}
       />
     </PetDetailShell>
   );
