@@ -1,9 +1,9 @@
 // src/__tests__/hive/HiveLinks.test.tsx
 import React from 'react';
 import { renderWithProviders, screen } from '../../test-utils';
-import { HivePetsYouCareForSection } from '../../app/care-circle/page';
+import { HivePetsYouCareForSection } from '../../app/hive/page';
 
-// Mock next-auth so importing the care-circle page doesn't try to pull in
+// Mock next-auth so importing the hive page doesn't try to pull in
 // the full OAuth / jose ESM stack. The test only cares about the JSX in
 // HivePetsYouCareForSection, not about sessions.
 jest.mock('next-auth', () => ({

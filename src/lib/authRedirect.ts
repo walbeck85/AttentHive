@@ -6,7 +6,7 @@ export const DEFAULT_AUTH_REDIRECT = "/dashboard";
 // Keep this very small and boring on purpose: it only allows internal,
 // app-relative paths and falls back to /dashboard on anything weird.
 // This prevents open redirects while still letting us support things like
-// /pets/:id and /care-circle.
+// /pets/:id and /hive.
 export function getSafeCallbackUrl(
   raw?: string | null
 ): string {

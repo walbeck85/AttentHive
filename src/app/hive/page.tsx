@@ -1,4 +1,4 @@
-// src/app/care-circle/page.tsx
+// src/app/hive/page.tsx
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -17,8 +17,8 @@ import {
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
-  loadCareCirclePageData,
-  type CareCirclePageData,
+  loadHivePageData,
+  type HivePageData,
   type CaregiverGroup,
   type PetYouCareFor,
   type OwnedPetSummary,
@@ -91,7 +91,7 @@ export async function removeCaregiverMembership(formData: FormData) {
     });
 
     // Refresh this page so the UI reflects the updated membership list.
-    revalidatePath("/care-circle");
+    revalidatePath("/hive");
 
     // Also refresh the pet details page if we know which pet this membership belonged to.
     if (typeof recipientId === "string" && recipientId.length > 0) {
@@ -107,11 +107,11 @@ export async function removeCaregiverMembership(formData: FormData) {
 // Coordinator: wire up data loader to sectional UI.
 // I want this component to stay boring on purpose so future changes
 // are clearly about data wiring or layout composition, not business logic.
-export default async function CareCirclePage() {
-  const data = await loadCareCirclePageData();
+export default async function HivePage() {
+  const data = await loadHivePageData();
 
   if (!data) {
-    redirect("/login?callbackUrl=/care-circle");
+    redirect("/login?callbackUrl=/hive");
   }
 
   return (
@@ -133,7 +133,7 @@ export default async function CareCirclePage() {
 function HiveHeroSection({
   user,
 }: {
-  user: CareCirclePageData["user"];
+  user: HivePageData["user"];
 }) {
   return (
     <Paper
