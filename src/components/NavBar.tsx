@@ -38,6 +38,7 @@ const NAV_LINKS: NavLink[] = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Hive", href: "/hive" },
   { label: "My Account", href: "/account" },
+  { label: "About", href: "/about" },
 ];
 
 // Links are always visible; route-level auth still protects pages.
