@@ -1,6 +1,6 @@
 # AttentHive Backlog
 
-Last updated: 2025-12-15
+Last updated: 2025-12-17
 
 ---
 
@@ -9,12 +9,12 @@ Last updated: 2025-12-15
 
 | | Item | Complexity | Status | Notes |
 |---|------|------------|--------|-------|
-| [ ] | Reduce image upload to 10MB | 🟢 Easy | Not started | Single validation change |
+| [x] | Reduce image upload to 10MB | 🟢 Easy | ✅ Done | Single validation change |
 | [ ] | Pet photos appear universally | 🟢 Easy | Not started | Audit where PetAvatar is/isn't used |
-| [ ] | Care actions on pet detail page | 🟢 Easy | Not started | QuickActions component already exists |
-| [ ] | About Page | 🟢 Easy | Not started | Static content page for legitimacy |
-| [ ] | Terms of Service page | 🟢 Easy | Not started | Static content page. Required before launch. |
-| [ ] | Privacy Policy page | 🟢 Easy | Not started | Static content page. Required with user data. |
+| [x] | Care actions on pet detail page | 🟢 Easy | ✅ Done | QuickActions + modals on detail page, role-gated |
+| [x] | About Page | 🟢 Easy | ✅ Done | Static content page for legitimacy |
+| [ ] | Terms of Service page | ⏸️ Blocked | Awaiting legal content | Static content page. Required before launch. |
+| [ ] | Privacy Policy page | 🟢 Easy | ⏸️ Blocked | Awaiting legal content | Static content page. Required with user data. |
 | [ ] | Contact/feedback form | 🟢 Easy | Not started | Simple way for users to reach out. |
 | [ ] | Error tracking (Sentry) | 🟢 Easy | Not started | Free tier. Know when things break. |
 
@@ -55,7 +55,10 @@ Last updated: 2025-12-15
 | [ ] | System notifications | 🔴 High | Not started | Push, email, in-app. Micro-project |
 | [ ] | Scheduled tasks + completion workflow | 🔴 High | Not started | Depends on notifications. Background jobs |
 | [ ] | Pet notification schedule settings | 🟡 Medium | Not started | "My dog needs out every 8 hours" - pairs with notifications |
-| [ ] | Security audit | 🟡 Medium | Not started | Do before launch. Consider Snyk, OWASP ZAP |
+| [x] | Security audit | 🟡 Medium | ✅ Done | Auth & Authorization audit. 6 vulns fixed, 34 tests added. |
+| [ ] | Rate limiting | 🟡 Medium | Not started | **HIGH priority.** Upstash Redis recommended for Vercel. |
+| [ ] | OAuth email change handling | 🟡 Medium | Not started | User changing Google email orphans data. |
+| [ ] | Explicit JWT expiration | 🟢 Easy | Not started | Currently using NextAuth defaults. |
 | [ ] | Rebrand Phases 6-9 | 🟢 Low | Not started | Vercel domains, OAuth branding |
 | [ ] | Account deletion flow | 🟡 Medium | Not started | GDPR/CCPA requirement. Must-have before public launch. |
 | [ ] | Data export | 🟡 Medium | Not started | "Download my data" - GDPR right to portability. |
@@ -85,6 +88,41 @@ Last updated: 2025-12-15
 | Walk Timer feature | Dec 2024 | Duration tracking, bathroom events |
 | CareCircle → Hive rebrand | Dec 2024 | Full codebase rename |
 | Git branch cleanup | Dec 2024 | 60+ branches → main only |
+| Security audit (Auth & Authorization) | Dec 2024 | 6 critical/high vulns fixed, 34 new tests |
+| Care logs authorization | Dec 2024 | Created canAccessPet/canWriteToPet helpers |
+| OAuth session ID mismatch | Dec 2024 | Created getDbUserFromSession helper |
+| Hive members data leakage | Dec 2024 | Field selection + auth check |
+| VIEWER role enforcement | Dec 2024 | canWriteToPet excludes VIEWER |
+| Login user enumeration | Dec 2024 | Unified errors + timing normalization |
+| Image upload MIME validation | Dec 2024 | Magic byte validation |
+| Pet detail QuickActions | Dec 2024 | Walk/Feed/Medicate/Accident on detail page, OWNER/CAREGIVER only |
+
+---
+
+## Security Audit Trail
+
+### Dec 2024 - Auth & Authorization Audit
+
+**Conducted:** Adversarial review of authentication and authorization
+
+**Critical Findings Fixed:**
+- Care logs API had no authorization
+- OAuth session ID vs DB ID mismatch
+
+**High Findings Fixed:**
+- Hive members endpoint leaked password hashes
+- VIEWER role not enforced
+- Login enabled user enumeration
+- File upload trusted client MIME type
+
+**New Infrastructure:**
+- `src/lib/auth-helpers.ts` - Centralized auth functions
+- 34 security-focused tests
+
+**Outstanding:**
+- Rate limiting (HIGH - needed before launch)
+- OAuth email change handling (MEDIUM)
+- JWT expiration config (LOW)
 
 ---
 
@@ -99,7 +137,7 @@ Last updated: 2025-12-15
 - Other
 
 ### Pet-Type Specific Actions (Future)
-- **Dogs:** Walk, Potty Break
+- **Dogs:** Walk, Potty Break, Indoor Play
 - **Cats:** Clean Litter Box, Indoor Play
 - **Fish:** Tank Cleaning, Water Change
 - **Birds:** Cage Cleaning
@@ -120,6 +158,7 @@ Last updated: 2025-12-15
 ### Security Audit Options
 - **Free:** npm audit, Dependabot, Snyk (free tier), OWASP ZAP
 - **Paid:** Trail of Bits, Bishop Fox, NCC Group
+- **Completed:** Manual auth & authorization audit (Dec 2024) - see Security Audit Trail above
 
 ---
 
