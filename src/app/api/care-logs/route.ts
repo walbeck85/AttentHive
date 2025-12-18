@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { ActivityType, Prisma } from "@prisma/client";
 
 import { authOptions } from "@/lib/auth";
+import { canAccessPet, canWriteToPet } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 
 // Metadata type for WALK activities with timer and bathroom tracking
@@ -70,19 +71,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // For now, we only enforce that the pet exists; we don't block on ownerId.
-    // This keeps the app usable even if profile/email changes introduce
-    // mismatches between session and ownerId.
-    const pet = await prisma.recipient.findUnique({
-      where: { id: recipientId },
-    });
+    // Check authorization: user must be owner or have Hive membership
+    const { canAccess } = await canAccessPet(dbUser.id, recipientId);
 
-    if (!pet) {
+    if (!canAccess) {
+      // Return 404 to avoid leaking pet existence information
       return NextResponse.json(
         { error: "Pet not found" },
         { status: 404 }
       );
     }
+
+    const pet = await prisma.recipient.findUnique({
+      where: { id: recipientId },
+      select: { name: true },
+    });
 
     const logs = await prisma.careLog.findMany({
       where: { recipientId },
@@ -103,7 +106,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         logs,
-        petName: pet.name,
+        petName: pet?.name ?? "Unknown",
       },
       { status: 200 }
     );
@@ -166,14 +169,11 @@ export async function POST(request: NextRequest) {
 
     const activityType = body.activityType as ActivityType;
 
-    // Again, only enforce that the pet exists. Ownership checks are relaxed
-    // here so that your dashboard buttons keep working even if user/profile
-    // data has evolved.
-    const pet = await prisma.recipient.findUnique({
-      where: { id: recipientId },
-    });
+    // Check authorization: user must be owner or CAREGIVER (not VIEWER)
+    const hasWriteAccess = await canWriteToPet(dbUser.id, recipientId);
 
-    if (!pet) {
+    if (!hasWriteAccess) {
+      // Return 404 to avoid leaking pet existence information
       return NextResponse.json(
         { error: "Pet not found" },
         { status: 404 }
