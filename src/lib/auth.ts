@@ -1,4 +1,22 @@
 // src/lib/auth.ts
+//
+// SECURITY NOTES - READ BEFORE MODIFYING:
+//
+// 1. USER ENUMERATION PREVENTION:
+//    The credentials provider uses the SAME error message "Invalid email or password"
+//    for both invalid email AND invalid password. DO NOT change this to provide
+//    more "helpful" error messages - it would allow attackers to discover valid emails.
+//
+// 2. TIMING ATTACK MITIGATION:
+//    When a user doesn't exist, we still run bcrypt.compare with a dummy hash.
+//    This ensures consistent response times regardless of whether the email exists.
+//    Without this, attackers could detect valid emails by measuring response time
+//    (bcrypt is slow ~100ms, so skipping it would be noticeable).
+//
+// 3. PASSWORD HASH STORAGE:
+//    OAuth users (Google) have passwordHash="google-oauth" as a placeholder.
+//    These accounts cannot be logged into via credentials - the OAuth flow is required.
+//
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
