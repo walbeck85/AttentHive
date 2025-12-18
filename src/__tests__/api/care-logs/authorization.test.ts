@@ -313,4 +313,95 @@ describe('Care Logs Authorization', () => {
       expect(prisma.careLog.create).not.toHaveBeenCalled();
     });
   });
+
+  describe('OAuth User Access (session.user.id !== dbUser.id)', () => {
+    /**
+     * CRITICAL: This test verifies the fix for OAuth users.
+     * For Google OAuth users, session.user.id is NOT the database User.id.
+     * Authorization must use email-based lookup to find the correct dbUser.id.
+     */
+    it('allows OAuth user to read their pet logs despite session.user.id mismatch', async () => {
+      // OAuth user: session.user.id is a random NextAuth ID, NOT the database id
+      const oauthSessionUserId = 'oauth-nextauth-generated-id-12345';
+      const dbUserId = 'cuid-database-user-id-abc123';
+
+      const dbUser = createMockUser({
+        id: dbUserId,
+        email: 'oauth.user@gmail.com',
+      });
+      const logs = [
+        createMockCareLog({ recipientId: 'pet-1', userId: dbUserId }),
+      ];
+
+      // Session has mismatched ID (OAuth scenario)
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: {
+          id: oauthSessionUserId, // Different from dbUser.id!
+          email: 'oauth.user@gmail.com',
+        },
+      });
+
+      // Email-based lookup returns the correct database user
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(dbUser);
+
+      // Authorization check uses dbUser.id (the correct one)
+      (prisma.recipient.findUnique as jest.Mock)
+        .mockResolvedValueOnce({ ownerId: dbUserId, hives: [] })
+        .mockResolvedValueOnce({ name: 'Buddy' });
+      (prisma.careLog.findMany as jest.Mock).mockResolvedValue(logs);
+
+      const req = createGetRequest('http://localhost/api/care-logs?id=pet-1');
+      const res = await getHandler(req);
+
+      // Should succeed because we use email lookup, not session.user.id
+      expect(res.status).toBe(200);
+      expect(prisma.careLog.findMany).toHaveBeenCalled();
+    });
+
+    it('allows OAuth user to create care logs despite session.user.id mismatch', async () => {
+      const oauthSessionUserId = 'oauth-nextauth-generated-id-67890';
+      const dbUserId = 'cuid-database-user-id-xyz789';
+
+      const dbUser = createMockUser({
+        id: dbUserId,
+        email: 'another.oauth@gmail.com',
+      });
+      const careLog = createMockCareLog({
+        recipientId: 'pet-1',
+        userId: dbUserId,
+        activityType: 'FEED',
+      });
+
+      // Session has mismatched ID (OAuth scenario)
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: {
+          id: oauthSessionUserId, // Different from dbUser.id!
+          email: 'another.oauth@gmail.com',
+        },
+      });
+
+      // Email-based lookup returns the correct database user
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(dbUser);
+
+      // Authorization uses dbUser.id
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValueOnce({
+        ownerId: dbUserId,
+        hives: [],
+      });
+      (prisma.careLog.create as jest.Mock).mockResolvedValue(careLog);
+
+      const req = createRequest({ petId: 'pet-1', activityType: 'FEED' });
+      const res = await postHandler(req);
+
+      // Should succeed because we use email lookup
+      expect(res.status).toBe(201);
+      expect(prisma.careLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            userId: dbUserId, // Must use DB id, not session id
+          }),
+        })
+      );
+    });
+  });
 });
