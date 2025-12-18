@@ -79,9 +79,17 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = (user as { id: string }).id;
+      }
+      // When the client calls `update()` from useSession, NextAuth invokes
+      // this callback with trigger="update". We merge any new fields (e.g. name)
+      // into the token so subsequent session reads reflect the change.
+      if (trigger === "update" && session) {
+        if (session.name !== undefined) {
+          token.name = session.name;
+        }
       }
       return token;
     },

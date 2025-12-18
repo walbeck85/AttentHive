@@ -3,6 +3,7 @@
 
 import type React from "react";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   Alert,
   Box,
@@ -27,6 +28,7 @@ export default function UserProfileForm({
   initialAddress,
   emailVerified,
 }: UserProfileFormProps) {
+  const { update: updateSession } = useSession();
   const [name, setName] = useState(initialName);
   const [email, setEmail] = useState(initialEmail);
   const [phone, setPhone] = useState(initialPhone);
@@ -76,6 +78,10 @@ export default function UserProfileForm({
       // We don't need the response body yet, but keeping this call means we
       // can later sync fresh server state without changing the control flow.
       await response.json();
+
+      // Update the NextAuth session so the new name appears immediately
+      // in client-side components (NavBar, etc.) without requiring logout.
+      await updateSession({ name: name.trim() });
 
       setStatus("success");
     } catch (error) {
