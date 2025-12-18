@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getDbUserFromSession, canAccessPet } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 
 // GET /api/pets/[id]/care-logs
@@ -10,10 +9,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 1. Check Authentication
-    const session = await getServerSession(authOptions);
+    // 1. Check Authentication - use email-based lookup for OAuth compatibility
+    const dbUser = await getDbUserFromSession();
 
-    if (!session?.user?.id) {
+    if (!dbUser) {
       return NextResponse.json(
         { error: 'You must be logged in' },
         { status: 401 }
@@ -28,26 +27,21 @@ export async function GET(
     }
 
     // 3. Authorization: verify the user has access to this specific pet
-    const pet = await prisma.recipient.findFirst({
-      where: {
-        id: petId,
-        OR: [
-          { ownerId: session.user.id },
-          {
-            hives: {
-              some: { userId: session.user.id },
-            },
-          },
-        ],
-      },
-    });
+    const { canAccess } = await canAccessPet(dbUser.id, petId);
 
-    if (!pet) {
+    if (!canAccess) {
+      // Return 404 to avoid leaking pet existence information
       return NextResponse.json(
-        { error: 'Pet not found or access denied' },
+        { error: 'Pet not found' },
         { status: 404 }
       );
     }
+
+    // Fetch pet name for response
+    const pet = await prisma.recipient.findUnique({
+      where: { id: petId },
+      select: { name: true },
+    });
 
     // 4. Fetch the Care Logs
     const logs = await prisma.careLog.findMany({
@@ -70,7 +64,7 @@ export async function GET(
     return NextResponse.json(
       {
         logs,
-        petName: pet.name,
+        petName: pet?.name ?? 'Unknown',
       },
       { status: 200 }
     );
