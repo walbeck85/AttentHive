@@ -169,14 +169,11 @@ export async function POST(request: NextRequest) {
 
     const activityType = body.activityType as ActivityType;
 
-    // Again, only enforce that the pet exists. Ownership checks are relaxed
-    // here so that your dashboard buttons keep working even if user/profile
-    // data has evolved.
-    const pet = await prisma.recipient.findUnique({
-      where: { id: recipientId },
-    });
+    // Check authorization: user must be owner or CAREGIVER (not VIEWER)
+    const hasWriteAccess = await canWriteToPet(dbUser.id, recipientId);
 
-    if (!pet) {
+    if (!hasWriteAccess) {
+      // Return 404 to avoid leaking pet existence information
       return NextResponse.json(
         { error: "Pet not found" },
         { status: 404 }
