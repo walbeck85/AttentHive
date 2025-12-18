@@ -1,16 +1,15 @@
 // src/app/api/hives/members/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 
-import { authOptions } from "@/lib/auth";
+import { getDbUserFromSession, canAccessPet } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { getHiveMembersForPet } from "@/lib/hive";
 
 export async function GET(request: NextRequest) {
-  // Ensure the caller is authenticated
-  const session = await getServerSession(authOptions);
+  // Ensure the caller is authenticated - use email-based lookup for OAuth compatibility
+  const dbUser = await getDbUserFromSession();
 
-  if (!session || !session.user?.email) {
+  if (!dbUser) {
     return NextResponse.json(
       { error: "You must be logged in to view hive members" },
       { status: 401 }
@@ -27,25 +26,18 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Resolve a backing DB user for this session, same pattern as /api/pets and /account
-  const dbUser = await prisma.user.upsert({
-    where: { email: session.user.email },
-    update: {},
-    create: {
-      email: session.user.email,
-      name: session.user.name ?? "",
-      // Satisfies the non-null constraint on passwordHash; not used for OAuth login
-      passwordHash: "google-oauth",
-    },
-  });
+  // Authorization: user must be owner OR have a Hive membership for this pet
+  const { canAccess, role } = await canAccessPet(dbUser.id, recipientId);
 
-  // Look up the recipient so we can determine ownership
-  const recipient = await prisma.recipient.findUnique({
-    where: { id: recipientId },
-    select: { ownerId: true },
-  });
+  if (!canAccess) {
+    // Return 404 to avoid revealing pet existence to unauthorized users
+    return NextResponse.json(
+      { error: "Pet not found" },
+      { status: 404 }
+    );
+  }
 
-  const isOwner = recipient?.ownerId === dbUser.id;
+  const isOwner = role === "OWNER";
 
   // Fetch Hive members for this recipient
   const members = await getHiveMembersForPet(recipientId);
@@ -62,26 +54,14 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   // Auth gate: only logged-in users can attempt to remove care circle members.
-  const session = await getServerSession(authOptions);
+  const dbUser = await getDbUserFromSession();
 
-  if (!session || !session.user?.email) {
+  if (!dbUser) {
     return NextResponse.json(
       { error: "You must be logged in to modify hive members" },
       { status: 401 }
     );
   }
-
-  // Resolve or create the backing User record for this session.
-  const dbUser = await prisma.user.upsert({
-    where: { email: session.user.email },
-    update: {},
-    create: {
-      email: session.user.email,
-      name: session.user.name ?? "",
-      // Satisfies the non-null constraint on passwordHash; not used for OAuth login
-      passwordHash: "google-oauth",
-    },
-  });
 
   let body: { membershipId?: string; recipientId?: string } = {};
 
