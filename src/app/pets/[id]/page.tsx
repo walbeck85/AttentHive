@@ -121,15 +121,24 @@ export default async function PetDetailsPage({ params }: Params) {
   // membership list (e.g. as CAREGIVER or VIEWER) for this specific pet.
   const isOwner = dbPet.ownerId === dbUser.id;
 
-  const hasHiveAccess =
-    isOwner ||
-    hiveMemberships.some((membership) => membership.userId === dbUser.id);
+  // Find the current user's membership to determine their role.
+  const currentUserMembership = hiveMemberships.find(
+    (membership) => membership.userId === dbUser.id
+  );
+
+  const hasHiveAccess = isOwner || !!currentUserMembership;
 
   if (!hasHiveAccess) {
     // If the user is neither the owner nor a member of the pet's Hive,
     // we fail with a 404 so we do not leak the existence of the pet ID.
     notFound();
   }
+
+  // Determine the current user's role for permission gating on the client.
+  // Owners get 'OWNER', otherwise use their hive membership role.
+  const currentUserRole: 'OWNER' | 'CAREGIVER' | 'VIEWER' = isOwner
+    ? 'OWNER'
+    : (currentUserMembership?.role as 'CAREGIVER' | 'VIEWER') ?? 'VIEWER';
 
   const hiveMembers: HiveMember[] = hiveMemberships.map(
     (membership) => ({
@@ -145,6 +154,7 @@ export default async function PetDetailsPage({ params }: Params) {
       pet={petForView}
       hiveMembers={hiveMembers}
       isOwner={isOwner}
+      currentUserRole={currentUserRole}
     />
   );
 }
