@@ -131,15 +131,25 @@ export async function removeCaregiverFromPet(
 
 /**
  * Get all Hive members for a given pet (recipient).
- * This returns Hive rows + the associated User records.
+ * This returns Hive rows + safe user fields (no sensitive data like passwordHash).
  *
  * NOTE: This does NOT include the owner by default; the owner lives on Recipient.ownerId.
  * On the UI side you can fetch the Recipient and combine owner + hive members.
+ *
+ * SECURITY: Only returns id, name, email - NEVER passwordHash, phone, address
  */
 export async function getHiveMembersForPet(recipientId: string) {
   const memberships = await prisma.hive.findMany({
     where: { recipientId },
-    include: { user: true },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
   });
 
   return memberships;
