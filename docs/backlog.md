@@ -1,6 +1,6 @@
 # AttentHive Backlog
 
-Last updated: 2025-12-17
+Last updated: 2025-12-18
 
 ---
 
@@ -82,26 +82,27 @@ Last updated: 2025-12-17
 
 | Item | Completed Date | Notes |
 |------|----------------|-------|
-| Pet profile enhancements | Dec 2024 | Description, specialNotes, characteristics |
-| Testing infrastructure | Dec 2024 | 84 tests, Prisma mocks, coverage reporting |
-| README rebrand | Dec 2024 | Full documentation update |
-| Walk Timer feature | Dec 2024 | Duration tracking, bathroom events |
-| CareCircle → Hive rebrand | Dec 2024 | Full codebase rename |
-| Git branch cleanup | Dec 2024 | 60+ branches → main only |
-| Security audit (Auth & Authorization) | Dec 2024 | 6 critical/high vulns fixed, 34 new tests |
-| Care logs authorization | Dec 2024 | Created canAccessPet/canWriteToPet helpers |
-| OAuth session ID mismatch | Dec 2024 | Created getDbUserFromSession helper |
-| Hive members data leakage | Dec 2024 | Field selection + auth check |
-| VIEWER role enforcement | Dec 2024 | canWriteToPet excludes VIEWER |
-| Login user enumeration | Dec 2024 | Unified errors + timing normalization |
-| Image upload MIME validation | Dec 2024 | Magic byte validation |
-| Pet detail QuickActions | Dec 2024 | Walk/Feed/Medicate/Accident on detail page, OWNER/CAREGIVER only |
+| Pet profile enhancements | Dec 2025 | Description, specialNotes, characteristics |
+| Testing infrastructure | Dec 2025 | 84 tests, Prisma mocks, coverage reporting |
+| README rebrand | Dec 2025 | Full documentation update |
+| Walk Timer feature | Dec 2025 | Duration tracking, bathroom events |
+| CareCircle → Hive rebrand | Dec 2025 | Full codebase rename |
+| Git branch cleanup | Dec 2025 | 60+ branches → main only |
+| Security audit (Auth & Authorization) | Dec 2025 | 6 critical/high vulns fixed, 34 new tests |
+| Care logs authorization | Dec 2025 | Created canAccessPet/canWriteToPet helpers |
+| OAuth session ID mismatch | Dec 2025 | Created getDbUserFromSession helper |
+| Hive members data leakage | Dec 2025 | Field selection + auth check |
+| VIEWER role enforcement | Dec 2025 | canWriteToPet excludes VIEWER |
+| Login user enumeration | Dec 2025 | Unified errors + timing normalization |
+| Image upload MIME validation | Dec 2025 | Magic byte validation |
+| Pet detail QuickActions | Dec 2025 | Walk/Feed/Medicate/Accident on detail page, OWNER/CAREGIVER only |
+| Fix Hive add caregiver bug | Dec 2025 | PetDetailShell positional child destructuring dropped HiveSection when QuickActions present |
 
 ---
 
 ## Security Audit Trail
 
-### Dec 2024 - Auth & Authorization Audit
+### Dec 2025 - Auth & Authorization Audit
 
 **Conducted:** Adversarial review of authentication and authorization
 
@@ -158,7 +159,7 @@ Last updated: 2025-12-17
 ### Security Audit Options
 - **Free:** npm audit, Dependabot, Snyk (free tier), OWASP ZAP
 - **Paid:** Trail of Bits, Bishop Fox, NCC Group
-- **Completed:** Manual auth & authorization audit (Dec 2024) - see Security Audit Trail above
+- **Completed:** Manual auth & authorization audit (Dec 2025) - see Security Audit Trail above
 
 ---
 
