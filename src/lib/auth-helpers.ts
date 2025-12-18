@@ -57,11 +57,21 @@ export async function canAccessPet(
 
 /**
  * Check if a user can write to a pet (create/update/delete operations).
- * A user can write to a pet if they are:
- * - The owner (recipient.ownerId === userId)
- * - A CAREGIVER in the pet's Hive
  *
- * VIEWER role is read-only and cannot write.
+ * Role Hierarchy (highest to lowest privilege):
+ * - OWNER: Full access - can read, write, and manage hive members
+ * - CAREGIVER: Can read and write (log care activities)
+ * - VIEWER: Read-only - can view pet info and care logs, but CANNOT write
+ *
+ * This function returns TRUE only for OWNER and CAREGIVER roles.
+ * VIEWER role is explicitly excluded from write operations.
+ *
+ * Use this for: POST care-logs, DELETE care-logs, any mutation endpoints
+ * Use canAccessPet() instead for: GET operations where VIEWERs should have access
+ *
+ * @param userId - The database User.id to check
+ * @param petId - The Recipient (pet) ID to check access for
+ * @returns true if user can write, false otherwise
  */
 export async function canWriteToPet(
   userId: string,
