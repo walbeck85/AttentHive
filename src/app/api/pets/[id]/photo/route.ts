@@ -152,21 +152,28 @@ export async function POST(
       );
     }
 
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-      // Limiting MIME types up front keeps the bucket from turning into a general-purpose dump.
-      return jsonResponse(
-        {
-          error:
-            'Unsupported file type. Please upload a JPEG, PNG, or WebP image.',
-        },
-        { status: 400 }
-      );
-    }
-
     if (file.size > MAX_FILE_SIZE_BYTES) {
       // Hard-capping file size avoids the slow creep of huge images clogging storage and bandwidth.
       return jsonResponse(
         { error: 'File is too large. Maximum size is 5 MB.' },
+        { status: 400 }
+      );
+    }
+
+    // Read file bytes BEFORE validation so we can check magic bytes
+    const arrayBuffer = await file.arrayBuffer();
+    const fileBytes = new Uint8Array(arrayBuffer);
+
+    // SECURITY: Validate actual file contents via magic bytes, not client-provided MIME type.
+    // Attackers can spoof file.type to upload malicious HTML/SVG as "image/jpeg".
+    const detectedType = detectImageType(fileBytes);
+
+    if (!detectedType || !ALLOWED_MIME_TYPES.includes(detectedType)) {
+      return jsonResponse(
+        {
+          error:
+            'Invalid file content. Please upload a valid JPEG, PNG, or WebP image.',
+        },
         { status: 400 }
       );
     }
@@ -181,10 +188,8 @@ export async function POST(
       );
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const fileBytes = new Uint8Array(arrayBuffer);
-
-    const extension = file.type.split('/')[1] ?? 'jpg';
+    // Use detected type (not client-provided) for extension and content-type
+    const extension = detectedType.split('/')[1] ?? 'jpg';
 
     // Bucket path includes the recipient id and a timestamp so re-uploads never collide.
     const objectPath = `pets/${recipient.id}/${Date.now()}.${extension}`;
@@ -192,7 +197,7 @@ export async function POST(
     const { data, error } = await supabase.storage
       .from('pet-photos')
       .upload(objectPath, fileBytes, {
-        contentType: file.type,
+        contentType: detectedType, // Use validated type, not spoofable file.type
         upsert: true,
       });
 
