@@ -9,9 +9,60 @@ import { prisma } from '@/lib/prisma';
 // Force Node runtime so file uploads and Supabase SDK behave consistently.
 export const runtime = 'nodejs';
 
-// Keeping limits tight so uploads stay fast and don’t quietly bloat storage.
+// Keeping limits tight so uploads stay fast and don't quietly bloat storage.
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+/**
+ * Detect actual image type by checking magic bytes (file signature).
+ *
+ * SECURITY: Client-provided MIME types (file.type) can be spoofed.
+ * An attacker could upload malicious HTML/SVG claiming to be "image/jpeg".
+ * This function validates the actual file contents to prevent such attacks.
+ *
+ * @param buffer - First bytes of the file
+ * @returns Detected MIME type or null if not a recognized image format
+ */
+function detectImageType(buffer: Uint8Array): string | null {
+  if (buffer.length < 12) {
+    return null;
+  }
+
+  // JPEG: starts with FF D8 FF
+  if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) {
+    return 'image/jpeg';
+  }
+
+  // PNG: starts with 89 50 4E 47 0D 0A 1A 0A (‰PNG\r\n\x1a\n)
+  if (
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4E &&
+    buffer[3] === 0x47 &&
+    buffer[4] === 0x0D &&
+    buffer[5] === 0x0A &&
+    buffer[6] === 0x1A &&
+    buffer[7] === 0x0A
+  ) {
+    return 'image/png';
+  }
+
+  // WebP: starts with RIFF....WEBP (bytes 0-3: RIFF, bytes 8-11: WEBP)
+  if (
+    buffer[0] === 0x52 && // R
+    buffer[1] === 0x49 && // I
+    buffer[2] === 0x46 && // F
+    buffer[3] === 0x46 && // F
+    buffer[8] === 0x57 && // W
+    buffer[9] === 0x45 && // E
+    buffer[10] === 0x42 && // B
+    buffer[11] === 0x50    // P
+  ) {
+    return 'image/webp';
+  }
+
+  return null;
+}
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -101,21 +152,28 @@ export async function POST(
       );
     }
 
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-      // Limiting MIME types up front keeps the bucket from turning into a general-purpose dump.
-      return jsonResponse(
-        {
-          error:
-            'Unsupported file type. Please upload a JPEG, PNG, or WebP image.',
-        },
-        { status: 400 }
-      );
-    }
-
     if (file.size > MAX_FILE_SIZE_BYTES) {
       // Hard-capping file size avoids the slow creep of huge images clogging storage and bandwidth.
       return jsonResponse(
         { error: 'File is too large. Maximum size is 5 MB.' },
+        { status: 400 }
+      );
+    }
+
+    // Read file bytes BEFORE validation so we can check magic bytes
+    const arrayBuffer = await file.arrayBuffer();
+    const fileBytes = new Uint8Array(arrayBuffer);
+
+    // SECURITY: Validate actual file contents via magic bytes, not client-provided MIME type.
+    // Attackers can spoof file.type to upload malicious HTML/SVG as "image/jpeg".
+    const detectedType = detectImageType(fileBytes);
+
+    if (!detectedType || !ALLOWED_MIME_TYPES.includes(detectedType)) {
+      return jsonResponse(
+        {
+          error:
+            'Invalid file content. Please upload a valid JPEG, PNG, or WebP image.',
+        },
         { status: 400 }
       );
     }
@@ -130,10 +188,8 @@ export async function POST(
       );
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const fileBytes = new Uint8Array(arrayBuffer);
-
-    const extension = file.type.split('/')[1] ?? 'jpg';
+    // Use detected type (not client-provided) for extension and content-type
+    const extension = detectedType.split('/')[1] ?? 'jpg';
 
     // Bucket path includes the recipient id and a timestamp so re-uploads never collide.
     const objectPath = `pets/${recipient.id}/${Date.now()}.${extension}`;
@@ -141,7 +197,7 @@ export async function POST(
     const { data, error } = await supabase.storage
       .from('pet-photos')
       .upload(objectPath, fileBytes, {
-        contentType: file.type,
+        contentType: detectedType, // Use validated type, not spoofable file.type
         upsert: true,
       });
 
