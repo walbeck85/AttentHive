@@ -314,6 +314,114 @@ describe('Care Logs Authorization', () => {
     });
   });
 
+  describe('VIEWER Role Enforcement (Read-Only)', () => {
+    /**
+     * VIEWER Role Contract:
+     * - VIEWERs CAN read care logs (GET operations)
+     * - VIEWERs CANNOT create care logs (POST operations)
+     * - This is enforced by canWriteToPet() returning false for VIEWERs
+     */
+
+    it('VIEWER can read care logs (GET succeeds)', async () => {
+      const viewer = createMockUser({
+        id: 'viewer-1',
+        email: 'viewer@example.com',
+      });
+      const logs = [createMockCareLog({ recipientId: 'pet-1' })];
+
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'viewer@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(viewer);
+      (prisma.recipient.findUnique as jest.Mock)
+        .mockResolvedValueOnce({ ownerId: 'owner-1', hives: [{ role: 'VIEWER' }] })
+        .mockResolvedValueOnce({ name: 'Buddy' });
+      (prisma.careLog.findMany as jest.Mock).mockResolvedValue(logs);
+
+      const req = createGetRequest('http://localhost/api/care-logs?id=pet-1');
+      const res = await getHandler(req);
+
+      expect(res.status).toBe(200);
+      expect(prisma.careLog.findMany).toHaveBeenCalled();
+    });
+
+    it('VIEWER cannot create care logs (POST fails with 404)', async () => {
+      const viewer = createMockUser({
+        id: 'viewer-1',
+        email: 'viewer@example.com',
+      });
+
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'viewer@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(viewer);
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValueOnce({
+        ownerId: 'owner-1',
+        hives: [{ role: 'VIEWER' }],
+      });
+
+      const req = createRequest({ petId: 'pet-1', activityType: 'FEED' });
+      const res = await postHandler(req);
+
+      // Returns 404 to avoid leaking pet existence
+      expect(res.status).toBe(404);
+      // Critical: careLog.create should NOT be called
+      expect(prisma.careLog.create).not.toHaveBeenCalled();
+    });
+
+    it('VIEWER cannot log WALK activities (POST fails)', async () => {
+      const viewer = createMockUser({
+        id: 'viewer-1',
+        email: 'viewer@example.com',
+      });
+
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'viewer@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(viewer);
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValueOnce({
+        ownerId: 'owner-1',
+        hives: [{ role: 'VIEWER' }],
+      });
+
+      const req = createRequest({
+        petId: 'pet-1',
+        activityType: 'WALK',
+        metadata: { durationSeconds: 1800, bathroomEvents: [] },
+      });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(404);
+      expect(prisma.careLog.create).not.toHaveBeenCalled();
+    });
+
+    it('VIEWER cannot log MEDICATE activities (POST fails)', async () => {
+      const viewer = createMockUser({
+        id: 'viewer-1',
+        email: 'viewer@example.com',
+      });
+
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'viewer@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(viewer);
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValueOnce({
+        ownerId: 'owner-1',
+        hives: [{ role: 'VIEWER' }],
+      });
+
+      const req = createRequest({
+        petId: 'pet-1',
+        activityType: 'MEDICATE',
+        notes: 'Heartworm prevention',
+      });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(404);
+      expect(prisma.careLog.create).not.toHaveBeenCalled();
+    });
+  });
+
   describe('OAuth User Access (session.user.id !== dbUser.id)', () => {
     /**
      * CRITICAL: This test verifies the fix for OAuth users.
