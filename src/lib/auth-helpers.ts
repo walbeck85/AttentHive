@@ -1,7 +1,6 @@
 // src/lib/auth-helpers.ts
 // Centralized authorization helpers for pet access control
 
-import { HiveRole } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 export type PetAccessResult = {

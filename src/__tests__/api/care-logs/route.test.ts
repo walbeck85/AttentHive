@@ -2,7 +2,7 @@ import { POST, GET } from '../../../app/api/care-logs/route';
 import { getServerSession } from 'next-auth';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { createMockUser, createMockRecipient, createMockCareLog } from '../../utils/test-factories';
+import { createMockUser, createMockCareLog } from '../../utils/test-factories';
 
 // Typed spy for console suppression
 type ConsoleErrorSpy = jest.SpyInstance<void, [message?: unknown, ...optionalParams: unknown[]]>;
@@ -69,7 +69,6 @@ describe('POST /api/care-logs', () => {
   describe('Success cases', () => {
     it('creates care log when user owns the pet', async () => {
       const mockUser = createMockUser({ id: 'user-1', email: 'owner@example.com' });
-      const mockPet = createMockRecipient({ id: 'pet-1', ownerId: 'user-1' });
       const mockCareLog = createMockCareLog({
         id: 'log-1',
         recipientId: 'pet-1',
@@ -81,7 +80,11 @@ describe('POST /api/care-logs', () => {
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue(mockPet);
+      // Mock must return hives array for canWriteToPet authorization check
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+        ownerId: 'user-1',
+        hives: [],
+      });
       (prisma.careLog.create as jest.Mock).mockResolvedValue(mockCareLog);
 
       const req = createRequest({
@@ -106,7 +109,6 @@ describe('POST /api/care-logs', () => {
 
     it('creates care log when user is in care circle', async () => {
       const mockUser = createMockUser({ id: 'caregiver-1', email: 'caregiver@example.com' });
-      const mockPet = createMockRecipient({ id: 'pet-1', ownerId: 'owner-1' });
       const mockCareLog = createMockCareLog({
         id: 'log-2',
         recipientId: 'pet-1',
@@ -118,7 +120,11 @@ describe('POST /api/care-logs', () => {
         user: { email: 'caregiver@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue(mockPet);
+      // Mock must return hives array for canWriteToPet authorization check
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+        ownerId: 'owner-1',
+        hives: [{ role: 'CAREGIVER' }],
+      });
       (prisma.careLog.create as jest.Mock).mockResolvedValue(mockCareLog);
 
       const req = createRequest({
@@ -142,7 +148,6 @@ describe('POST /api/care-logs', () => {
 
     it('creates care log with null notes when not provided', async () => {
       const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
-      const mockPet = createMockRecipient({ id: 'pet-1', ownerId: 'user-1' });
       const mockCareLog = createMockCareLog({
         id: 'log-3',
         recipientId: 'pet-1',
@@ -155,7 +160,10 @@ describe('POST /api/care-logs', () => {
         user: { email: 'user@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue(mockPet);
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+        ownerId: 'user-1',
+        hives: [],
+      });
       (prisma.careLog.create as jest.Mock).mockResolvedValue(mockCareLog);
 
       const req = createRequest({
@@ -179,7 +187,6 @@ describe('POST /api/care-logs', () => {
 
     it('creates walk care log with metadata', async () => {
       const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
-      const mockPet = createMockRecipient({ id: 'pet-1', ownerId: 'user-1' });
       const walkMetadata = {
         durationSeconds: 900,
         bathroomEvents: [
@@ -199,7 +206,10 @@ describe('POST /api/care-logs', () => {
         user: { email: 'user@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue(mockPet);
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+        ownerId: 'user-1',
+        hives: [],
+      });
       (prisma.careLog.create as jest.Mock).mockResolvedValue(mockCareLog);
 
       const req = createRequest({
@@ -224,7 +234,6 @@ describe('POST /api/care-logs', () => {
 
     it('creates walk care log without metadata (backward compatible)', async () => {
       const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
-      const mockPet = createMockRecipient({ id: 'pet-1', ownerId: 'user-1' });
       const mockCareLog = createMockCareLog({
         id: 'log-5',
         recipientId: 'pet-1',
@@ -236,7 +245,10 @@ describe('POST /api/care-logs', () => {
         user: { email: 'user@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue(mockPet);
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+        ownerId: 'user-1',
+        hives: [],
+      });
       (prisma.careLog.create as jest.Mock).mockResolvedValue(mockCareLog);
 
       const req = createRequest({
@@ -354,7 +366,6 @@ describe('POST /api/care-logs', () => {
 describe('GET /api/care-logs', () => {
   it('returns care logs for a pet', async () => {
     const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
-    const mockPet = createMockRecipient({ id: 'pet-1', name: 'Buddy', ownerId: 'user-1' });
     const mockLogs = [
       createMockCareLog({ id: 'log-1', recipientId: 'pet-1', userId: 'user-1', activityType: 'FEED' }),
       createMockCareLog({ id: 'log-2', recipientId: 'pet-1', userId: 'user-1', activityType: 'WALK' }),
@@ -364,7 +375,10 @@ describe('GET /api/care-logs', () => {
       user: { email: 'user@example.com' },
     });
     (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
-    (prisma.recipient.findUnique as jest.Mock).mockResolvedValue(mockPet);
+    // First call is for canAccessPet, second for pet name
+    (prisma.recipient.findUnique as jest.Mock)
+      .mockResolvedValueOnce({ ownerId: 'user-1', hives: [] })
+      .mockResolvedValueOnce({ name: 'Buddy' });
     (prisma.careLog.findMany as jest.Mock).mockResolvedValue(mockLogs);
 
     const req = createGetRequest('http://localhost/api/care-logs?id=pet-1');
