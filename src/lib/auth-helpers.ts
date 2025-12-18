@@ -1,6 +1,9 @@
 // src/lib/auth-helpers.ts
 // Centralized authorization helpers for pet access control
 
+import { getServerSession } from 'next-auth';
+import type { User } from '@prisma/client';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export type PetAccessResult = {
@@ -72,4 +75,28 @@ export async function canWriteToPet(
 
   // Only OWNER and CAREGIVER can write
   return role === 'OWNER' || role === 'CAREGIVER';
+}
+
+/**
+ * Get the database User record for the current session.
+ *
+ * IMPORTANT: This looks up the user by EMAIL, not by session.user.id.
+ * For OAuth users (e.g., Google), session.user.id is NOT the database User.id.
+ * Email is the stable identifier that links sessions to database records.
+ *
+ * @returns The database User object, or null if not authenticated
+ */
+export async function getDbUserFromSession(): Promise<User | null> {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.email) {
+    return null;
+  }
+
+  // Look up by email - this is the stable identifier across all auth methods
+  const dbUser = await prisma.user.findUnique({
+    where: { email: session.user.email },
+  });
+
+  return dbUser;
 }
