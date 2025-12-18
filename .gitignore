@@ -26,6 +26,9 @@ yarn-error.log*
 .env
 .env*.local
 
+# Local credentials/notes (never commit)
+*.local.md
+
 # Vercel
 .vercel
 
