@@ -23,6 +23,13 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
+          // Timing attack mitigation: always run bcrypt.compare even when user
+          // doesn't exist. This ensures both code paths take similar time,
+          // preventing attackers from detecting valid emails via response timing.
+          await bcrypt.compare(
+            credentials.password,
+            "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
+          );
           throw new Error("Invalid email or password");
         }
 
