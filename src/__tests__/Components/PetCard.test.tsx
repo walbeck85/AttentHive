@@ -144,33 +144,43 @@ describe('PetCard', () => {
     expect(onQuickAction).toHaveBeenCalledWith('pet-1', 'Fluffy', 'FEED');
   });
 
-  test('renders quick action and navigation buttons', () => {
-    const pet = createPet({ id: 'pet-123' });
+  describe('Quick action buttons by pet type', () => {
+    test('renders correct buttons for DOG', () => {
+      const pet = createPet({ id: 'pet-123', type: 'DOG' });
 
-    renderWithProviders(
-      <PetCard pet={pet} currentUserName="Will" onQuickAction={jest.fn()} />
-    );
+      renderWithProviders(
+        <PetCard pet={pet} currentUserName="Will" onQuickAction={jest.fn()} />
+      );
 
-    // Quick action buttons should be present and accessible by their labels.
-    expect(
-      screen.getByRole('button', { name: /feed/i })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /walk/i })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /meds/i })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /oops/i })
-    ).toBeInTheDocument();
+      // DOG should have Walk but not Litter Box
+      expect(screen.getByRole('button', { name: /feed/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /walk/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /medicate/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /bathroom/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /accident/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /wellness check/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /litter box/i })).not.toBeInTheDocument();
 
-    // Footer navigation actions render as links (MUI Button with component=Link).
-    expect(
-      screen.getByRole('link', { name: /\+ details/i })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: /view history/i })
-    ).toBeInTheDocument();
+      // Footer navigation actions render as links (MUI Button with component=Link).
+      expect(screen.getByRole('link', { name: /\+ details/i })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /view history/i })).toBeInTheDocument();
+    });
+
+    test('renders correct buttons for CAT', () => {
+      const pet = createPet({ id: 'pet-456', type: 'CAT', name: 'Whiskers', breed: 'Siamese' });
+
+      renderWithProviders(
+        <PetCard pet={pet} currentUserName="Will" onQuickAction={jest.fn()} />
+      );
+
+      // CAT should have Litter Box but not Walk
+      expect(screen.getByRole('button', { name: /feed/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /litter box/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /medicate/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /bathroom/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /accident/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /wellness check/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /walk/i })).not.toBeInTheDocument();
+    });
   });
 });

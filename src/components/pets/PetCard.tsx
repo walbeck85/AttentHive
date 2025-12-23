@@ -4,15 +4,21 @@
 // Imports ------------------------------------------------------
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ActivityType } from '@prisma/client';
+import { ActivityType, PetType } from '@prisma/client';
 import ConfirmActionModal from './ConfirmActionModal';
 import WalkTimerModal from './WalkTimerModal';
+import BathroomModal from './BathroomModal';
+import AccidentModal from './AccidentModal';
 import PetAvatar from './PetAvatar';
 import {
   PET_CHARACTERISTICS,
   type PetCharacteristicId,
 } from '@/lib/petCharacteristics';
-import { getActivityLabel } from '@/config/activityTypes';
+import {
+  getActivityLabel,
+  getActivitiesForPetType,
+  type ActivityConfig,
+} from '@/config/activityTypes';
 import { alpha, type Theme, useTheme } from '@mui/material/styles';
 
 // MUI imports --------------------------------------------------
@@ -220,6 +226,8 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
   const [pendingAction, setPendingAction] = useState<ActivityType | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isWalkTimerOpen, setIsWalkTimerOpen] = useState(false);
+  const [isBathroomOpen, setIsBathroomOpen] = useState(false);
+  const [isAccidentOpen, setIsAccidentOpen] = useState(false);
 
   // We gate time-based formatting behind a "mounted" flag so the server and
   // client don't disagree about relative times and trigger hydration warnings.
@@ -259,14 +267,24 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
   };
 
   // When a button is clicked, we *open the modal* instead of logging immediately.
-  const handleRequestQuickAction = (action: ActivityType) => {
-    if (action === 'WALK') {
-      // Walk gets the timer modal instead of simple confirmation
-      setIsWalkTimerOpen(true);
-      return;
+  // Route to the appropriate modal based on action type.
+  const handleRequestQuickAction = (config: ActivityConfig) => {
+    switch (config.modalType) {
+      case 'timer':
+        setIsWalkTimerOpen(true);
+        break;
+      case 'bathroom':
+        setIsBathroomOpen(true);
+        break;
+      case 'accident':
+        setIsAccidentOpen(true);
+        break;
+      case 'confirm':
+      default:
+        setPendingAction(config.type);
+        setIsConfirmOpen(true);
+        break;
     }
-    setPendingAction(action);
-    setIsConfirmOpen(true);
   };
 
   const handleConfirmAction = async () => {
@@ -320,6 +338,74 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
 
   const handleWalkCancel = () => {
     setIsWalkTimerOpen(false);
+  };
+
+  // Bathroom modal handlers
+  const handleBathroomConfirm = async (data: { subtype: 'pee' | 'poo' }) => {
+    try {
+      const res = await fetch('/api/care-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          petId: pet.id,
+          activityType: 'BATHROOM',
+          metadata: data,
+        }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        console.error('Failed to log bathroom', result);
+        throw new Error(result.error || 'Failed to log bathroom');
+      }
+
+      if (onQuickAction) {
+        onQuickAction(pet.id, pet.name, 'BATHROOM');
+      }
+    } catch (err) {
+      console.error('Error while logging bathroom', err);
+    } finally {
+      setIsBathroomOpen(false);
+    }
+  };
+
+  const handleBathroomCancel = () => {
+    setIsBathroomOpen(false);
+  };
+
+  // Accident modal handlers
+  const handleAccidentConfirm = async (data: { subtype: 'pee' | 'poo' | 'vomit' }) => {
+    try {
+      const res = await fetch('/api/care-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          petId: pet.id,
+          activityType: 'ACCIDENT',
+          metadata: data,
+        }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        console.error('Failed to log accident', result);
+        throw new Error(result.error || 'Failed to log accident');
+      }
+
+      if (onQuickAction) {
+        onQuickAction(pet.id, pet.name, 'ACCIDENT');
+      }
+    } catch (err) {
+      console.error('Error while logging accident', err);
+    } finally {
+      setIsAccidentOpen(false);
+    }
+  };
+
+  const handleAccidentCancel = () => {
+    setIsAccidentOpen(false);
   };
 
   const pendingLabel = pendingAction ? getActivityLabel(pendingAction) : '';
@@ -544,85 +630,39 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
               gap: 1.5,
             }}
             >
-              {/* Quick actions left */}
+              {/* Quick actions - dynamically filtered by pet type */}
               <Box
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: {
                     xs: 'repeat(2, minmax(0, 1fr))',
-                    sm: 'repeat(4, auto)',
+                    sm: 'repeat(3, auto)',
                   },
                   gap: 1,
                   width: '100%',
                   justifyItems: 'center',
                 }}
               >
-                {/* Outlined buttons here keep the action set lightweight while staying legible across modes. */}
-                <Button
-                  onClick={() => handleRequestQuickAction('FEED')}
-                  variant="outlined"
-                  size="small"
-                  sx={{
-                  textTransform: 'none',
-                  width: { xs: '100%', sm: 'auto' },
-                  px: { xs: 1, sm: 2 },
-                  justifyContent: 'center',
-                  minHeight: { xs: 34, sm: 40 },
-                  fontSize: { xs: 12, sm: 14 },
-                }}
-                >
-                  Feed
-                </Button>
-
-                <Button
-                  onClick={() => handleRequestQuickAction('WALK')}
-                variant="outlined"
-                size="small"
-                sx={{
-                  textTransform: 'none',
-                  width: { xs: '100%', sm: 'auto' },
-                  px: { xs: 1, sm: 2 },
-                  justifyContent: 'center',
-                  minHeight: { xs: 34, sm: 40 },
-                  fontSize: { xs: 12, sm: 14 },
-                }}
-              >
-                Walk
-              </Button>
-
-              <Button
-                onClick={() => handleRequestQuickAction('MEDICATE')}
-                variant="outlined"
-                size="small"
-                sx={{
-                  textTransform: 'none',
-                  width: { xs: '100%', sm: 'auto' },
-                  px: { xs: 1, sm: 2 },
-                  justifyContent: 'center',
-                  minHeight: { xs: 34, sm: 40 },
-                  fontSize: { xs: 12, sm: 14 },
-                }}
-              >
-                Meds
-              </Button>
-
-              <Button
-                onClick={() => handleRequestQuickAction('ACCIDENT')}
-                variant="outlined"
-                size="small"
-                color="error"
-                sx={{
-                  textTransform: 'none',
-                  width: { xs: '100%', sm: 'auto' },
-                  px: { xs: 1, sm: 2 },
-                  justifyContent: 'center',
-                  minHeight: { xs: 34, sm: 40 },
-                  fontSize: { xs: 12, sm: 14 },
-                }}
-              >
-                Oops
-              </Button>
-            </Box>
+                {getActivitiesForPetType(pet.type as PetType).map((config) => (
+                  <Button
+                    key={config.type}
+                    onClick={() => handleRequestQuickAction(config)}
+                    variant="outlined"
+                    size="small"
+                    color={config.type === 'ACCIDENT' ? 'error' : 'primary'}
+                    sx={{
+                      textTransform: 'none',
+                      width: { xs: '100%', sm: 'auto' },
+                      px: { xs: 1, sm: 2 },
+                      justifyContent: 'center',
+                      minHeight: { xs: 34, sm: 40 },
+                      fontSize: { xs: 12, sm: 14 },
+                    }}
+                  >
+                    {config.label}
+                  </Button>
+                ))}
+              </Box>
 
             {/* Details / History */}
             <Box
@@ -686,6 +726,20 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
         petName={pet.name}
         onComplete={handleWalkComplete}
         onCancel={handleWalkCancel}
+      />
+
+      <BathroomModal
+        open={isBathroomOpen}
+        petName={pet.name}
+        onConfirm={handleBathroomConfirm}
+        onClose={handleBathroomCancel}
+      />
+
+      <AccidentModal
+        open={isAccidentOpen}
+        petName={pet.name}
+        onConfirm={handleAccidentConfirm}
+        onClose={handleAccidentCancel}
       />
     </>
   );
