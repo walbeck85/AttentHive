@@ -3,19 +3,20 @@
 import Link from "next/link";
 import AuthShell from "@/components/auth/AuthShell";
 
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import {
   Alert,
   Box,
   Button,
+  CircularProgress,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
@@ -189,5 +190,26 @@ export default function ResetPasswordPage() {
         </Typography>
       </Stack>
     </AuthShell>
+  );
+}
+
+function ResetPasswordLoading() {
+  return (
+    <AuthShell title="Reset password">
+      <Stack spacing={3} alignItems="center">
+        <CircularProgress />
+        <Typography variant="body2" color="text.secondary">
+          Loading...
+        </Typography>
+      </Stack>
+    </AuthShell>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<ResetPasswordLoading />}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
