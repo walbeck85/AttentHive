@@ -32,6 +32,8 @@ model CareLog {
   notes        String?
   metadata     Json?
   createdAt    DateTime     @default(now())
+  photoUrl     String?
+  editedAt     DateTime?
   recipient    Recipient    @relation(fields: [recipientId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
