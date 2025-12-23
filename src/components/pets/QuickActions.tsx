@@ -1,24 +1,51 @@
 'use client';
-// Imports ------------------------------------------------------
+
 import type { ReactNode } from 'react';
 import { Box, Button } from '@mui/material';
-import { Utensils, Footprints, Pill, AlertTriangle } from 'lucide-react';
-// Types --------------------------------------------------------
-type ActionType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
-// Component Props ----------------------------------------------
-type Props = {
-  onAction: (action: ActionType) => void;
-};
-// Component -----------------------------------------------------
+import {
+  Utensils,
+  Footprints,
+  Pill,
+  AlertTriangle,
+  Bath,
+  Box as BoxIcon,
+  Heart,
+} from 'lucide-react';
+import { PetType } from '@prisma/client';
+import {
+  getActivitiesForPetType,
+  type ActivityConfig,
+} from '@/config/activityTypes';
 
-export default function QuickActions({ onAction }: Props) {
+// Icon mapping from config string to component
+const ICON_MAP: Record<string, ReactNode> = {
+  Utensils: <Utensils size={16} />,
+  Footprints: <Footprints size={16} />,
+  Pill: <Pill size={16} />,
+  AlertTriangle: <AlertTriangle size={16} />,
+  Bath: <Bath size={16} />,
+  Box: <BoxIcon size={16} />,
+  Heart: <Heart size={16} />,
+};
+
+type Props = {
+  petType: PetType;
+  onAction: (config: ActivityConfig) => void;
+};
+
+export default function QuickActions({ petType, onAction }: Props) {
+  const activities = getActivitiesForPetType(petType);
+
+  // Calculate grid columns based on number of activities
+  const columnCount = Math.min(activities.length, 4);
+
   return (
     <Box
       sx={{
         display: 'grid',
         gridTemplateColumns: {
-          xs: 'repeat(2, minmax(0, 1fr))', // 2x2 on mobile
-          sm: 'repeat(4, auto)',           // compact row on wider screens
+          xs: 'repeat(2, minmax(0, 1fr))',
+          sm: `repeat(${columnCount}, auto)`,
         },
         gap: 1,
         width: '100%',
@@ -32,31 +59,19 @@ export default function QuickActions({ onAction }: Props) {
         },
       }}
     >
-      <ActionBtn
-        icon={<Utensils size={16} />}
-        onClick={() => onAction('FEED')}
-        title="Feed"
-      />
-      <ActionBtn
-        icon={<Footprints size={16} />}
-        onClick={() => onAction('WALK')}
-        title="Walk"
-      />
-      <ActionBtn
-        icon={<Pill size={16} />}
-        onClick={() => onAction('MEDICATE')}
-        title="Meds"
-      />
-      <ActionBtn
-        icon={<AlertTriangle size={16} />}
-        danger
-        onClick={() => onAction('ACCIDENT')}
-        title="Report Accident"
-      />
+      {activities.map((config) => (
+        <ActionBtn
+          key={config.type}
+          icon={ICON_MAP[config.icon] ?? <Heart size={16} />}
+          onClick={() => onAction(config)}
+          title={config.label}
+          danger={config.type === 'ACCIDENT'}
+        />
+      ))}
     </Box>
   );
 }
-// Action Button Component --------------------------------------
+
 function ActionBtn({
   icon,
   onClick,

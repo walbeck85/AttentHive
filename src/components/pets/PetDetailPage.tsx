@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { PetType, ActivityType } from '@prisma/client';
 import PetDetailShell from '@/components/pets/PetDetailShell';
 import PetDetailHeaderSection from '@/components/pets/PetDetailHeaderSection';
 import PetDetailActivitySection from '@/components/pets/PetDetailActivitySection';
@@ -11,14 +12,17 @@ import PetDetailProfileSection from '@/components/pets/PetDetailProfileSection';
 import QuickActions from './QuickActions';
 import ConfirmActionModal from './ConfirmActionModal';
 import WalkTimerModal from './WalkTimerModal';
+import BathroomModal, { type BathroomMetadata } from './BathroomModal';
+import AccidentModal, { type AccidentMetadata } from './AccidentModal';
 import {
   Box,
   Typography,
   Button,
 } from '@mui/material';
 import { type PetCharacteristicId } from '@/lib/petCharacteristics';
-import type { HiveMember, CareLog, PetData } from './petDetailTypes'; // The detail page now consumes a fully-shaped view model instead of raw Prisma data.
-import type { ActionType, WalkMetadata } from './petActivityUtils';
+import type { HiveMember, CareLog, PetData } from './petDetailTypes';
+import type { WalkMetadata } from './petActivityUtils';
+import { type ActivityConfig, getActivityLabel } from '@/config/activityTypes';
 
 // Re-exporting these so other components can keep importing view types from here if needed.
 export type { HiveMember, CareCircleMember, CareLog, PetData } from './petDetailTypes';
@@ -50,15 +54,6 @@ type PetDetailPageProps = {
   currentUserRole: 'OWNER' | 'CAREGIVER' | 'VIEWER';
 };
 
-// Map for nicer labels in the modal
-const ACTION_LABELS: Record<ActionType, string> = {
-  FEED: 'Feed',
-  WALK: 'Walk',
-  MEDICATE: 'Medicate',
-  ACCIDENT: 'Accident',
-};
-
-// page --------------------------------------------------------
 export default function PetDetailPage({
   pet: petProp,
   hiveMembers: hiveMembersProp,
@@ -77,13 +72,18 @@ export default function PetDetailPage({
   );
   const [isOwner, setIsOwner] = useState<boolean>(Boolean(isOwnerProp));
 
-  // QuickActions modal state
-  const [pendingAction, setPendingAction] = useState<ActionType | null>(null);
+  // Modal state - now tracks which modal type to show
+  const [pendingConfig, setPendingConfig] = useState<ActivityConfig | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isWalkTimerOpen, setIsWalkTimerOpen] = useState(false);
+  const [isBathroomOpen, setIsBathroomOpen] = useState(false);
+  const [isAccidentOpen, setIsAccidentOpen] = useState(false);
 
   // Only OWNER and CAREGIVER can log care actions
   const canLogCareActions = currentUserRole === 'OWNER' || currentUserRole === 'CAREGIVER';
+
+  // Derive pet type for QuickActions filtering
+  const petType: PetType = (pet?.type as PetType) ?? 'DOG';
 
   useEffect(() => {
     // Whenever the server sends updated pet data, we trust that as the source of truth.
@@ -102,18 +102,33 @@ export default function PetDetailPage({
     setIsOwner(Boolean(isOwnerProp));
   }, [isOwnerProp]);
 
-  // QuickActions handlers
-  const handleQuickAction = (action: ActionType) => {
-    if (action === 'WALK') {
-      setIsWalkTimerOpen(true);
-      return;
+  // Route action to the correct modal based on modalType
+  const handleQuickAction = (config: ActivityConfig) => {
+    setPendingConfig(config);
+
+    switch (config.modalType) {
+      case 'timer':
+        setIsWalkTimerOpen(true);
+        break;
+      case 'bathroom':
+        setIsBathroomOpen(true);
+        break;
+      case 'accident':
+        setIsAccidentOpen(true);
+        break;
+      case 'confirm':
+      default:
+        setIsConfirmOpen(true);
+        break;
     }
-    setPendingAction(action);
-    setIsConfirmOpen(true);
   };
 
-  const handleConfirmAction = async () => {
-    if (!pendingAction || !pet) return;
+  // Generic function to log activity with optional metadata
+  const logActivity = async (
+    activityType: ActivityType,
+    metadata?: Record<string, unknown> | null
+  ) => {
+    if (!pet) return;
 
     try {
       const res = await fetch('/api/care-logs', {
@@ -121,7 +136,8 @@ export default function PetDetailPage({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           petId: pet.id,
-          activityType: pendingAction,
+          activityType,
+          metadata: metadata ?? undefined,
         }),
       });
 
@@ -134,79 +150,77 @@ export default function PetDetailPage({
 
       // Add the new care log to the local state so UI updates immediately
       const newCareLog: CareLog = {
-        id: data.id ?? crypto.randomUUID(),
-        activityType: pendingAction,
+        id: data.log?.id ?? crypto.randomUUID(),
+        activityType: activityType as CareLog['activityType'],
         createdAt: new Date().toISOString(),
         notes: null,
-        metadata: null,
-        user: { name: data.user?.name ?? null },
+        metadata: metadata as CareLog['metadata'],
+        user: { name: data.log?.user?.name ?? null },
       };
       setPet((prev) =>
         prev ? { ...prev, careLogs: [newCareLog, ...prev.careLogs] } : prev
       );
     } catch (err) {
       console.error('Error while logging care activity', err);
-    } finally {
-      setIsConfirmOpen(false);
-      setPendingAction(null);
     }
   };
 
-  const handleCancelAction = () => {
+  // Confirm modal handler (FEED, MEDICATE, LITTER_BOX, WELLNESS_CHECK)
+  const handleConfirmAction = async () => {
+    if (!pendingConfig || !pet) return;
+
+    await logActivity(pendingConfig.type);
     setIsConfirmOpen(false);
-    setPendingAction(null);
+    setPendingConfig(null);
   };
 
+  const handleCancelConfirm = () => {
+    setIsConfirmOpen(false);
+    setPendingConfig(null);
+  };
+
+  // Walk timer handler
   const handleWalkComplete = async (metadata: WalkMetadata) => {
-    if (!pet) return;
-
-    try {
-      const res = await fetch('/api/care-logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          petId: pet.id,
-          activityType: 'WALK',
-          metadata,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        console.error('Failed to log walk', data);
-        return;
-      }
-
-      // Add the new walk log to the local state
-      const newCareLog: CareLog = {
-        id: data.id ?? crypto.randomUUID(),
-        activityType: 'WALK',
-        createdAt: new Date().toISOString(),
-        notes: null,
-        metadata,
-        user: { name: data.user?.name ?? null },
-      };
-      setPet((prev) =>
-        prev ? { ...prev, careLogs: [newCareLog, ...prev.careLogs] } : prev
-      );
-    } catch (err) {
-      console.error('Error while logging walk', err);
-    } finally {
-      setIsWalkTimerOpen(false);
-    }
+    await logActivity('WALK', metadata);
+    setIsWalkTimerOpen(false);
+    setPendingConfig(null);
   };
 
   const handleWalkCancel = () => {
     setIsWalkTimerOpen(false);
+    setPendingConfig(null);
+  };
+
+  // Bathroom modal handler
+  const handleBathroomConfirm = async (metadata: BathroomMetadata) => {
+    await logActivity('BATHROOM', metadata);
+    setIsBathroomOpen(false);
+    setPendingConfig(null);
+  };
+
+  const handleBathroomClose = () => {
+    setIsBathroomOpen(false);
+    setPendingConfig(null);
+  };
+
+  // Accident modal handler
+  const handleAccidentConfirm = async (metadata: AccidentMetadata) => {
+    await logActivity('ACCIDENT', metadata);
+    setIsAccidentOpen(false);
+    setPendingConfig(null);
+  };
+
+  const handleAccidentClose = () => {
+    setIsAccidentOpen(false);
+    setPendingConfig(null);
   };
 
   // Modal content for confirmation dialog
-  const pendingLabel = pendingAction ? ACTION_LABELS[pendingAction] : '';
-  const modalTitle = pendingAction && pet
+  const pendingLabel = pendingConfig ? getActivityLabel(pendingConfig.type) : '';
+  const modalTitle = pendingConfig && pet
     ? `Log ${pendingLabel.toLowerCase()} for ${pet.name}?`
     : '';
-  const modalBody = pendingAction && pet
+  const modalBody = pendingConfig && pet
     ? `This will add a "${pendingLabel}" entry to ${pet.name}'s activity log.`
     : '';
 
@@ -223,7 +237,6 @@ export default function PetDetailPage({
           px: 2,
         }}
       >
-        {/* Loading fallback keeps typography consistent via MUI variants while matching the subdued text tone. */}
         <Typography variant="body2" color="text.secondary">
           Loading pet details…
         </Typography>
@@ -246,7 +259,6 @@ export default function PetDetailPage({
           px: 2,
         }}
       >
-        {/* Error header leans on the theme text color so it adapts automatically in both light and dark palettes. */}
         <Typography variant="h6" color="text.primary" sx={{ fontWeight: 600 }}>
           Failed to load pet details
         </Typography>
@@ -279,29 +291,25 @@ export default function PetDetailPage({
   return (
     <>
       <PetDetailShell>
-        {/* Header section stays separate so navigation and primary pet summary remain isolated from detail areas. */}
         <PetDetailHeaderSection
           pet={pet}
           onBack={() => router.back()}
         />
 
-        {/* QuickActions for logging care activities - only visible to owners and caregivers */}
+        {/* QuickActions for logging care activities - filtered by pet type */}
         {canLogCareActions && (
           <Box sx={{ px: { xs: 2, sm: 0 }, mb: 2 }}>
-            <QuickActions onAction={handleQuickAction} />
+            <QuickActions petType={petType} onAction={handleQuickAction} />
           </Box>
         )}
 
-        {/* Profile section manages editable pet fields while sharing the same pet state. */}
         <PetDetailProfileSection
           pet={pet}
           setPet={setPet}
         />
 
-        {/* Activity section is read-only; leaving layout to the child keeps this wrapper lightweight. */}
         <PetDetailActivitySection careLogs={pet.careLogs} />
 
-        {/* Hive relies on the latest membership state; keeping it last mirrors the page stacking order. */}
         <PetDetailHiveSection
           recipientId={pet.id}
           isOwner={isOwner}
@@ -309,14 +317,14 @@ export default function PetDetailPage({
         />
       </PetDetailShell>
 
-      {/* Confirmation modal for non-walk actions */}
+      {/* Confirmation modal for simple actions (FEED, MEDICATE, LITTER_BOX, WELLNESS_CHECK) */}
       <ConfirmActionModal
         open={isConfirmOpen}
         title={modalTitle}
         body={modalBody}
         confirmLabel="Log Activity"
         onConfirm={handleConfirmAction}
-        onCancel={handleCancelAction}
+        onCancel={handleCancelConfirm}
       />
 
       {/* Walk timer modal with bathroom event tracking */}
@@ -326,6 +334,22 @@ export default function PetDetailPage({
         petName={pet.name}
         onComplete={handleWalkComplete}
         onCancel={handleWalkCancel}
+      />
+
+      {/* Bathroom modal with pee/poo selection */}
+      <BathroomModal
+        open={isBathroomOpen}
+        petName={pet.name}
+        onConfirm={handleBathroomConfirm}
+        onClose={handleBathroomClose}
+      />
+
+      {/* Accident modal with pee/poo/vomit selection */}
+      <AccidentModal
+        open={isAccidentOpen}
+        petName={pet.name}
+        onConfirm={handleAccidentConfirm}
+        onClose={handleAccidentClose}
       />
     </>
   );
