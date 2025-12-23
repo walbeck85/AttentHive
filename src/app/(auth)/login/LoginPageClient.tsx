@@ -166,6 +166,17 @@ export default function LoginPageClient({
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            <Box sx={{ textAlign: "right", mt: -1 }}>
+              <Button
+                component={Link}
+                href="/auth/forgot-password"
+                variant="text"
+                size="small"
+                sx={{ textTransform: "none", px: 0.5, minWidth: "auto" }}
+              >
+                Forgot password?
+              </Button>
+            </Box>
             <Button
               type="submit"
               variant="contained"
