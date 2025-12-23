@@ -25,6 +25,8 @@ export type CareLog = {
   notes?: string | null;
   metadata?: ActivityMetadata | Record<string, unknown>;
   user: { name: string | null };
+  photoUrl?: string | null;
+  editedAt?: string | null;
 };
 
 // Core pet data shape for this screen, decoupled from the raw Prisma model.

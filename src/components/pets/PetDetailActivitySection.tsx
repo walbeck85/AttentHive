@@ -5,11 +5,14 @@ import {
   Card,
   CardContent,
   CardHeader,
+  Chip,
   List,
   ListItem,
   ListItemText,
+  Tooltip,
   Typography,
 } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 import { formatDateTime, formatActivityDisplay } from '@/components/pets/petActivityUtils';
 import type { CareLog } from '@/components/pets/petDetailTypes';
 
@@ -70,16 +73,33 @@ export default function PetDetailActivitySection({
                   alignItems="flex-start"
                   sx={{ px: 3, py: 1.5 }}
                   secondaryAction={
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        ml: 2,
-                        whiteSpace: 'nowrap',
-                        color: 'text.secondary',
-                      }}
-                    >
-                      {formatDateTime(log.createdAt)}
-                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          whiteSpace: 'nowrap',
+                          color: 'text.secondary',
+                        }}
+                      >
+                        {formatDateTime(log.createdAt)}
+                      </Typography>
+                      {log.editedAt && (
+                        <Tooltip title={`Edited ${formatDateTime(log.editedAt)}`} arrow>
+                          <Chip
+                            icon={<EditIcon sx={{ fontSize: 12 }} />}
+                            label="edited"
+                            size="small"
+                            variant="outlined"
+                            sx={{
+                              height: 20,
+                              fontSize: 10,
+                              '& .MuiChip-icon': { ml: 0.5 },
+                              '& .MuiChip-label': { px: 0.5 },
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+                    </Box>
                   }
                 >
                   <ListItemText
@@ -111,6 +131,31 @@ export default function PetDetailActivitySection({
                           >
                             {log.notes}
                           </Typography>
+                        )}
+                        {/* Photo thumbnail */}
+                        {log.photoUrl && (
+                          <Box
+                            sx={{
+                              mt: 1,
+                              width: 80,
+                              height: 60,
+                              borderRadius: 1,
+                              overflow: 'hidden',
+                              border: '1px solid',
+                              borderColor: 'divider',
+                            }}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={log.photoUrl}
+                              alt="Activity photo"
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                              }}
+                            />
+                          </Box>
                         )}
                       </>
                     }
