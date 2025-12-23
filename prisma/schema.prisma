@@ -68,17 +68,19 @@ model Recipient {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model User {
-  id           String      @id @default(cuid())
-  email        String      @unique
-  name         String
-  passwordHash String
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  address      String?
-  phone        String?
-  hives        Hive[]
-  careLogs     CareLog[]
-  ownedPets    Recipient[] @relation("PetOwner")
+  id                String      @id @default(cuid())
+  email             String      @unique
+  name              String
+  passwordHash      String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  address           String?
+  phone             String?
+  resetToken        String?     @unique
+  resetTokenExpiry  DateTime?
+  hives             Hive[]
+  careLogs          CareLog[]
+  ownedPets         Recipient[] @relation("PetOwner")
 }
 
 enum ActivityType {
