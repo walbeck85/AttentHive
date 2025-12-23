@@ -103,6 +103,7 @@ describe('POST /api/care-logs', () => {
           activityType: 'FEED',
           notes: 'Morning feeding',
           metadata: Prisma.JsonNull,
+          photoUrl: null,
         },
       });
     });
@@ -142,6 +143,7 @@ describe('POST /api/care-logs', () => {
           activityType: 'WALK',
           notes: null,
           metadata: Prisma.JsonNull,
+          photoUrl: null,
         },
       });
     });
@@ -181,6 +183,7 @@ describe('POST /api/care-logs', () => {
           activityType: 'MEDICATE',
           notes: null,
           metadata: Prisma.JsonNull,
+          photoUrl: null,
         },
       });
     });
@@ -228,6 +231,7 @@ describe('POST /api/care-logs', () => {
           activityType: 'WALK',
           notes: null,
           metadata: walkMetadata,
+          photoUrl: null,
         },
       });
     });
@@ -266,6 +270,7 @@ describe('POST /api/care-logs', () => {
           activityType: 'WALK',
           notes: null,
           metadata: Prisma.JsonNull,
+          photoUrl: null,
         },
       });
     });

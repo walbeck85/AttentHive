@@ -138,6 +138,7 @@ export async function POST(request: NextRequest) {
       activityType?: string;
       notes?: string;
       metadata?: WalkMetadata;
+      photoUrl?: string;
     };
 
     const recipientId = body.petId;
@@ -187,6 +188,7 @@ export async function POST(request: NextRequest) {
         activityType,
         notes: body.notes ?? null,
         metadata: body.metadata ?? Prisma.JsonNull,
+        photoUrl: body.photoUrl ?? null,
       },
     });
 
