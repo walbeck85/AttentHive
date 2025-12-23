@@ -1,9 +1,11 @@
 // src/components/pets/AccidentModal.tsx
 'use client';
 
-import { Box, Button, Paper, Stack, Typography } from '@mui/material';
+import { useState } from 'react';
+import { Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import type { AccidentSubtype } from '@/config/activityTypes';
+import ActivityPhotoPicker from './ActivityPhotoPicker';
 
 export type AccidentMetadata = {
   subtype: AccidentSubtype;
@@ -12,8 +14,9 @@ export type AccidentMetadata = {
 interface AccidentModalProps {
   open: boolean;
   petName: string;
-  onConfirm: (metadata: AccidentMetadata) => void;
+  onConfirm: (metadata: AccidentMetadata, photo: File | null) => void;
   onClose: () => void;
+  isLoading?: boolean;
 }
 
 export default function AccidentModal({
@@ -21,14 +24,23 @@ export default function AccidentModal({
   petName,
   onConfirm,
   onClose,
+  isLoading = false,
 }: AccidentModalProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
 
   if (!open) return null;
 
   const handleSelect = (subtype: AccidentSubtype) => {
-    onConfirm({ subtype });
+    const photo = selectedPhoto;
+    setSelectedPhoto(null);
+    onConfirm({ subtype }, photo);
+  };
+
+  const handleClose = () => {
+    setSelectedPhoto(null);
+    onClose();
   };
 
   const overlayColor = alpha(theme.palette.common.black, isDark ? 0.65 : 0.4);
@@ -55,7 +67,7 @@ export default function AccidentModal({
         px: 2,
         py: 3,
       }}
-      onClick={onClose}
+      onClick={handleClose}
     >
       <Paper
         onClick={(e) => e.stopPropagation()}
@@ -86,6 +98,12 @@ export default function AccidentModal({
             What type of accident?
           </Typography>
 
+          {/* Photo picker */}
+          <ActivityPhotoPicker
+            onPhotoChange={setSelectedPhoto}
+            disabled={isLoading}
+          />
+
           {/* Selection Buttons - 3 options */}
           <Stack spacing={1.5} width="100%">
             <Stack direction="row" spacing={2} width="100%">
@@ -93,6 +111,7 @@ export default function AccidentModal({
                 variant="outlined"
                 fullWidth
                 onClick={() => handleSelect('pee')}
+                disabled={isLoading}
                 sx={{
                   py: 2,
                   fontSize: '1.1rem',
@@ -104,12 +123,13 @@ export default function AccidentModal({
                   },
                 }}
               >
-                💧 Pee
+                {isLoading ? <CircularProgress size={20} /> : '💧 Pee'}
               </Button>
               <Button
                 variant="outlined"
                 fullWidth
                 onClick={() => handleSelect('poo')}
+                disabled={isLoading}
                 sx={{
                   py: 2,
                   fontSize: '1.1rem',
@@ -121,13 +141,14 @@ export default function AccidentModal({
                   },
                 }}
               >
-                💩 Poo
+                {isLoading ? <CircularProgress size={20} /> : '💩 Poo'}
               </Button>
             </Stack>
             <Button
               variant="outlined"
               fullWidth
               onClick={() => handleSelect('vomit')}
+              disabled={isLoading}
               sx={{
                 py: 2,
                 fontSize: '1.1rem',
@@ -139,7 +160,7 @@ export default function AccidentModal({
                 },
               }}
             >
-              🤮 Vomit
+              {isLoading ? <CircularProgress size={20} /> : '🤮 Vomit'}
             </Button>
           </Stack>
 
@@ -147,8 +168,9 @@ export default function AccidentModal({
           <Button
             variant="outlined"
             color="inherit"
-            onClick={onClose}
+            onClick={handleClose}
             fullWidth
+            disabled={isLoading}
             sx={{
               mt: 1,
               borderColor: isDark

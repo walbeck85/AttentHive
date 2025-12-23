@@ -228,6 +228,7 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
   const [isWalkTimerOpen, setIsWalkTimerOpen] = useState(false);
   const [isBathroomOpen, setIsBathroomOpen] = useState(false);
   const [isAccidentOpen, setIsAccidentOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // We gate time-based formatting behind a "mounted" flag so the server and
   // client don't disagree about relative times and trigger hydration warnings.
@@ -237,32 +238,19 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
     setHasMounted(true);
   }, []);
 
-  // Centralized handler that *actually* logs the activity
-  const persistQuickAction = async (action: ActivityType) => {
-    try {
-      // Using fetch keeps this aligned with the rest of the app's API layer without introducing another client.
-      const res = await fetch('/api/care-logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          petId: pet.id,
-          activityType: action,
-        }),
-      });
+  // Helper to upload a photo to a care log after it's created
+  const uploadPhotoToCareLog = async (careLogId: string, photo: File): Promise<void> => {
+    const formData = new FormData();
+    formData.append('file', photo);
 
-      const data = await res.json();
+    const uploadRes = await fetch(`/api/care-logs/${careLogId}/photo`, {
+      method: 'POST',
+      body: formData,
+    });
 
-      if (!res.ok) {
-        console.error('Failed to log care activity', data);
-        throw new Error(data.error || 'Failed to log care activity');
-      }
-
-      // Let the parent react if it wants to (toasts, optimistic UI, etc.).
-      if (onQuickAction) {
-        onQuickAction(pet.id, pet.name, action);
-      }
-    } catch (err) {
-      console.error('Error while logging care activity', err);
+    if (!uploadRes.ok) {
+      const uploadData = await uploadRes.json();
+      console.error('Failed to upload photo to care log', uploadData);
     }
   };
 
@@ -287,11 +275,42 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
     }
   };
 
-  const handleConfirmAction = async () => {
+  const handleConfirmAction = async (photo: File | null) => {
     if (!pendingAction) return;
-    await persistQuickAction(pendingAction);
-    setIsConfirmOpen(false);
-    setPendingAction(null);
+    setIsLoading(true);
+    try {
+      // Create the care log
+      const res = await fetch('/api/care-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          petId: pet.id,
+          activityType: pendingAction,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error('Failed to log care activity', data);
+        throw new Error(data.error || 'Failed to log care activity');
+      }
+
+      // Upload photo if provided
+      if (photo && data.log?.id) {
+        await uploadPhotoToCareLog(data.log.id, photo);
+      }
+
+      if (onQuickAction) {
+        onQuickAction(pet.id, pet.name, pendingAction);
+      }
+    } catch (err) {
+      console.error('Error while logging care activity', err);
+    } finally {
+      setIsLoading(false);
+      setIsConfirmOpen(false);
+      setPendingAction(null);
+    }
   };
 
   const handleCancelAction = () => {
@@ -341,7 +360,8 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
   };
 
   // Bathroom modal handlers
-  const handleBathroomConfirm = async (data: { subtype: 'pee' | 'poo' }) => {
+  const handleBathroomConfirm = async (data: { subtype: 'pee' | 'poo' }, photo: File | null) => {
+    setIsLoading(true);
     try {
       const res = await fetch('/api/care-logs', {
         method: 'POST',
@@ -360,12 +380,18 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
         throw new Error(result.error || 'Failed to log bathroom');
       }
 
+      // Upload photo if provided
+      if (photo && result.log?.id) {
+        await uploadPhotoToCareLog(result.log.id, photo);
+      }
+
       if (onQuickAction) {
         onQuickAction(pet.id, pet.name, 'BATHROOM');
       }
     } catch (err) {
       console.error('Error while logging bathroom', err);
     } finally {
+      setIsLoading(false);
       setIsBathroomOpen(false);
     }
   };
@@ -375,7 +401,8 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
   };
 
   // Accident modal handlers
-  const handleAccidentConfirm = async (data: { subtype: 'pee' | 'poo' | 'vomit' }) => {
+  const handleAccidentConfirm = async (data: { subtype: 'pee' | 'poo' | 'vomit' }, photo: File | null) => {
+    setIsLoading(true);
     try {
       const res = await fetch('/api/care-logs', {
         method: 'POST',
@@ -394,12 +421,18 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
         throw new Error(result.error || 'Failed to log accident');
       }
 
+      // Upload photo if provided
+      if (photo && result.log?.id) {
+        await uploadPhotoToCareLog(result.log.id, photo);
+      }
+
       if (onQuickAction) {
         onQuickAction(pet.id, pet.name, 'ACCIDENT');
       }
     } catch (err) {
       console.error('Error while logging accident', err);
     } finally {
+      setIsLoading(false);
       setIsAccidentOpen(false);
     }
   };
@@ -718,6 +751,7 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
         cancelLabel="Never mind"
         onConfirm={handleConfirmAction}
         onCancel={handleCancelAction}
+        isLoading={isLoading}
       />
 
       <WalkTimerModal
@@ -733,6 +767,7 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
         petName={pet.name}
         onConfirm={handleBathroomConfirm}
         onClose={handleBathroomCancel}
+        isLoading={isLoading}
       />
 
       <AccidentModal
@@ -740,6 +775,7 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
         petName={pet.name}
         onConfirm={handleAccidentConfirm}
         onClose={handleAccidentCancel}
+        isLoading={isLoading}
       />
     </>
   );

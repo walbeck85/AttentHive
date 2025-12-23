@@ -58,7 +58,7 @@ describe('BathroomModal', () => {
       fireEvent.click(peeButton);
 
       expect(onConfirm).toHaveBeenCalledTimes(1);
-      expect(onConfirm).toHaveBeenCalledWith({ subtype: 'pee' });
+      expect(onConfirm).toHaveBeenCalledWith({ subtype: 'pee' }, null);
     });
 
     it('calls onConfirm with poo subtype when poo button is clicked', () => {
@@ -69,7 +69,7 @@ describe('BathroomModal', () => {
       fireEvent.click(pooButton);
 
       expect(onConfirm).toHaveBeenCalledTimes(1);
-      expect(onConfirm).toHaveBeenCalledWith({ subtype: 'poo' });
+      expect(onConfirm).toHaveBeenCalledWith({ subtype: 'poo' }, null);
     });
   });
 
