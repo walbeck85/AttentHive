@@ -1,12 +1,21 @@
 'use client';
 
 import React from 'react';
+import { ActivityType } from '@prisma/client';
 import PetAvatar from '@/components/pets/PetAvatar';
 import {
   PET_CHARACTERISTICS,
   type PetCharacteristicId,
 } from '@/lib/petCharacteristics';
 import { Box, Chip, Paper, Stack, Typography } from '@mui/material';
+
+type CareLog = {
+  id: string;
+  activityType: ActivityType;
+  createdAt: string;
+  notes?: string | null;
+  user: { name: string | null };
+};
 
 type PetData = {
   id: string;
@@ -21,16 +30,6 @@ type PetData = {
   imageUrl?: string | null;
   characteristics?: PetCharacteristicId[];
 };
-
-type CareLog = {
-  id: string;
-  activityType: ActionType;
-  createdAt: string;
-  notes?: string | null;
-  user: { name: string | null };
-};
-
-type ActionType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
 
 function getCharacteristicLabel(id: PetCharacteristicId): string {
   const meta = PET_CHARACTERISTICS.find((item) => item.id === id);

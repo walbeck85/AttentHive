@@ -4,6 +4,7 @@
 // Imports ------------------------------------------------------
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { ActivityType } from '@prisma/client';
 import ConfirmActionModal from './ConfirmActionModal';
 import WalkTimerModal from './WalkTimerModal';
 import PetAvatar from './PetAvatar';
@@ -11,10 +12,11 @@ import {
   PET_CHARACTERISTICS,
   type PetCharacteristicId,
 } from '@/lib/petCharacteristics';
+import { getActivityLabel } from '@/config/activityTypes';
 import { alpha, type Theme, useTheme } from '@mui/material/styles';
 
 // MUI imports --------------------------------------------------
-// I’m using MUI here for the structural shell (Card, Box, Stack, Typography)
+// I'm using MUI here for the structural shell (Card, Box, Stack, Typography)
 // so dashboard cards can share theme-based spacing/shape, while keeping
 // existing Tailwind tokens like mm-card/mm-chip as visual scaffolding for now.
 import {
@@ -28,12 +30,10 @@ import {
 } from '@mui/material';
 
 // Types --------------------------------------------------------
-type ActionType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
-
 // CareLog represents a single activity entry for a pet
 type CareLog = {
   id: string;
-  activityType: ActionType;
+  activityType: ActivityType;
   createdAt: string;
   user: { name: string };
 };
@@ -59,7 +59,7 @@ export type PetData = {
 type Props = {
   pet: PetData;
   currentUserName?: string | null;
-  onQuickAction: (petId: string, petName: string, action: ActionType) => void;
+  onQuickAction: (petId: string, petName: string, action: ActivityType) => void;
 };
 
 // Helpers ------------------------------------------------------
@@ -89,7 +89,7 @@ function formatTimeAgo(dateString: string): string {
 }
 
 // Returns the appropriate noun for an activity type so logs read naturally when rendered.
-function getActivityNoun(type: ActionType): string {
+function getActivityNoun(type: ActivityType): string {
   switch (type) {
     case 'FEED':
       return 'a meal';
@@ -99,6 +99,12 @@ function getActivityNoun(type: ActionType): string {
       return 'medication';
     case 'ACCIDENT':
       return 'an accident';
+    case 'BATHROOM':
+      return 'a bathroom break';
+    case 'LITTER_BOX':
+      return 'litter box use';
+    case 'WELLNESS_CHECK':
+      return 'a wellness check';
     default:
       return 'care';
   }
@@ -118,13 +124,6 @@ function describeActivity(
   return `${actor} logged ${noun}`;
 }
 
-// Map for nicer labels in the modal + buttons
-const ACTION_LABELS: Record<ActionType, string> = {
-  FEED: 'Feed',
-  WALK: 'Walk',
-  MEDICATE: 'Medicate',
-  ACCIDENT: 'Accident',
-};
 
 // Helper: look up a human-readable label for a characteristic ID.
 // This keeps rendering logic simple and resilient to future list changes.
@@ -218,7 +217,7 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
   const lastLog = pet.careLogs?.[0];
 
   // Modal state: which action is waiting for confirmation?
-  const [pendingAction, setPendingAction] = useState<ActionType | null>(null);
+  const [pendingAction, setPendingAction] = useState<ActivityType | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isWalkTimerOpen, setIsWalkTimerOpen] = useState(false);
 
@@ -231,7 +230,7 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
   }, []);
 
   // Centralized handler that *actually* logs the activity
-  const persistQuickAction = async (action: ActionType) => {
+  const persistQuickAction = async (action: ActivityType) => {
     try {
       // Using fetch keeps this aligned with the rest of the app's API layer without introducing another client.
       const res = await fetch('/api/care-logs', {
@@ -260,7 +259,7 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
   };
 
   // When a button is clicked, we *open the modal* instead of logging immediately.
-  const handleRequestQuickAction = (action: ActionType) => {
+  const handleRequestQuickAction = (action: ActivityType) => {
     if (action === 'WALK') {
       // Walk gets the timer modal instead of simple confirmation
       setIsWalkTimerOpen(true);
@@ -323,12 +322,12 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
     setIsWalkTimerOpen(false);
   };
 
-  const pendingLabel = pendingAction ? ACTION_LABELS[pendingAction] : '';
+  const pendingLabel = pendingAction ? getActivityLabel(pendingAction) : '';
   const modalTitle = pendingAction
     ? `Log ${pendingLabel.toLowerCase()} for ${pet.name}?`
     : '';
   const modalBody = pendingAction
-    ? `This will add a “${pendingLabel}” entry to ${pet.name}'s activity log.`
+    ? `This will add a "${pendingLabel}" entry to ${pet.name}'s activity log.`
     : '';
 
   // Render the pet card + modal

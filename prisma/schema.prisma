@@ -87,7 +87,8 @@ enum ActivityType {
   MEDICATE
   BATHROOM
   ACCIDENT
-  VOMIT
+  LITTER_BOX
+  WELLNESS_CHECK
 }
 
 enum HiveRole {

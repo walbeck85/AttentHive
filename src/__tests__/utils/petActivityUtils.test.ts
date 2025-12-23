@@ -2,7 +2,10 @@ import {
   formatWalkDuration,
   formatWalkDetails,
   getActivityLabel,
+  formatActivityDisplay,
   type WalkMetadata,
+  type BathroomMetadata,
+  type AccidentMetadata,
 } from '@/components/pets/petActivityUtils';
 
 describe('formatWalkDuration', () => {
@@ -103,9 +106,93 @@ describe('getActivityLabel', () => {
     expect(getActivityLabel('WALK')).toBe('Walk');
     expect(getActivityLabel('MEDICATE')).toBe('Medicate');
     expect(getActivityLabel('ACCIDENT')).toBe('Accident');
+    expect(getActivityLabel('BATHROOM')).toBe('Bathroom');
+    expect(getActivityLabel('LITTER_BOX')).toBe('Litter Box');
+    expect(getActivityLabel('WELLNESS_CHECK')).toBe('Wellness Check');
   });
 
   it('returns "Log" for unknown activity types', () => {
     expect(getActivityLabel('UNKNOWN' as 'FEED')).toBe('Log');
+  });
+});
+
+describe('formatActivityDisplay', () => {
+  describe('WALK activities', () => {
+    it('formats walk with metadata', () => {
+      const metadata: WalkMetadata = {
+        durationSeconds: 1800,
+        bathroomEvents: [
+          { type: 'URINATION', occurredAt: '2024-01-15T10:15:00Z', minutesIntoWalk: 15 },
+        ],
+      };
+      expect(formatActivityDisplay('WALK', metadata)).toBe('Walk · 30 min · 💧×1');
+    });
+
+    it('returns "Walk" when metadata is null', () => {
+      expect(formatActivityDisplay('WALK', null)).toBe('Walk');
+    });
+  });
+
+  describe('BATHROOM activities', () => {
+    it('formats bathroom with pee subtype', () => {
+      const metadata: BathroomMetadata = { subtype: 'pee' };
+      expect(formatActivityDisplay('BATHROOM', metadata)).toBe('Bathroom (Pee)');
+    });
+
+    it('formats bathroom with poo subtype', () => {
+      const metadata: BathroomMetadata = { subtype: 'poo' };
+      expect(formatActivityDisplay('BATHROOM', metadata)).toBe('Bathroom (Poo)');
+    });
+
+    it('returns "Bathroom" when metadata is null', () => {
+      expect(formatActivityDisplay('BATHROOM', null)).toBe('Bathroom');
+    });
+
+    it('returns "Bathroom" when metadata has no subtype', () => {
+      expect(formatActivityDisplay('BATHROOM', {})).toBe('Bathroom');
+    });
+  });
+
+  describe('ACCIDENT activities', () => {
+    it('formats accident with pee subtype', () => {
+      const metadata: AccidentMetadata = { subtype: 'pee' };
+      expect(formatActivityDisplay('ACCIDENT', metadata)).toBe('Accident (Pee)');
+    });
+
+    it('formats accident with poo subtype', () => {
+      const metadata: AccidentMetadata = { subtype: 'poo' };
+      expect(formatActivityDisplay('ACCIDENT', metadata)).toBe('Accident (Poo)');
+    });
+
+    it('formats accident with vomit subtype', () => {
+      const metadata: AccidentMetadata = { subtype: 'vomit' };
+      expect(formatActivityDisplay('ACCIDENT', metadata)).toBe('Accident (Vomit)');
+    });
+
+    it('returns "Accident" when metadata is null', () => {
+      expect(formatActivityDisplay('ACCIDENT', null)).toBe('Accident');
+    });
+
+    it('returns "Accident" when metadata has no subtype', () => {
+      expect(formatActivityDisplay('ACCIDENT', {})).toBe('Accident');
+    });
+  });
+
+  describe('Other activities', () => {
+    it('returns label for FEED', () => {
+      expect(formatActivityDisplay('FEED', null)).toBe('Feed');
+    });
+
+    it('returns label for MEDICATE', () => {
+      expect(formatActivityDisplay('MEDICATE', null)).toBe('Medicate');
+    });
+
+    it('returns label for LITTER_BOX', () => {
+      expect(formatActivityDisplay('LITTER_BOX', null)).toBe('Litter Box');
+    });
+
+    it('returns label for WELLNESS_CHECK', () => {
+      expect(formatActivityDisplay('WELLNESS_CHECK', null)).toBe('Wellness Check');
+    });
   });
 });
