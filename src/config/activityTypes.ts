@@ -32,5 +32,5 @@ export function getActivityConfig(type: ActivityType): ActivityConfig | undefine
 }
 
 export function getActivityLabel(type: ActivityType): string {
-  return getActivityConfig(type)?.label ?? type;
+  return getActivityConfig(type)?.label ?? 'Log';
 }

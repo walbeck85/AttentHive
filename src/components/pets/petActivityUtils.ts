@@ -1,6 +1,10 @@
 'use client';
 
-export type ActionType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
+import { ActivityType } from '@prisma/client';
+import { getActivityLabel as getActivityLabelFromConfig } from '@/config/activityTypes';
+
+// Re-export ActivityType from Prisma for consumers that need it
+export type { ActivityType } from '@prisma/client';
 
 // Metadata type for WALK activities
 export type WalkMetadata = {
@@ -66,17 +70,7 @@ export function formatDateTime(dateString: string): string {
   }).format(date);
 }
 
-export function getActivityLabel(type: ActionType): string {
-  switch (type) {
-    case 'FEED':
-      return 'Feed';
-    case 'WALK':
-      return 'Walk';
-    case 'MEDICATE':
-      return 'Medicate';
-    case 'ACCIDENT':
-      return 'Accident';
-    default:
-      return 'Log';
-  }
+// Delegate to centralized config for activity labels
+export function getActivityLabel(type: ActivityType): string {
+  return getActivityLabelFromConfig(type);
 }

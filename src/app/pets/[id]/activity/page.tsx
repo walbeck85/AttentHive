@@ -4,13 +4,17 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { ActivityType } from '@prisma/client';
 import PetAvatar from '@/components/pets/PetAvatar';
 import { Box, Button, Container, Paper, Stack, Typography } from '@mui/material';
-import { formatWalkDetails, type WalkMetadata } from '@/components/pets/petActivityUtils';
+import {
+  formatWalkDetails,
+  formatDateTime,
+  type WalkMetadata,
+} from '@/components/pets/petActivityUtils';
+import { getActivityLabel, ACTIVITY_CONFIGS } from '@/config/activityTypes';
 
 // Types --------------------------------------------------------
-
-type ActivityType = 'FEED' | 'WALK' | 'MEDICATE' | 'ACCIDENT';
 
 // CareLog represents a single activity entry for a pet
 type CareLog = {
@@ -23,28 +27,6 @@ type CareLog = {
     id: string;
     name: string;
   };
-};
-
-// Helper functions ---------------------------------------------
-
-// Formats a date string into a human-readable format
-function formatDateTime(dateString: string): string {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    hour12: true,
-  }).format(date);
-}
-
-// Labels for activity types
-const ACTIVITY_LABELS: Record<ActivityType, string> = {
-  FEED: 'Feed',
-  WALK: 'Walk',
-  MEDICATE: 'Medicate',
-  ACCIDENT: 'Accident',
 };
 
 // Page component -----------------------------------------------
@@ -60,6 +42,12 @@ export default function ActivityLogPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'ALL' | ActivityType>('ALL');
+
+  // Get filter options from centralized config
+  const filterOptions: Array<'ALL' | ActivityType> = [
+    'ALL',
+    ...ACTIVITY_CONFIGS.map((c) => c.type),
+  ];
 
   // Fetch data -------------------------------------------------
   useEffect(() => {
@@ -250,33 +238,27 @@ export default function ActivityLogPage() {
           }}
         >
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {(['ALL', 'FEED', 'WALK', 'MEDICATE', 'ACCIDENT'] as const).map(
-              (type) => {
-                const isAll = type === 'ALL';
-                const isActive = filter === type;
-                const label = isAll
-                  ? 'All activity'
-                  : ACTIVITY_LABELS[type as ActivityType];
+            {filterOptions.map((type) => {
+              const isAll = type === 'ALL';
+              const isActive = filter === type;
+              const label = isAll ? 'All activity' : getActivityLabel(type);
 
-                return (
-                  <Button
-                    key={type}
-                    type="button"
-                    onClick={() =>
-                      setFilter(type === 'ALL' ? 'ALL' : (type as ActivityType))
-                    }
-                    variant={isActive ? 'contained' : 'outlined'}
-                    size="small"
-                    sx={{
-                      borderRadius: '9999px',
-                      textTransform: 'none',
-                    }}
-                  >
-                    {label}
-                  </Button>
-                );
-              }
-            )}
+              return (
+                <Button
+                  key={type}
+                  type="button"
+                  onClick={() => setFilter(type)}
+                  variant={isActive ? 'contained' : 'outlined'}
+                  size="small"
+                  sx={{
+                    borderRadius: '9999px',
+                    textTransform: 'none',
+                  }}
+                >
+                  {label}
+                </Button>
+              );
+            })}
           </Box>
         </Paper>
 
@@ -340,7 +322,7 @@ export default function ActivityLogPage() {
                     >
                       {log.activityType === 'WALK'
                         ? formatWalkDetails(log.metadata)
-                        : ACTIVITY_LABELS[log.activityType]}
+                        : getActivityLabel(log.activityType)}
                     </Typography>
                     <Typography
                       variant="body2"

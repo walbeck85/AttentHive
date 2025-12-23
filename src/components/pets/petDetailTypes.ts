@@ -1,6 +1,7 @@
 // src/components/pets/petDetailTypes.ts
+import type { ActivityType } from '@prisma/client';
 import type { PetCharacteristicId } from '@/lib/petCharacteristics';
-import type { ActionType, WalkMetadata } from '@/components/pets/petActivityUtils';
+import type { WalkMetadata } from '@/components/pets/petActivityUtils';
 
 // Shared view models for the pet detail screen.
 // Keeping these types here lets the server loader and UI evolve together
@@ -19,7 +20,7 @@ export type CareCircleMember = HiveMember;
 // I am normalizing timestamps and enum types here so the UI can stay simple.
 export type CareLog = {
   id: string;
-  activityType: ActionType;
+  activityType: ActivityType;
   createdAt: string;
   notes?: string | null;
   metadata?: WalkMetadata | null;
