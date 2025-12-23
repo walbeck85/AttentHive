@@ -47,6 +47,12 @@ describe('BathroomModal', () => {
 
       expect(screen.getByText('Log bathroom for Max')).toBeInTheDocument();
     });
+
+    it('renders photo picker', () => {
+      renderWithProviders(<BathroomModal {...defaultProps} />);
+
+      expect(screen.getByRole('button', { name: /add photo/i })).toBeInTheDocument();
+    });
   });
 
   describe('Selection', () => {

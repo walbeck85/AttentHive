@@ -274,6 +274,47 @@ describe('POST /api/care-logs', () => {
         },
       });
     });
+
+    it('creates care log with photoUrl when provided', async () => {
+      const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
+      const mockCareLog = createMockCareLog({
+        id: 'log-6',
+        recipientId: 'pet-1',
+        userId: 'user-1',
+        activityType: 'FEED',
+        photoUrl: 'https://example.com/activity-photo.jpg',
+      });
+
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'user@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+        ownerId: 'user-1',
+        hives: [],
+      });
+      (prisma.careLog.create as jest.Mock).mockResolvedValue(mockCareLog);
+
+      const req = createRequest({
+        petId: 'pet-1',
+        activityType: 'FEED',
+        photoUrl: 'https://example.com/activity-photo.jpg',
+      });
+
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+      expect(prisma.careLog.create).toHaveBeenCalledWith({
+        data: {
+          recipientId: 'pet-1',
+          userId: 'user-1',
+          activityType: 'FEED',
+          notes: null,
+          metadata: Prisma.JsonNull,
+          photoUrl: 'https://example.com/activity-photo.jpg',
+        },
+      });
+    });
   });
 
   describe('Error cases', () => {

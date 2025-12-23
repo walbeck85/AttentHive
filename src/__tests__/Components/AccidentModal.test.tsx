@@ -48,6 +48,12 @@ describe('AccidentModal', () => {
 
       expect(screen.getByText('Report accident for Whiskers')).toBeInTheDocument();
     });
+
+    it('renders photo picker', () => {
+      renderWithProviders(<AccidentModal {...defaultProps} />);
+
+      expect(screen.getByRole('button', { name: /add photo/i })).toBeInTheDocument();
+    });
   });
 
   describe('Selection', () => {
