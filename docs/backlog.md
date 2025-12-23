@@ -1,6 +1,6 @@
 # AttentHive Backlog
 
-Last updated: 2025-12-18
+Last updated: 2025-12-22
 
 ---
 
@@ -20,17 +20,29 @@ Last updated: 2025-12-18
 
 ---
 
+## 🚀 Pilot Release Blockers
+*Must complete before pilot testing.*
+
+| | Item | Complexity | Status | Notes |
+|---|------|------------|--------|-------|
+| [ ] | Pet-type specific actions | 🟡 Medium | Not started | Dogs: Walk, Feed, Medicate, Accident, Wellness Check. Cats: Litter Box, Feed, Medicate, Accident, Wellness Check. |
+| [ ] | Password reset flow | 🟡 Medium | Not started | Requires email infrastructure (Resend). Critical - no recovery path currently. |
+| [ ] | Photo on activity logs | 🟡 Medium | Not started | Optional photo per CareLog. 5MB limit. Track edits with editedAt timestamp. |
+| [ ] | Multiple owners per pet | 🔴 High | Not started | Option B: Keep primary ownerId + allow OWNER role in Hive as co-owners. Primary owner can remove co-owners. |
+
+---
+
 ## Tier 2: Valuable MVP Enhancements
 *Medium complexity, good demo value.*
 
 | | Item | Complexity | Status | Notes |
 |---|------|------------|--------|-------|
 | [ ] | User profile photos | 🟡 Medium | Not started | Schema + upload UI + display in Hive/NavBar |
-| [ ] | Comments/photos on care activities | 🟡 Medium | Not started | Notes field exists, add photos |
+| [x] | Comments/photos on care activities | 🟡 Medium | Moved to Pilot Blockers | See Pilot Release Blockers section |
 | [ ] | Adding medications data model | 🟡 Medium | Not started | Foundation for reminders |
 | [ ] | "Time Since" display | 🟡 Medium | Not started | Calculated from care logs. Shows time since last walk/pee/poop/meal |
 | [ ] | New user onboarding flow | 🟡 Medium | Not started | Multi-step setup, "who are you caring for" |
-| [ ] | Password reset flow | 🟡 Medium | Not started | Check if NextAuth handles this or needs custom build. |
+| [x] | Password reset flow | 🟡 Medium | Moved to Pilot Blockers | See Pilot Release Blockers section |
 | [ ] | Weekly care summary | 🟡 Medium | Not started | "Murphy was walked 12 times this week" - email or in-app. |
 
 ---
@@ -41,7 +53,7 @@ Last updated: 2025-12-18
 | | Item | Complexity | Status | Notes |
 |---|------|------------|--------|-------|
 | [ ] | Additional pet types | 🟡 Medium | Not started | Bird, Fish, Small Animal, Reptile, Other |
-| [ ] | Pet-type specific actions | 🟡 Medium | Not started | Depends on additional pet types. Filter actions by type |
+| [x] | Pet-type specific actions | 🟡 Medium | Moved to Pilot Blockers | See Pilot Release Blockers section |
 | [ ] | Pet → Care Recipient rebrand | 🔴 High | Not started | Only when ready to add non-pet recipients |
 | [ ] | User as care recipient | 🔴 High | Not started | Depends on Recipient rebrand. Wellness checks, meal trains |
 
@@ -137,12 +149,24 @@ Last updated: 2025-12-18
 - Reptile
 - Other
 
-### Pet-Type Specific Actions (Future)
-- **Dogs:** Walk, Potty Break, Indoor Play
-- **Cats:** Clean Litter Box, Indoor Play
-- **Fish:** Tank Cleaning, Water Change
-- **Birds:** Cage Cleaning
-- **All:** Feed, Medicate, Accident/Incident
+### Pet-Type Specific Actions
+
+| Pet Type | Actions |
+|----------|---------|
+| Dog | Walk, Feed, Medicate, Accident, Wellness Check |
+| Cat | Litter Box, Feed, Medicate, Accident, Wellness Check |
+| Both | Feed, Medicate, Accident, Wellness Check |
+
+**Implementation approach:**
+- Add `activityType` configuration per species
+- Filter QuickActions buttons based on pet type
+- Walk button only for dogs
+- Litter Box button only for cats
+- Shared actions available for all
+
+**Database consideration:**
+- ActivityType enum may need LITTER_BOX and WELLNESS_CHECK added
+- Existing WALK logs remain valid (dogs only going forward)
 
 ### Hive Terminology Ideas
 - Hive Mind - AI/analytics
@@ -160,6 +184,49 @@ Last updated: 2025-12-18
 - **Free:** npm audit, Dependabot, Snyk (free tier), OWASP ZAP
 - **Paid:** Trail of Bits, Bishop Fox, NCC Group
 - **Completed:** Manual auth & authorization audit (Dec 2025) - see Security Audit Trail above
+
+### Email Infrastructure
+
+**Provider:** Resend (recommended for Vercel, free tier available)
+
+**Sender:** noreply@attenthive.app
+
+**Required for:**
+- Password reset flow
+- Future: Hive invite notifications
+- Future: Activity notifications
+- Future: Weekly care summaries
+
+**Setup steps:**
+1. Create Resend account
+2. Verify attenthive.app domain (DNS records)
+3. Add RESEND_API_KEY to environment variables
+4. Configure NextAuth email provider
+
+### Multiple Owners Design (Option B)
+
+**Approach:** Primary owner + co-owners via Hive
+
+**Schema:**
+- Keep `ownerId` on Recipient as primary owner (cannot be removed)
+- Additional owners = Hive membership with `role: OWNER`
+- Primary owner can remove co-owners
+- Co-owners have same permissions as primary (except removing primary)
+
+**Authorization updates needed:**
+- `canAccessPet()` - already checks Hive, should work
+- `canWriteToPet()` - already checks Hive OWNER role, should work
+- New: `isPrimaryOwner()` helper for owner management UI
+- New: Prevent primary owner from being removed
+
+**UI updates needed:**
+- Hive panel shows "Owner" vs "Co-owner" distinction
+- Invite flow allows selecting OWNER role
+- Only primary owner sees "remove" button for co-owners
+
+**Migration:**
+- No schema migration needed (uses existing Hive table)
+- Existing pets: current owner remains primary, no co-owners
 
 ---
 
