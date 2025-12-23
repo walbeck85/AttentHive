@@ -2,13 +2,8 @@
 
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import {
-  formatDateTime,
-  getActivityLabel,
-  formatWalkDetails,
-  type WalkMetadata,
-} from '@/components/pets/petActivityUtils';
-import type { CareLog } from '@/components/pets/PetDetailPage';
+import { formatDateTime, formatActivityDisplay } from '@/components/pets/petActivityUtils';
+import type { CareLog } from '@/components/pets/petDetailTypes';
 
 type PetActivityListProps = {
   careLogs: CareLog[];
@@ -72,9 +67,7 @@ export default function PetActivityList({ careLogs }: PetActivityListProps) {
                     color: (theme) => theme.palette.text.primary,
                   }}
                 >
-                  {log.activityType === 'WALK'
-                    ? formatWalkDetails(log.metadata as WalkMetadata | null)
-                    : getActivityLabel(log.activityType)}
+                  {formatActivityDisplay(log.activityType, log.metadata)}
                 </Typography>
                 <Typography
                   variant="body2"

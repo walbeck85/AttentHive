@@ -1,7 +1,11 @@
 'use client';
 
 import { ActivityType } from '@prisma/client';
-import { getActivityLabel as getActivityLabelFromConfig } from '@/config/activityTypes';
+import {
+  getActivityLabel as getActivityLabelFromConfig,
+  type AccidentSubtype,
+  type BathroomSubtype,
+} from '@/config/activityTypes';
 
 // Re-export ActivityType from Prisma for consumers that need it
 export type { ActivityType } from '@prisma/client';
@@ -15,6 +19,19 @@ export type WalkMetadata = {
     minutesIntoWalk: number;
   }>;
 };
+
+// Metadata type for BATHROOM activities
+export type BathroomMetadata = {
+  subtype: BathroomSubtype;
+};
+
+// Metadata type for ACCIDENT activities
+export type AccidentMetadata = {
+  subtype: AccidentSubtype;
+};
+
+// Union type for all possible activity metadata
+export type ActivityMetadata = WalkMetadata | BathroomMetadata | AccidentMetadata | null;
 
 // Format duration from seconds to human-readable string
 export function formatWalkDuration(seconds: number): string {
@@ -73,4 +90,51 @@ export function formatDateTime(dateString: string): string {
 // Delegate to centralized config for activity labels
 export function getActivityLabel(type: ActivityType): string {
   return getActivityLabelFromConfig(type);
+}
+
+// Capitalize first letter of a string
+function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// Format subtype for display (pee -> Pee, poo -> Poo, vomit -> Vomit)
+function formatSubtype(subtype: string): string {
+  return capitalize(subtype);
+}
+
+// Check if metadata has a subtype property
+function hasSubtype(
+  metadata: unknown
+): metadata is BathroomMetadata | AccidentMetadata {
+  return (
+    typeof metadata === 'object' &&
+    metadata !== null &&
+    'subtype' in metadata &&
+    typeof (metadata as { subtype: unknown }).subtype === 'string'
+  );
+}
+
+// Format activity display with metadata support
+// Returns appropriate label based on activity type and any associated metadata
+export function formatActivityDisplay(
+  activityType: ActivityType,
+  metadata?: ActivityMetadata | Record<string, unknown> | null
+): string {
+  // Handle WALK with duration and bathroom events
+  if (activityType === 'WALK') {
+    return formatWalkDetails(metadata as WalkMetadata | null);
+  }
+
+  // Handle BATHROOM with subtype
+  if (activityType === 'BATHROOM' && hasSubtype(metadata)) {
+    return `Bathroom (${formatSubtype(metadata.subtype)})`;
+  }
+
+  // Handle ACCIDENT with subtype
+  if (activityType === 'ACCIDENT' && hasSubtype(metadata)) {
+    return `Accident (${formatSubtype(metadata.subtype)})`;
+  }
+
+  // Default: return the base label
+  return getActivityLabel(activityType);
 }

@@ -8,9 +8,9 @@ import { ActivityType } from '@prisma/client';
 import PetAvatar from '@/components/pets/PetAvatar';
 import { Box, Button, Container, Paper, Stack, Typography } from '@mui/material';
 import {
-  formatWalkDetails,
   formatDateTime,
-  type WalkMetadata,
+  formatActivityDisplay,
+  type ActivityMetadata,
 } from '@/components/pets/petActivityUtils';
 import { getActivityLabel, ACTIVITY_CONFIGS } from '@/config/activityTypes';
 
@@ -21,7 +21,7 @@ type CareLog = {
   id: string;
   activityType: ActivityType;
   notes: string | null;
-  metadata?: WalkMetadata | null;
+  metadata?: ActivityMetadata | Record<string, unknown>;
   createdAt: string;
   user: {
     id: string;
@@ -320,9 +320,7 @@ export default function ActivityLogPage() {
                         color: 'text.primary',
                       }}
                     >
-                      {log.activityType === 'WALK'
-                        ? formatWalkDetails(log.metadata)
-                        : getActivityLabel(log.activityType)}
+                      {formatActivityDisplay(log.activityType, log.metadata)}
                     </Typography>
                     <Typography
                       variant="body2"

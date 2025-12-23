@@ -10,7 +10,7 @@ import {
   ListItemText,
   Typography,
 } from '@mui/material';
-import { formatDateTime, getActivityLabel } from '@/components/pets/petActivityUtils';
+import { formatDateTime, formatActivityDisplay } from '@/components/pets/petActivityUtils';
 import type { CareLog } from '@/components/pets/petDetailTypes';
 
 type PetDetailActivitySectionProps = {
@@ -83,7 +83,7 @@ export default function PetDetailActivitySection({
                   }
                 >
                   <ListItemText
-                    primary={getActivityLabel(log.activityType)}
+                    primary={formatActivityDisplay(log.activityType, log.metadata)}
                     secondary={
                       <>
                         {/* Attribution line stays small and muted through MUI color tokens instead of Tailwind text classes. */}
