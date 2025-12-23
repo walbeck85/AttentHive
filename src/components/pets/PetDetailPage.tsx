@@ -52,6 +52,8 @@ type PetDetailPageProps = {
   isOwner?: boolean;
   // The current user's role determines which actions they can perform.
   currentUserRole: 'OWNER' | 'CAREGIVER' | 'VIEWER';
+  // The current user's ID for checking edit permissions on activities.
+  currentUserId: string;
 };
 
 export default function PetDetailPage({
@@ -59,6 +61,7 @@ export default function PetDetailPage({
   hiveMembers: hiveMembersProp,
   isOwner: isOwnerProp = false,
   currentUserRole,
+  currentUserId,
 }: PetDetailPageProps) {
   const router = useRouter();
 
@@ -155,7 +158,9 @@ export default function PetDetailPage({
         createdAt: new Date().toISOString(),
         notes: null,
         metadata: metadata as CareLog['metadata'],
-        user: { name: data.log?.user?.name ?? null },
+        user: { id: currentUserId, name: data.log?.user?.name ?? null },
+        photoUrl: null,
+        editedAt: null,
       };
       setPet((prev) =>
         prev ? { ...prev, careLogs: [newCareLog, ...prev.careLogs] } : prev
@@ -308,7 +313,23 @@ export default function PetDetailPage({
           setPet={setPet}
         />
 
-        <PetDetailActivitySection careLogs={pet.careLogs} />
+        <PetDetailActivitySection
+          careLogs={pet.careLogs}
+          currentUserId={currentUserId}
+          canEdit={canLogCareActions}
+          onCareLogUpdated={(updatedLog) => {
+            setPet((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    careLogs: prev.careLogs.map((log) =>
+                      log.id === updatedLog.id ? updatedLog : log
+                    ),
+                  }
+                : prev
+            );
+          }}
+        />
 
         <PetDetailHiveSection
           recipientId={pet.id}

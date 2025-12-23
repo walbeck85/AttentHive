@@ -24,7 +24,7 @@ export type CareLog = {
   createdAt: string;
   notes?: string | null;
   metadata?: ActivityMetadata | Record<string, unknown>;
-  user: { name: string | null };
+  user: { id: string; name: string | null };
   photoUrl?: string | null;
   editedAt?: string | null;
 };
