@@ -5,6 +5,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { canEditPet, type PetWithOwnership } from '@/lib/permissions';
 
 // Force Node runtime so file uploads and Supabase SDK behave consistently.
 export const runtime = 'nodejs';
@@ -125,16 +126,34 @@ export async function POST(
       );
     }
 
-    // Recipients are our "pets", so we key authorization off ownerId to keep access strict.
-    const recipient = await prisma.recipient.findFirst({
-      where: {
-        id,
-        ownerId: dbUser.id,
+    // Fetch the pet with hive members to check permissions
+    const recipient = await prisma.recipient.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        ownerId: true,
+        hives: {
+          select: { userId: true, role: true },
+        },
       },
     });
 
     if (!recipient) {
-      // From the caller’s perspective, this is just "not found" to avoid hinting at other users’ data.
+      // From the caller's perspective, this is just "not found" to avoid hinting at other users' data.
+      return jsonResponse(
+        { error: 'Pet not found or you do not have permission to modify it.' },
+        { status: 404 }
+      );
+    }
+
+    // Build ownership context for permission check
+    const pet: PetWithOwnership = {
+      ownerId: recipient.ownerId,
+      members: recipient.hives,
+    };
+
+    // Both primary owner and co-owners can upload photos
+    if (!canEditPet(pet, dbUser.id)) {
       return jsonResponse(
         { error: 'Pet not found or you do not have permission to modify it.' },
         { status: 404 }
