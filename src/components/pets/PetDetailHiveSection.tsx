@@ -12,6 +12,7 @@ import type { HiveMember } from '@/components/pets/petDetailTypes';
 type PetDetailHiveSectionProps = {
   recipientId: string;
   isOwner: boolean;
+  isPrimaryOwner: boolean;
   initialMembers: HiveMember[];
 };
 
@@ -20,6 +21,7 @@ type PetDetailHiveSectionProps = {
 export default function PetDetailHiveSection({
   recipientId,
   isOwner,
+  isPrimaryOwner,
   initialMembers,
 }: PetDetailHiveSectionProps) {
   return (
@@ -46,6 +48,7 @@ export default function PetDetailHiveSection({
           <HivePanel
             recipientId={recipientId}
             isOwner={isOwner}
+            isPrimaryOwner={isPrimaryOwner}
             initialMembers={initialMembers}
           />
         </CardContent>
