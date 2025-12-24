@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { inviteCaregiverToPet } from '@/lib/hive';
+import { inviteMemberToPet } from '@/lib/hive';
 
 // Keep the payload tight so this endpoint doesn't drift over time
 const inviteSchema = z.object({
   recipientId: z.string().min(1, 'recipientId is required'),
   email: z.string().email('A valid email is required'),
+  role: z.enum(['OWNER', 'CAREGIVER']).optional().default('CAREGIVER'),
 });
 
 export async function POST(request: NextRequest) {
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     if (!session || !session.user?.email) {
       return NextResponse.json(
-        { error: 'You must be logged in to invite a caregiver' },
+        { error: 'You must be logged in to invite members' },
         { status: 401 },
       );
     }
@@ -40,14 +41,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { recipientId, email } = parsed.data;
+    const { recipientId, email, role } = parsed.data;
 
     // Permission checks + DB work live in the lib helper
-    const membership = await inviteCaregiverToPet(recipientId, email);
+    const membership = await inviteMemberToPet(recipientId, email, role);
 
+    const roleLabel = role === 'OWNER' ? 'Co-owner' : 'Caregiver';
     return NextResponse.json(
       {
-        message: 'Caregiver invited successfully',
+        message: `${roleLabel} invited successfully`,
         membership,
       },
       { status: 201 },
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : 'Something went wrong while inviting a caregiver',
+            : 'Something went wrong while inviting a member',
       },
       { status: 500 },
     );
