@@ -67,6 +67,7 @@ Earlier iterations of this project used the working title **Mimamori** (見守�
 
 - **User authentication**
   - Sign up, login, logout, session handling
+  - Password reset flow via email (Resend integration)
 - **Pet profiles (full CRUD)**
   - Create, view, update, and delete pets with ownership validation
   - Profile fields: name, type, breed, birth date, weight, gender
@@ -77,18 +78,20 @@ Earlier iterations of this project used the working title **Mimamori** (見守�
   - Photos stored in Supabase Storage
 - **Care activity logging**
   - Track feeding, walking, medication, bathroom, accident, and vomit events
+  - Pet-type specific actions (Walk for dogs, Litter Box for cats)
+  - Optional photo attachments on activity logs
 - **Activity timeline**
   - See who did what, when, for each pet
 - **Mobile‑responsive UI**
   - Designed to work cleanly on phones, tablets, and desktops
 - **Shared pet access via Hive**
   - Many‑to‑many relationship between users and pets for shared households
+  - Multiple owners per pet (primary owner + co-owners)
 - **Role‑based permissions**
-  - Owner, caregiver, viewer roles with different capabilities
+  - Primary owner, co-owner, caregiver, viewer roles with different capabilities
+  - Centralized permission utilities for consistent authorization
 - **Activity filtering**
-  - Filter by type (feed, walk, medicate, etc.) and by date range
-
-> Note: An initial version of Hive sharing, shared pet access, and activity filtering is now implemented and used throughout the dashboard and pet detail flows. 
+  - Filter by type (feed, walk, medicate, etc.) and by date range 
 
 ---
 
@@ -135,7 +138,7 @@ AttentHive/
 │   ├── prisma-healthcheck.ts      # TypeScript version of DB healthcheck logic
 │   └── run-healthcheck.mjs        # Orchestrator script to run healthcheck in CI/dev
 ├── src
-│   ├── __tests__                  # Jest + React Testing Library test suites
+│   ├── __tests__                  # Jest + React Testing Library test suites (319 tests)
 │   │   ├── api                    # API route tests (server-side logic)
 │   │   │   ├── pets-id-route.test.ts   # Tests for /api/pets/[id] endpoint
 │   │   │   └── pets-route.test.ts      # Tests for /api/pets CRUD list/create endpoint
@@ -143,7 +146,9 @@ AttentHive/
 │   │   │   ├── LoginPage.test.tsx      # Login page rendering and validation tests
 │   │   │   └── SignupPage.test.tsx     # Signup page rendering and validation tests
 │   │   ├── hive                   # Hive tests
-│   │   │   └── HiveLinks.test.tsx         # Ensures Hive links navigate to pets
+│   │   │   └── HiveLinks.test.tsx      # Ensures Hive links navigate to pets
+│   │   ├── lib                    # Library/utility tests
+│   │   │   └── permissions.test.ts     # Permission utility tests (44 tests)
 │   │   ├── Components             # Component-level unit tests
 │   │   │   └── PetCard.test.tsx   # PetCard behavior, quick actions, and links
 │   │   └── smoke.test.ts          # Basic smoke test to verify Jest wiring
@@ -236,12 +241,16 @@ AttentHive/
 │   │   └── UserProfileForm.tsx          # Form for editing user profile/contact info
 │   ├── lib
 │   │   ├── auth-client.ts               # Client-side helpers for NextAuth sign-in/out
+│   │   ├── auth-helpers.ts              # Centralized auth functions (getDbUserFromSession, canAccessPet, etc.)
 │   │   ├── auth.ts                      # NextAuth server configuration and adapters
 │   │   ├── authRedirect.ts              # Safe callback URL handling to prevent open redirects
 │   │   ├── breeds.ts                    # Static breed list and helpers for BreedSelect
+│   │   ├── email.ts                     # Email utilities (Resend integration for password reset)
 │   │   ├── hive.ts                      # Hive utility functions and role helpers
+│   │   ├── permissions.ts               # Permission utilities (isPrimaryOwner, isCoOwner, canRemoveMember, etc.)
 │   │   ├── petCharacteristics.ts        # Characteristic definitions and mapping utilities
 │   │   ├── prisma.ts                    # Prisma client singleton (avoids hot-reload issues)
+│   │   ├── storage.ts                   # Supabase storage helpers for photo uploads
 │   │   └── supabase-server.ts           # Helper for connecting to Supabase-hosted Postgres
 │   ├── test-utils.tsx                   # Custom RTL render helpers and providers for tests
 │   └── theme.ts                         # Central MUI theme definition (colors, typography, cards)
@@ -636,11 +645,12 @@ Formal support channels (email, chat, etc.) are still to be determined for early
 
 Planned enhancements include:
 
-- Hive sharing with role-based permissions
-- Richer filtering and reporting on activity history
 - Reminders/notifications for overdue care tasks
 - Dashboard metrics for households with multiple pets
 - Improved onboarding for shared households and pet-sitters
+- Weekly care summary emails
+- User profile photos
+- Account deletion flow (GDPR/CCPA compliance)
 
 If you have ideas that would make AttentHive more useful for your household or care network, please open an issue or submit a PR.
 

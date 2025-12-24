@@ -1,6 +1,6 @@
 # AttentHive Backlog
 
-Last updated: 2025-12-22
+Last updated: 2025-12-24
 
 ---
 
@@ -25,10 +25,10 @@ Last updated: 2025-12-22
 
 | | Item | Complexity | Status | Notes |
 |---|------|------------|--------|-------|
-| [ ] | Pet-type specific actions | 🟡 Medium | Not started | Dogs: Walk, Feed, Medicate, Accident, Wellness Check. Cats: Litter Box, Feed, Medicate, Accident, Wellness Check. |
-| [ ] | Password reset flow | 🟡 Medium | Not started | Requires email infrastructure (Resend). Critical - no recovery path currently. |
-| [ ] | Photo on activity logs | 🟡 Medium | Not started | Optional photo per CareLog. 5MB limit. Track edits with editedAt timestamp. |
-| [ ] | Multiple owners per pet | 🔴 High | Not started | Option B: Keep primary ownerId + allow OWNER role in Hive as co-owners. Primary owner can remove co-owners. |
+| [x] | Pet-type specific actions | 🟡 Medium | ✅ Complete | PRs #98, #99. Dogs: Walk, Bathroom, Feed, Medicate, Accident, Wellness. Cats: Litter Box, Feed, Medicate, Accident, Wellness. |
+| [x] | Password reset flow | 🟡 Medium | ✅ Complete | PR #100. Resend integration, token-based reset, noreply@attenthive.app |
+| [x] | Photo on activity logs | 🟡 Medium | ✅ Complete | PR #101. Optional photo per CareLog, editedAt tracking, 5MB limit |
+| [x] | Multiple owners per pet | 🔴 High | ✅ Complete | PR #102. Primary owner + co-owners via Hive OWNER role |
 
 ---
 
@@ -95,7 +95,7 @@ Last updated: 2025-12-22
 | Item | Completed Date | Notes |
 |------|----------------|-------|
 | Pet profile enhancements | Dec 2025 | Description, specialNotes, characteristics |
-| Testing infrastructure | Dec 2025 | 84 tests, Prisma mocks, coverage reporting |
+| Testing infrastructure | Dec 2025 | 319 tests, Prisma mocks, coverage reporting |
 | README rebrand | Dec 2025 | Full documentation update |
 | Walk Timer feature | Dec 2025 | Duration tracking, bathroom events |
 | CareCircle → Hive rebrand | Dec 2025 | Full codebase rename |
@@ -109,6 +109,10 @@ Last updated: 2025-12-22
 | Image upload MIME validation | Dec 2025 | Magic byte validation |
 | Pet detail QuickActions | Dec 2025 | Walk/Feed/Medicate/Accident on detail page, OWNER/CAREGIVER only |
 | Fix Hive add caregiver bug | Dec 2025 | PetDetailShell positional child destructuring dropped HiveSection when QuickActions present |
+| Pet-type specific actions | Dec 2025 | PRs #98, #99. Filter QuickActions by species, 319 tests |
+| Password reset flow | Dec 2025 | PR #100. Resend integration, token-based reset |
+| Photo on activity logs | Dec 2025 | PR #101. Optional photo per CareLog, editedAt tracking |
+| Multiple owners per pet | Dec 2025 | PR #102. Primary owner + co-owners via Hive OWNER role, 55 new tests |
 
 ---
 
