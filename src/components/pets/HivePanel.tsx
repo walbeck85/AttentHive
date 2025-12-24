@@ -203,12 +203,16 @@ export default function HivePanel({
         <List disablePadding>
           {members.map((member) => {
             const displayName = member.userName || member.userEmail;
+            // Members with OWNER role in hive are co-owners (primary owner is on pet.ownerId)
             const roleLabel =
               member.role === "OWNER"
-                ? "Owner"
+                ? "Co-owner"
                 : member.role === "CAREGIVER"
                   ? "Caregiver"
                   : "Viewer";
+            // Distinct colors: amber for co-owners, blue for caregivers
+            const isCoOwner = member.role === "OWNER";
+            const chipColor = isCoOwner ? "warning" : "info";
             const initials =
               (member.userName || member.userEmail || "?")
                 .split(" ")
@@ -216,6 +220,13 @@ export default function HivePanel({
                 .join("")
                 .slice(0, 2)
                 .toUpperCase();
+
+            // Remove button visibility:
+            // - Primary owner can remove anyone (co-owners and caregivers)
+            // - Co-owners can only remove caregivers, not other co-owners
+            const canRemove = isPrimaryOwner
+              ? true
+              : isOwner && !isCoOwner;
 
             return (
               <ListItem
@@ -263,10 +274,10 @@ export default function HivePanel({
                   <Chip
                     label={roleLabel}
                     size="small"
+                    color={chipColor}
                     variant="outlined"
-                    sx={{ textTransform: "capitalize" }}
                   />
-                  {isOwner && member.role !== "OWNER" && (
+                  {canRemove && (
                     <Button
                       type="button"
                       onClick={() => handleRemove(member.id)}
