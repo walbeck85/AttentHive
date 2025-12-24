@@ -1,9 +1,10 @@
 // src/components/pets/ConfirmActionModal.tsx
 'use client';
 
-import React from 'react';
-import { Box, Button, Paper, Stack, Typography } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
+import ActivityPhotoPicker from './ActivityPhotoPicker';
 
 type ConfirmActionModalProps = {
   open: boolean;
@@ -11,13 +12,15 @@ type ConfirmActionModalProps = {
   body: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  onConfirm: () => void;
+  onConfirm: (photo: File | null) => void;
   onCancel: () => void;
+  isLoading?: boolean;
 };
 
 /**
  * Full-screen confirmation modal for quick actions.
  * Styled with the MUI theme so it matches light/dark mode surfaces.
+ * Now supports optional photo attachment.
  */
 export default function ConfirmActionModal({
   open,
@@ -27,9 +30,11 @@ export default function ConfirmActionModal({
   cancelLabel = 'Cancel',
   onConfirm,
   onCancel,
+  isLoading = false,
 }: ConfirmActionModalProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
 
   if (!open) return null;
 
@@ -43,6 +48,17 @@ export default function ConfirmActionModal({
   const cardShadow = isDark
     ? `0 28px 70px ${alpha(theme.palette.common.black, 0.7)}`
     : `0 20px 50px ${alpha(theme.palette.common.black, 0.35)}`;
+
+  const handleConfirm = () => {
+    const photo = selectedPhoto;
+    setSelectedPhoto(null);
+    onConfirm(photo);
+  };
+
+  const handleCancel = () => {
+    setSelectedPhoto(null);
+    onCancel();
+  };
 
   return (
     <Box
@@ -62,7 +78,7 @@ export default function ConfirmActionModal({
         px: 2,
         py: 3,
       }}
-      onClick={onCancel} // click on backdrop closes
+      onClick={handleCancel} // click on backdrop closes
     >
       <Paper
         onClick={(event) => event.stopPropagation()} // don't close when clicking inside
@@ -97,11 +113,20 @@ export default function ConfirmActionModal({
             {body}
           </Typography>
 
+          {/* Photo picker */}
+          <Box sx={{ py: 1 }}>
+            <ActivityPhotoPicker
+              onPhotoChange={setSelectedPhoto}
+              disabled={isLoading}
+            />
+          </Box>
+
           <Stack direction="row" spacing={1.5} justifyContent="center" width="100%" pt={0.5}>
             <Button
               variant="outlined"
               color="inherit"
-              onClick={onCancel}
+              onClick={handleCancel}
+              disabled={isLoading}
               sx={{
                 borderColor: isDark
                   ? alpha(theme.palette.common.white, 0.25)
@@ -118,7 +143,8 @@ export default function ConfirmActionModal({
             <Button
               variant="contained"
               color="primary"
-              onClick={onConfirm}
+              onClick={handleConfirm}
+              disabled={isLoading}
               sx={{
                 px: 2.75,
                 minWidth: 130,
@@ -128,7 +154,11 @@ export default function ConfirmActionModal({
                   : `0 8px 18px ${alpha(theme.palette.primary.main, 0.25)}`,
               }}
             >
-              {confirmLabel}
+              {isLoading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                confirmLabel
+              )}
             </Button>
           </Stack>
         </Stack>

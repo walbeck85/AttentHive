@@ -52,6 +52,8 @@ type PetDetailPageProps = {
   isOwner?: boolean;
   // The current user's role determines which actions they can perform.
   currentUserRole: 'OWNER' | 'CAREGIVER' | 'VIEWER';
+  // The current user's ID for checking edit permissions on activities.
+  currentUserId: string;
 };
 
 export default function PetDetailPage({
@@ -59,6 +61,7 @@ export default function PetDetailPage({
   hiveMembers: hiveMembersProp,
   isOwner: isOwnerProp = false,
   currentUserRole,
+  currentUserId,
 }: PetDetailPageProps) {
   const router = useRouter();
 
@@ -123,10 +126,11 @@ export default function PetDetailPage({
     }
   };
 
-  // Generic function to log activity with optional metadata
+  // Generic function to log activity with optional metadata and photo
   const logActivity = async (
     activityType: ActivityType,
-    metadata?: Record<string, unknown> | null
+    metadata?: Record<string, unknown> | null,
+    photo?: File | null
   ) => {
     if (!pet) return;
 
@@ -148,14 +152,37 @@ export default function PetDetailPage({
         return;
       }
 
+      const logId = data.log?.id;
+      let photoUrl: string | null = null;
+
+      // Upload photo if provided
+      if (photo && logId) {
+        const formData = new FormData();
+        formData.append('file', photo);
+
+        const photoRes = await fetch(`/api/care-logs/${logId}/photo`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (photoRes.ok) {
+          const photoData = await photoRes.json();
+          photoUrl = photoData.photoUrl ?? null;
+        } else {
+          console.error('Failed to upload photo');
+        }
+      }
+
       // Add the new care log to the local state so UI updates immediately
       const newCareLog: CareLog = {
-        id: data.log?.id ?? crypto.randomUUID(),
+        id: logId ?? crypto.randomUUID(),
         activityType: activityType as CareLog['activityType'],
         createdAt: new Date().toISOString(),
         notes: null,
         metadata: metadata as CareLog['metadata'],
-        user: { name: data.log?.user?.name ?? null },
+        user: { id: currentUserId, name: data.log?.user?.name ?? null },
+        photoUrl,
+        editedAt: photoUrl ? new Date().toISOString() : null,
       };
       setPet((prev) =>
         prev ? { ...prev, careLogs: [newCareLog, ...prev.careLogs] } : prev
@@ -192,8 +219,8 @@ export default function PetDetailPage({
   };
 
   // Bathroom modal handler
-  const handleBathroomConfirm = async (metadata: BathroomMetadata) => {
-    await logActivity('BATHROOM', metadata);
+  const handleBathroomConfirm = async (metadata: BathroomMetadata, photo: File | null) => {
+    await logActivity('BATHROOM', metadata, photo);
     setIsBathroomOpen(false);
     setPendingConfig(null);
   };
@@ -204,8 +231,8 @@ export default function PetDetailPage({
   };
 
   // Accident modal handler
-  const handleAccidentConfirm = async (metadata: AccidentMetadata) => {
-    await logActivity('ACCIDENT', metadata);
+  const handleAccidentConfirm = async (metadata: AccidentMetadata, photo: File | null) => {
+    await logActivity('ACCIDENT', metadata, photo);
     setIsAccidentOpen(false);
     setPendingConfig(null);
   };
@@ -308,7 +335,23 @@ export default function PetDetailPage({
           setPet={setPet}
         />
 
-        <PetDetailActivitySection careLogs={pet.careLogs} />
+        <PetDetailActivitySection
+          careLogs={pet.careLogs}
+          currentUserId={currentUserId}
+          canEdit={canLogCareActions}
+          onCareLogUpdated={(updatedLog) => {
+            setPet((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    careLogs: prev.careLogs.map((log) =>
+                      log.id === updatedLog.id ? updatedLog : log
+                    ),
+                  }
+                : prev
+            );
+          }}
+        />
 
         <PetDetailHiveSection
           recipientId={pet.id}

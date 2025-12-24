@@ -1,9 +1,11 @@
 // src/components/pets/BathroomModal.tsx
 'use client';
 
-import { Box, Button, Paper, Stack, Typography } from '@mui/material';
+import { useState } from 'react';
+import { Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import type { BathroomSubtype } from '@/config/activityTypes';
+import ActivityPhotoPicker from './ActivityPhotoPicker';
 
 export type BathroomMetadata = {
   subtype: BathroomSubtype;
@@ -12,8 +14,9 @@ export type BathroomMetadata = {
 interface BathroomModalProps {
   open: boolean;
   petName: string;
-  onConfirm: (metadata: BathroomMetadata) => void;
+  onConfirm: (metadata: BathroomMetadata, photo: File | null) => void;
   onClose: () => void;
+  isLoading?: boolean;
 }
 
 export default function BathroomModal({
@@ -21,14 +24,23 @@ export default function BathroomModal({
   petName,
   onConfirm,
   onClose,
+  isLoading = false,
 }: BathroomModalProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
 
   if (!open) return null;
 
   const handleSelect = (subtype: BathroomSubtype) => {
-    onConfirm({ subtype });
+    const photo = selectedPhoto;
+    setSelectedPhoto(null);
+    onConfirm({ subtype }, photo);
+  };
+
+  const handleClose = () => {
+    setSelectedPhoto(null);
+    onClose();
   };
 
   const overlayColor = alpha(theme.palette.common.black, isDark ? 0.65 : 0.4);
@@ -55,7 +67,7 @@ export default function BathroomModal({
         px: 2,
         py: 3,
       }}
-      onClick={onClose}
+      onClick={handleClose}
     >
       <Paper
         onClick={(e) => e.stopPropagation()}
@@ -86,12 +98,19 @@ export default function BathroomModal({
             What type of bathroom event?
           </Typography>
 
+          {/* Photo picker */}
+          <ActivityPhotoPicker
+            onPhotoChange={setSelectedPhoto}
+            disabled={isLoading}
+          />
+
           {/* Selection Buttons */}
           <Stack direction="row" spacing={2} width="100%">
             <Button
               variant="outlined"
               fullWidth
               onClick={() => handleSelect('pee')}
+              disabled={isLoading}
               sx={{
                 py: 2,
                 fontSize: '1.1rem',
@@ -103,12 +122,13 @@ export default function BathroomModal({
                 },
               }}
             >
-              💧 Pee
+              {isLoading ? <CircularProgress size={20} /> : '💧 Pee'}
             </Button>
             <Button
               variant="outlined"
               fullWidth
               onClick={() => handleSelect('poo')}
+              disabled={isLoading}
               sx={{
                 py: 2,
                 fontSize: '1.1rem',
@@ -120,7 +140,7 @@ export default function BathroomModal({
                 },
               }}
             >
-              💩 Poo
+              {isLoading ? <CircularProgress size={20} /> : '💩 Poo'}
             </Button>
           </Stack>
 
@@ -128,8 +148,9 @@ export default function BathroomModal({
           <Button
             variant="outlined"
             color="inherit"
-            onClick={onClose}
+            onClick={handleClose}
             fullWidth
+            disabled={isLoading}
             sx={{
               mt: 1,
               borderColor: isDark

@@ -81,7 +81,9 @@ export default async function PetDetailsPage({ params }: Params) {
     createdAt: log.createdAt.toISOString(),
     notes: log.notes,
     metadata: (log as unknown as { metadata?: CareLog["metadata"] }).metadata ?? null,
-    user: { name: log.user?.name ?? null },
+    user: { id: log.userId, name: log.user?.name ?? null },
+    photoUrl: log.photoUrl ?? null,
+    editedAt: log.editedAt?.toISOString() ?? null,
   }));
 
   // Normalize the pet record into PetData so the client gets a stable, string-
@@ -155,6 +157,7 @@ export default async function PetDetailsPage({ params }: Params) {
       hiveMembers={hiveMembers}
       isOwner={isOwner}
       currentUserRole={currentUserRole}
+      currentUserId={dbUser.id}
     />
   );
 }

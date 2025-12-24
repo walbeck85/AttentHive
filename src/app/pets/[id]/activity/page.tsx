@@ -6,7 +6,8 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ActivityType } from '@prisma/client';
 import PetAvatar from '@/components/pets/PetAvatar';
-import { Box, Button, Container, Paper, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, Container, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 import {
   formatDateTime,
   formatActivityDisplay,
@@ -27,6 +28,8 @@ type CareLog = {
     id: string;
     name: string;
   };
+  photoUrl?: string | null;
+  editedAt?: string | null;
 };
 
 // Page component -----------------------------------------------
@@ -311,12 +314,11 @@ export default function ActivityLogPage() {
                     },
                   }}
                 >
-                  <div>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography
                       variant="body2"
                       sx={{
                         fontWeight: 600,
-                        // Rely on text.primary so labels stay legible in both light and dark mode without manual mode checks.
                         color: 'text.primary',
                       }}
                     >
@@ -329,7 +331,6 @@ export default function ActivityLogPage() {
                       by{' '}
                       <Box
                         component="span"
-                        // Use a primary accent for the author to keep emphasis consistent with the theme.
                         sx={{ color: 'primary.main', fontWeight: 500 }}
                       >
                         {log.user?.name || 'Someone'}
@@ -338,21 +339,66 @@ export default function ActivityLogPage() {
                     {log.notes && (
                       <Typography
                         variant="caption"
+                        component="p"
                         sx={{
-                          mt: 1,
+                          mt: 0.5,
                           color: 'text.secondary',
                         }}
                       >
                         {log.notes}
                       </Typography>
                     )}
-                  </div>
-                  <Typography
-                    variant="caption"
-                    sx={{ whiteSpace: 'nowrap', color: 'text.secondary' }}
-                  >
-                    {formatDateTime(log.createdAt)}
-                  </Typography>
+                    {/* Photo thumbnail */}
+                    {log.photoUrl && (
+                      <Box
+                        sx={{
+                          mt: 1,
+                          width: 80,
+                          height: 60,
+                          borderRadius: 1,
+                          overflow: 'hidden',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={log.photoUrl}
+                          alt="Activity photo"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                      </Box>
+                    )}
+                  </Box>
+                  {/* Timestamp and edited badge */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5, ml: 2 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ whiteSpace: 'nowrap', color: 'text.secondary' }}
+                    >
+                      {formatDateTime(log.createdAt)}
+                    </Typography>
+                    {log.editedAt && (
+                      <Tooltip title={`Edited ${formatDateTime(log.editedAt)}`} arrow>
+                        <Chip
+                          icon={<EditIcon sx={{ fontSize: 12 }} />}
+                          label="edited"
+                          size="small"
+                          variant="outlined"
+                          sx={{
+                            height: 20,
+                            fontSize: 10,
+                            '& .MuiChip-icon': { ml: 0.5 },
+                            '& .MuiChip-label': { px: 0.5 },
+                          }}
+                        />
+                      </Tooltip>
+                    )}
+                  </Box>
                 </Box>
               ))}
             </Box>

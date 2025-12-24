@@ -65,6 +65,8 @@ export function createMockCareLog(overrides?: Partial<CareLog>): CareLog {
     notes: null,
     metadata: null,
     createdAt: now,
+    photoUrl: null,
+    editedAt: null,
     ...overrides,
   };
 }
