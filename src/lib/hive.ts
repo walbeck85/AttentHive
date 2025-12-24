@@ -217,10 +217,10 @@ export async function getSharedPetsForUser(userId: string) {
   const memberships = await prisma.hive.findMany({
     where: {
       userId,
-      // We treat CAREGIVER and VIEWER as "shared" access.
-      // If you later add OWNER rows to Hive, you can decide whether to include/exclude them here.
+      // Include all hive roles: co-owners (OWNER), caregivers, and viewers.
+      // Co-owners should see the pet in their "Pets you care for" section.
       role: {
-        in: ['CAREGIVER', 'VIEWER'],
+        in: ['OWNER', 'CAREGIVER', 'VIEWER'],
       },
     },
     include: {

@@ -80,11 +80,12 @@ export async function loadHivePageData(): Promise<HivePageData | null> {
   }));
 
   // 2) People caring for your pets (you are the owner).
-  // This mirrors the original grouping logic so behavior stays identical.
+  // This includes caregivers, viewers, AND co-owners (role: OWNER in hive).
   const caregiverMemberships = await prisma.hive.findMany({
     where: {
       recipient: { ownerId: dbUser.id },
-      role: { in: ["CAREGIVER", "VIEWER"] },
+      // Include all hive members: co-owners, caregivers, and viewers
+      role: { in: ["OWNER", "CAREGIVER", "VIEWER"] },
     },
     include: {
       user: true,
@@ -125,11 +126,13 @@ export async function loadHivePageData(): Promise<HivePageData | null> {
 
   // 3) Pets you care for (someone else is the owner).
   // We explicitly exclude pets you own so they only appear in the
-  // "Pets you own" section, even if you also have a caregiver record.
+  // "Pets you own" section, even if you also have a hive membership record.
+  // Include co-owners (OWNER role), caregivers, and viewers.
   const petsYouCareForMemberships = await prisma.hive.findMany({
     where: {
       userId: dbUser.id,
-      role: { in: ["CAREGIVER", "VIEWER"] },
+      // Include all hive roles: co-owners, caregivers, and viewers
+      role: { in: ["OWNER", "CAREGIVER", "VIEWER"] },
       recipient: {
         ownerId: { not: dbUser.id },
       },
