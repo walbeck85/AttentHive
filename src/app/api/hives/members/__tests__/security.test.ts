@@ -1,4 +1,4 @@
-import { GET } from '../route';
+import { GET, DELETE } from '../route';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { createMockUser } from '@/__tests__/utils/test-factories';
@@ -37,6 +37,8 @@ jest.mock('@/lib/prisma', () => ({
     },
     hive: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
+      delete: jest.fn(),
     },
   },
 }));
@@ -236,6 +238,232 @@ describe('GET /api/hives/members - Security', () => {
           },
         },
       });
+    });
+  });
+});
+
+// DELETE handler type for testing
+type DeleteHandler = (request: Request) => Promise<Response>;
+const deleteHandler = DELETE as unknown as DeleteHandler;
+
+const createDeleteRequest = (
+  url: string,
+  body?: { membershipId?: string; recipientId?: string }
+): Request =>
+  ({
+    url,
+    json: async () => body ?? {},
+  }) as unknown as Request;
+
+describe('DELETE /api/hives/members - Owner Permission Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // Helper to set up common mocks
+  const setupMocks = (
+    actingUser: { id: string; email: string },
+    membership: {
+      id: string;
+      userId: string;
+      recipientId: string;
+      role: 'OWNER' | 'CAREGIVER' | 'VIEWER';
+      recipient: { ownerId: string };
+    },
+    allMembers: Array<{ userId: string; role: 'OWNER' | 'CAREGIVER' | 'VIEWER' }>
+  ) => {
+    (getServerSession as jest.Mock).mockResolvedValue({
+      user: { email: actingUser.email },
+    });
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(actingUser);
+    (prisma.hive.findUnique as jest.Mock).mockResolvedValue(membership);
+    (prisma.hive.findMany as jest.Mock).mockResolvedValue(allMembers);
+    (prisma.hive.delete as jest.Mock).mockResolvedValue({});
+  };
+
+  describe('Primary owner removing members', () => {
+    it('primary owner removes co-owner → allowed', async () => {
+      const primaryOwner = createMockUser({ id: 'primary-owner', email: 'primary@example.com' });
+      const coOwnerMembership = {
+        id: 'membership-1',
+        userId: 'co-owner',
+        recipientId: 'pet-1',
+        role: 'OWNER' as const,
+        recipient: { ownerId: 'primary-owner' },
+      };
+      const allMembers = [
+        { userId: 'co-owner', role: 'OWNER' as const },
+        { userId: 'caregiver-1', role: 'CAREGIVER' as const },
+      ];
+
+      setupMocks(primaryOwner, coOwnerMembership, allMembers);
+
+      const req = createDeleteRequest(
+        'http://localhost/api/hives/members',
+        { membershipId: 'membership-1' }
+      );
+      const res = await deleteHandler(req);
+
+      expect(res.status).toBe(200);
+      expect(prisma.hive.delete).toHaveBeenCalledWith({
+        where: { id: 'membership-1' },
+      });
+    });
+
+    it('primary owner removes caregiver → allowed', async () => {
+      const primaryOwner = createMockUser({ id: 'primary-owner', email: 'primary@example.com' });
+      const caregiverMembership = {
+        id: 'membership-2',
+        userId: 'caregiver-1',
+        recipientId: 'pet-1',
+        role: 'CAREGIVER' as const,
+        recipient: { ownerId: 'primary-owner' },
+      };
+      const allMembers = [
+        { userId: 'co-owner', role: 'OWNER' as const },
+        { userId: 'caregiver-1', role: 'CAREGIVER' as const },
+      ];
+
+      setupMocks(primaryOwner, caregiverMembership, allMembers);
+
+      const req = createDeleteRequest(
+        'http://localhost/api/hives/members',
+        { membershipId: 'membership-2' }
+      );
+      const res = await deleteHandler(req);
+
+      expect(res.status).toBe(200);
+      expect(prisma.hive.delete).toHaveBeenCalledWith({
+        where: { id: 'membership-2' },
+      });
+    });
+  });
+
+  describe('Co-owner removing members', () => {
+    it('co-owner removes caregiver → allowed', async () => {
+      const coOwner = createMockUser({ id: 'co-owner', email: 'coowner@example.com' });
+      const caregiverMembership = {
+        id: 'membership-2',
+        userId: 'caregiver-1',
+        recipientId: 'pet-1',
+        role: 'CAREGIVER' as const,
+        recipient: { ownerId: 'primary-owner' },
+      };
+      const allMembers = [
+        { userId: 'co-owner', role: 'OWNER' as const },
+        { userId: 'caregiver-1', role: 'CAREGIVER' as const },
+      ];
+
+      setupMocks(coOwner, caregiverMembership, allMembers);
+
+      const req = createDeleteRequest(
+        'http://localhost/api/hives/members',
+        { membershipId: 'membership-2' }
+      );
+      const res = await deleteHandler(req);
+
+      expect(res.status).toBe(200);
+      expect(prisma.hive.delete).toHaveBeenCalledWith({
+        where: { id: 'membership-2' },
+      });
+    });
+
+    it('co-owner removes another co-owner → forbidden', async () => {
+      const coOwner1 = createMockUser({ id: 'co-owner-1', email: 'coowner1@example.com' });
+      const coOwner2Membership = {
+        id: 'membership-3',
+        userId: 'co-owner-2',
+        recipientId: 'pet-1',
+        role: 'OWNER' as const,
+        recipient: { ownerId: 'primary-owner' },
+      };
+      const allMembers = [
+        { userId: 'co-owner-1', role: 'OWNER' as const },
+        { userId: 'co-owner-2', role: 'OWNER' as const },
+        { userId: 'caregiver-1', role: 'CAREGIVER' as const },
+      ];
+
+      setupMocks(coOwner1, coOwner2Membership, allMembers);
+
+      const req = createDeleteRequest(
+        'http://localhost/api/hives/members',
+        { membershipId: 'membership-3' }
+      );
+      const res = await deleteHandler(req);
+
+      expect(res.status).toBe(403);
+      expect(prisma.hive.delete).not.toHaveBeenCalled();
+    });
+
+    it('co-owner removes primary owner → forbidden', async () => {
+      const coOwner = createMockUser({ id: 'co-owner', email: 'coowner@example.com' });
+      // Note: This would require the primary owner to have a Hive membership
+      // In practice, primary owner is on ownerId, not in Hive table
+      // But if they somehow had a Hive OWNER record, it should still be blocked
+      const primaryOwnerMembership = {
+        id: 'membership-primary',
+        userId: 'primary-owner',
+        recipientId: 'pet-1',
+        role: 'OWNER' as const,
+        recipient: { ownerId: 'primary-owner' },
+      };
+      const allMembers = [
+        { userId: 'co-owner', role: 'OWNER' as const },
+        { userId: 'primary-owner', role: 'OWNER' as const },
+      ];
+
+      setupMocks(coOwner, primaryOwnerMembership, allMembers);
+
+      const req = createDeleteRequest(
+        'http://localhost/api/hives/members',
+        { membershipId: 'membership-primary' }
+      );
+      const res = await deleteHandler(req);
+
+      expect(res.status).toBe(403);
+      expect(prisma.hive.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Caregiver attempting to remove members', () => {
+    it('caregiver removes anyone → forbidden', async () => {
+      const caregiver = createMockUser({ id: 'caregiver-1', email: 'caregiver@example.com' });
+      const anotherCaregiverMembership = {
+        id: 'membership-4',
+        userId: 'caregiver-2',
+        recipientId: 'pet-1',
+        role: 'CAREGIVER' as const,
+        recipient: { ownerId: 'primary-owner' },
+      };
+      const allMembers = [
+        { userId: 'caregiver-1', role: 'CAREGIVER' as const },
+        { userId: 'caregiver-2', role: 'CAREGIVER' as const },
+      ];
+
+      setupMocks(caregiver, anotherCaregiverMembership, allMembers);
+
+      const req = createDeleteRequest(
+        'http://localhost/api/hives/members',
+        { membershipId: 'membership-4' }
+      );
+      const res = await deleteHandler(req);
+
+      expect(res.status).toBe(403);
+      expect(prisma.hive.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Authentication', () => {
+    it('returns 401 when user is not authenticated', async () => {
+      (getServerSession as jest.Mock).mockResolvedValue(null);
+
+      const req = createDeleteRequest(
+        'http://localhost/api/hives/members',
+        { membershipId: 'membership-1' }
+      );
+      const res = await deleteHandler(req);
+
+      expect(res.status).toBe(401);
     });
   });
 });

@@ -4,6 +4,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDbUserFromSession, canAccessPet } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { getHiveMembersForPet } from "@/lib/hive";
+import {
+  isPrimaryOwner,
+  isOwner,
+  canRemoveMember,
+  type PetWithOwnership,
+} from "@/lib/permissions";
 
 export async function GET(request: NextRequest) {
   // Ensure the caller is authenticated - use email-based lookup for OAuth compatibility
@@ -117,19 +123,40 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Only the owner of the recipient can remove caregivers/viewers.
-    if (membership.recipient.ownerId !== dbUser.id) {
+    // Fetch all hive members to build the ownership context for permission checks
+    const hiveMembers = await prisma.hive.findMany({
+      where: { recipientId: membership.recipientId },
+      select: { userId: true, role: true },
+    });
+
+    const pet: PetWithOwnership = {
+      ownerId: membership.recipient.ownerId,
+      members: hiveMembers,
+    };
+
+    const targetUserId = membership.userId;
+
+    // Cannot remove the primary owner
+    if (isPrimaryOwner(pet, targetUserId)) {
+      return NextResponse.json(
+        { error: "Cannot remove the primary owner" },
+        { status: 403 }
+      );
+    }
+
+    // Only owners (primary or co-owners) can remove members
+    if (!isOwner(pet, dbUser.id)) {
       return NextResponse.json(
         { error: "You do not have permission to modify this hive" },
         { status: 403 }
       );
     }
 
-    // Extra guardrail: do not allow removing the OWNER record.
-    if (membership.role === "OWNER") {
+    // Check if this specific removal is allowed
+    if (!canRemoveMember(pet, dbUser.id, targetUserId)) {
       return NextResponse.json(
-        { error: "Owners cannot be removed from their own hive" },
-        { status: 400 }
+        { error: "Co-owners cannot remove other owners" },
+        { status: 403 }
       );
     }
 
