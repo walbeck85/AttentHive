@@ -48,9 +48,10 @@ export type EditFieldErrors = Partial<Record<keyof EditFormState, string>>;
 type PetDetailPageProps = {
   pet: PetData;
   hiveMembers: HiveMember[];
-  // This flags whether the current user owns the pet so we can gate owner-only actions.
+  // This flags whether the current user is the primary owner (ownerId on pet).
   isOwner?: boolean;
   // The current user's role determines which actions they can perform.
+  // OWNER role can come from being primary owner OR a co-owner in the hive.
   currentUserRole: 'OWNER' | 'CAREGIVER' | 'VIEWER';
   // The current user's ID for checking edit permissions on activities.
   currentUserId: string;
@@ -355,7 +356,8 @@ export default function PetDetailPage({
 
         <PetDetailHiveSection
           recipientId={pet.id}
-          isOwner={isOwner}
+          isOwner={currentUserRole === 'OWNER'}
+          isPrimaryOwner={isOwner}
           initialMembers={hiveMembers}
         />
       </PetDetailShell>

@@ -7,6 +7,7 @@ import {
   PET_CHARACTERISTIC_IDS,
   type PetCharacteristicId,
 } from '@/lib/petCharacteristics';
+import { canEditPet, type PetWithOwnership } from '@/lib/permissions';
 
 // Helper: create a JSON Response without relying on Response.json,
 // which can be missing or behave differently in some Jest environments.
@@ -293,12 +294,15 @@ export async function PATCH(
 
     const petId = resolvedParams.id;
 
-    // Step 2: Verify the pet exists and belongs to this user
+    // Step 2: Verify the pet exists and user has permission to edit
     const existingPet = await prisma.recipient.findUnique({
       where: { id: petId },
       select: {
         id: true,
         ownerId: true,
+        hives: {
+          select: { userId: true, role: true },
+        },
       },
     });
 
@@ -309,7 +313,14 @@ export async function PATCH(
       );
     }
 
-    if (existingPet.ownerId !== dbUser.id) {
+    // Build ownership context for permission check
+    const pet: PetWithOwnership = {
+      ownerId: existingPet.ownerId,
+      members: existingPet.hives,
+    };
+
+    // Both primary owner and co-owners can edit pet details
+    if (!canEditPet(pet, dbUser.id)) {
       return jsonResponse(
         { error: 'You do not have permission to update this pet' },
         { status: 403 },

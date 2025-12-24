@@ -6,10 +6,15 @@ import {
   Box,
   Button,
   Chip,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
   List,
   ListItem,
   ListItemAvatar,
   ListItemText,
+  Radio,
+  RadioGroup,
   Stack,
   TextField,
   Typography,
@@ -36,6 +41,7 @@ type HiveMembersApiResponse = {
 type HivePanelProps = {
   recipientId: string;
   isOwner: boolean;
+  isPrimaryOwner: boolean;
   initialMembers: HiveMember[];
 };
 
@@ -52,10 +58,12 @@ type HivePanelProps = {
 export default function HivePanel({
   recipientId,
   isOwner,
+  isPrimaryOwner,
   initialMembers,
 }: HivePanelProps) {
   const [members, setMembers] = useState<HiveMember[]>(initialMembers);
   const [email, setEmail] = useState("");
+  const [selectedRole, setSelectedRole] = useState<"CAREGIVER" | "OWNER">("CAREGIVER");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -74,6 +82,9 @@ export default function HivePanel({
     setErrorMessage(null);
     setSuccessMessage(null);
 
+    // Co-owners can only invite caregivers
+    const roleToInvite = isPrimaryOwner ? selectedRole : "CAREGIVER";
+
     try {
       const inviteResponse = await fetch("/api/hives/invite", {
         method: "POST",
@@ -83,6 +94,7 @@ export default function HivePanel({
         body: JSON.stringify({
           recipientId,
           email: email.trim(),
+          role: roleToInvite,
         }),
       });
 
@@ -118,12 +130,14 @@ export default function HivePanel({
 
       setMembers(refreshedMembers);
       setEmail("");
-      setSuccessMessage("Caregiver invited successfully.");
+      setSelectedRole("CAREGIVER");
+      const roleLabel = roleToInvite === "OWNER" ? "Co-owner" : "Caregiver";
+      setSuccessMessage(`${roleLabel} invited successfully.`);
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : "Something went wrong while inviting a caregiver.";
+          : "Something went wrong while inviting.";
       setErrorMessage(message);
       setSuccessMessage(null);
     } finally {
@@ -189,12 +203,16 @@ export default function HivePanel({
         <List disablePadding>
           {members.map((member) => {
             const displayName = member.userName || member.userEmail;
+            // Members with OWNER role in hive are co-owners (primary owner is on pet.ownerId)
             const roleLabel =
               member.role === "OWNER"
-                ? "Owner"
+                ? "Co-owner"
                 : member.role === "CAREGIVER"
                   ? "Caregiver"
                   : "Viewer";
+            // Distinct colors: amber for co-owners, blue for caregivers
+            const isCoOwner = member.role === "OWNER";
+            const chipColor = isCoOwner ? "warning" : "info";
             const initials =
               (member.userName || member.userEmail || "?")
                 .split(" ")
@@ -202,6 +220,13 @@ export default function HivePanel({
                 .join("")
                 .slice(0, 2)
                 .toUpperCase();
+
+            // Remove button visibility:
+            // - Primary owner can remove anyone (co-owners and caregivers)
+            // - Co-owners can only remove caregivers, not other co-owners
+            const canRemove = isPrimaryOwner
+              ? true
+              : isOwner && !isCoOwner;
 
             return (
               <ListItem
@@ -249,10 +274,10 @@ export default function HivePanel({
                   <Chip
                     label={roleLabel}
                     size="small"
+                    color={chipColor}
                     variant="outlined"
-                    sx={{ textTransform: "capitalize" }}
                   />
-                  {isOwner && member.role !== "OWNER" && (
+                  {canRemove && (
                     <Button
                       type="button"
                       onClick={() => handleRemove(member.id)}
@@ -274,17 +299,60 @@ export default function HivePanel({
         <Box
           component="form"
           onSubmit={handleInvite}
-          sx={{ px: 3, py: hasMembers ? 2 : 3, display: "flex", flexDirection: "column", gap: 1.25 }}
+          sx={{ px: 3, py: hasMembers ? 2 : 3, display: "flex", flexDirection: "column", gap: 1.5 }}
         >
           <TextField
             type="email"
-            label="Invite a caregiver by email"
+            label="Invite by email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="caregiver@example.com"
+            placeholder="user@example.com"
             size="small"
             fullWidth
           />
+
+          {isPrimaryOwner && (
+            <FormControl component="fieldset" size="small">
+              <FormLabel component="legend" sx={{ fontSize: "0.875rem", mb: 0.5 }}>
+                Role
+              </FormLabel>
+              <RadioGroup
+                row
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value as "CAREGIVER" | "OWNER")}
+              >
+                <FormControlLabel
+                  value="CAREGIVER"
+                  control={<Radio size="small" />}
+                  label={
+                    <Box>
+                      <Typography variant="body2" component="span">
+                        Caregiver
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Can log activities and view pet
+                      </Typography>
+                    </Box>
+                  }
+                  sx={{ mr: 3 }}
+                />
+                <FormControlLabel
+                  value="OWNER"
+                  control={<Radio size="small" />}
+                  label={
+                    <Box>
+                      <Typography variant="body2" component="span">
+                        Co-owner
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Full access, can manage pet and members
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </RadioGroup>
+            </FormControl>
+          )}
 
           {errorMessage && (
             <Typography variant="body2" color="error">
@@ -304,7 +372,7 @@ export default function HivePanel({
               size="small"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Inviting..." : "Invite caregiver"}
+              {isSubmitting ? "Inviting..." : `Invite ${selectedRole === "OWNER" && isPrimaryOwner ? "co-owner" : "caregiver"}`}
             </Button>
           </Stack>
         </Box>

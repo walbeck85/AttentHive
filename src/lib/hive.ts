@@ -4,6 +4,11 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import {
+  isPrimaryOwner,
+  canInviteMembers,
+  type PetWithOwnership,
+} from '@/lib/permissions';
 
 async function getCurrentDbUserOrThrow() {
   const session = await getServerSession(authOptions);
@@ -27,11 +32,19 @@ async function getCurrentDbUserOrThrow() {
 }
 
 /**
- * Grant caregiver access to a pet (Recipient) for a given user email.
+ * Grant access to a pet (Recipient) for a given user email with a specific role.
  * For now this acts as an "instant invite" – as soon as the owner adds someone,
  * they can see and log care for that pet.
+ *
+ * @param recipientId - The pet to share
+ * @param email - The email of the user to invite
+ * @param role - The role to grant: 'OWNER' (co-owner) or 'CAREGIVER' (default)
  */
-export async function inviteCaregiverToPet(recipientId: string, email: string) {
+export async function inviteMemberToPet(
+  recipientId: string,
+  email: string,
+  role: 'OWNER' | 'CAREGIVER' = 'CAREGIVER',
+) {
   const dbUser = await getCurrentDbUserOrThrow();
 
   // Make sure the current user actually owns this pet
@@ -39,8 +52,34 @@ export async function inviteCaregiverToPet(recipientId: string, email: string) {
     where: { id: recipientId },
   });
 
-  if (!recipient || recipient.ownerId !== dbUser.id) {
+  if (!recipient) {
+    throw new Error('Pet not found');
+  }
+
+  // Fetch hive members for permission checks
+  const hiveMembers = await prisma.hive.findMany({
+    where: { recipientId },
+    select: { userId: true, role: true },
+  });
+
+  const pet: PetWithOwnership = {
+    ownerId: recipient.ownerId,
+    members: hiveMembers,
+  };
+
+  // Check if user can invite members at all
+  if (!canInviteMembers(pet, dbUser.id)) {
     throw new Error('Not authorized to share this pet');
+  }
+
+  // Only primary owner can invite co-owners
+  if (role === 'OWNER' && !isPrimaryOwner(pet, dbUser.id)) {
+    throw new Error('Only the primary owner can invite co-owners');
+  }
+
+  // Prevent inviting yourself
+  if (email.toLowerCase() === dbUser.email?.toLowerCase()) {
+    throw new Error('You cannot invite yourself');
   }
 
   // Only allow sharing with existing users for v1
@@ -53,7 +92,12 @@ export async function inviteCaregiverToPet(recipientId: string, email: string) {
     throw new Error('No user found with that email');
   }
 
-  // Upsert so this is idempotent: re-inviting someone just updates their role.
+  // Prevent inviting the primary owner (they already own it)
+  if (isPrimaryOwner(pet, invitedUser.id)) {
+    throw new Error('This user is already the primary owner');
+  }
+
+  // Upsert so this is idempotent: re-inviting someone updates their role.
   const membership = await prisma.hive.upsert({
     where: {
       recipientId_userId: {
@@ -62,17 +106,24 @@ export async function inviteCaregiverToPet(recipientId: string, email: string) {
       },
     },
     update: {
-      // If we ever downgrade someone to VIEWER, re-inviting as caregiver bumps them back up.
-      role: 'CAREGIVER',
+      role,
     },
     create: {
       recipientId,
       userId: invitedUser.id,
-      role: 'CAREGIVER',
+      role,
     },
   });
 
   return membership;
+}
+
+/**
+ * @deprecated Use inviteMemberToPet instead
+ * Grant caregiver access to a pet (Recipient) for a given user email.
+ */
+export async function inviteCaregiverToPet(recipientId: string, email: string) {
+  return inviteMemberToPet(recipientId, email, 'CAREGIVER');
 }
 
 /**
@@ -166,10 +217,10 @@ export async function getSharedPetsForUser(userId: string) {
   const memberships = await prisma.hive.findMany({
     where: {
       userId,
-      // We treat CAREGIVER and VIEWER as "shared" access.
-      // If you later add OWNER rows to Hive, you can decide whether to include/exclude them here.
+      // Include all hive roles: co-owners (OWNER), caregivers, and viewers.
+      // Co-owners should see the pet in their "Pets you care for" section.
       role: {
-        in: ['CAREGIVER', 'VIEWER'],
+        in: ['OWNER', 'CAREGIVER', 'VIEWER'],
       },
     },
     include: {

@@ -33,7 +33,7 @@ jest.mock('@/lib/prisma', () => ({
       findUnique: jest.fn(),
     },
     recipient: {
-      findFirst: jest.fn(),
+      findUnique: jest.fn(),
       update: jest.fn(),
     },
   },
@@ -143,7 +143,7 @@ describe('POST /api/pets/[id]/photo - Security', () => {
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      (prisma.recipient.findFirst as jest.Mock).mockResolvedValue(pet);
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
 
       // Create a text file but claim it's image/jpeg
       const maliciousContent = '<script>alert("xss")</script>';
@@ -165,7 +165,7 @@ describe('POST /api/pets/[id]/photo - Security', () => {
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      (prisma.recipient.findFirst as jest.Mock).mockResolvedValue(pet);
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
 
       // Create HTML file but claim it's image/png
       const htmlContent = '<!DOCTYPE html><html><body>Malicious</body></html>';
@@ -187,7 +187,7 @@ describe('POST /api/pets/[id]/photo - Security', () => {
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      (prisma.recipient.findFirst as jest.Mock).mockResolvedValue(pet);
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
 
       // SVG can contain JavaScript and is dangerous
       const svgContent = '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>';
@@ -209,7 +209,7 @@ describe('POST /api/pets/[id]/photo - Security', () => {
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      (prisma.recipient.findFirst as jest.Mock).mockResolvedValue(pet);
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
 
       // File too small to have valid magic bytes
       const tinyContent = new Uint8Array([0x00, 0x01, 0x02]);
@@ -233,7 +233,7 @@ describe('POST /api/pets/[id]/photo - Security', () => {
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      (prisma.recipient.findFirst as jest.Mock).mockResolvedValue(pet);
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
       (prisma.recipient.update as jest.Mock).mockResolvedValue({
         ...pet,
         imageUrl: 'https://example.com/test.jpg',
@@ -255,7 +255,7 @@ describe('POST /api/pets/[id]/photo - Security', () => {
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      (prisma.recipient.findFirst as jest.Mock).mockResolvedValue(pet);
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
       (prisma.recipient.update as jest.Mock).mockResolvedValue({
         ...pet,
         imageUrl: 'https://example.com/test.png',
@@ -277,7 +277,7 @@ describe('POST /api/pets/[id]/photo - Security', () => {
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      (prisma.recipient.findFirst as jest.Mock).mockResolvedValue(pet);
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
       (prisma.recipient.update as jest.Mock).mockResolvedValue({
         ...pet,
         imageUrl: 'https://example.com/test.webp',
@@ -305,13 +305,14 @@ describe('POST /api/pets/[id]/photo - Security', () => {
 
     it('returns 404 when user does not own the pet', async () => {
       const notOwner = createMockUser({ id: 'not-owner', email: 'other@example.com' });
+      const pet = createMockRecipient({ id: 'pet-1', ownerId: 'owner-1' });
 
       (getServerSession as jest.Mock).mockResolvedValue({
         user: { email: 'other@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(notOwner);
-      // findFirst returns null because ownerId doesn't match
-      (prisma.recipient.findFirst as jest.Mock).mockResolvedValue(null);
+      // findUnique returns a pet but user is not owner and has no hive membership
+      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
 
       const validFile = createMockFile(VALID_JPEG_BYTES, 'photo.jpg', 'image/jpeg');
       const { request, context } = createMockRequest(validFile);
