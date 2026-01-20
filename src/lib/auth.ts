@@ -22,6 +22,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
+import { authLimiter, checkRateLimit } from "./rate-limit";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -31,9 +32,20 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Email and password required");
+        }
+
+        // Rate limit by email address: 5 attempts per 15 minutes
+        // Using email as identifier to prevent brute force attacks on specific accounts
+        const rateLimitResult = await checkRateLimit(
+          authLimiter,
+          credentials.email.toLowerCase()
+        );
+
+        if (!rateLimitResult.success) {
+          throw new Error("Too many login attempts. Please try again later.");
         }
 
         const user = await prisma.user.findUnique({
