@@ -139,6 +139,11 @@ export function rateLimitResponse(result: RateLimitResult): NextResponse {
  * @returns The client IP address or 'unknown'
  */
 export function getClientIp(request: Request): string {
+  // Handle cases where headers might not exist (e.g., in some test environments)
+  if (!request?.headers?.get) {
+    return 'unknown';
+  }
+
   // Vercel uses x-forwarded-for
   const forwardedFor = request.headers.get('x-forwarded-for');
   if (forwardedFor) {

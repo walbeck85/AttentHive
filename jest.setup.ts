@@ -3,6 +3,27 @@ import 'whatwg-fetch';
 
 import { TextEncoder, TextDecoder } from 'util';
 
+// Mock the Upstash modules globally to prevent ESM issues and avoid hitting Redis in tests
+jest.mock('@upstash/redis', () => ({
+  Redis: jest.fn().mockImplementation(() => ({})),
+}));
+
+jest.mock('@upstash/ratelimit', () => ({
+  Ratelimit: Object.assign(
+    jest.fn().mockImplementation(() => ({
+      limit: jest.fn().mockResolvedValue({
+        success: true,
+        limit: 100,
+        remaining: 99,
+        reset: Date.now() + 60000,
+      }),
+    })),
+    {
+      slidingWindow: jest.fn().mockReturnValue('sliding-window-config'),
+    }
+  ),
+}));
+
 // Next's server-side helpers (pulled in by app routes that import things like
 // `next/cache`) expect Web-style TextEncoder/TextDecoder globals. Node's Jest
 // environment does not always provide them, so I patch them here for tests.
