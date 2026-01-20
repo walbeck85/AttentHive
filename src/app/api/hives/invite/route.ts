@@ -3,6 +3,13 @@ import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { inviteMemberToPet } from '@/lib/hive';
+import { prisma } from '@/lib/prisma';
+import {
+  apiLimiter,
+  checkRateLimit,
+  rateLimitResponse,
+  getClientIp,
+} from '@/lib/rate-limit';
 
 // Keep the payload tight so this endpoint doesn't drift over time
 const inviteSchema = z.object({
@@ -15,6 +22,19 @@ export async function POST(request: NextRequest) {
   try {
     // Make sure only authenticated users can hit this
     const session = await getServerSession(authOptions);
+
+    // Get DB user for rate limiting identifier
+    const dbUser = session?.user?.email
+      ? await prisma.user.findUnique({ where: { email: session.user.email } })
+      : null;
+
+    // Rate limit by user ID if authenticated, otherwise by IP
+    const identifier = dbUser?.id ?? getClientIp(request);
+    const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+    if (!rateLimitResult.success) {
+      return rateLimitResponse(rateLimitResult);
+    }
 
     if (!session || !session.user?.email) {
       return NextResponse.json(

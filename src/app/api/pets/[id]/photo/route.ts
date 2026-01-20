@@ -6,6 +6,12 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { canEditPet, type PetWithOwnership } from '@/lib/permissions';
+import {
+  apiLimiter,
+  checkRateLimit,
+  rateLimitResponse,
+  getClientIp,
+} from '@/lib/rate-limit';
 
 // Force Node runtime so file uploads and Supabase SDK behave consistently.
 export const runtime = 'nodejs';
@@ -108,15 +114,23 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || !session.user?.email) {
-      // If we don’t have a real session, we fail fast rather than leaking any details about pets.
-      return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
+    // Get DB user for rate limiting
+    const dbUser = session?.user?.email
+      ? await prisma.user.findUnique({ where: { email: session.user.email } })
+      : null;
+
+    // Rate limit by user ID if authenticated, otherwise by IP
+    const identifier = dbUser?.id ?? getClientIp(req);
+    const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+    if (!rateLimitResult.success) {
+      return rateLimitResponse(rateLimitResult);
     }
 
-    // Resolve the current user record so we can enforce true ownership, not just "logged in".
-    const dbUser = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
+    if (!session || !session.user?.email) {
+      // If we don't have a real session, we fail fast rather than leaking any details about pets.
+      return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     if (!dbUser) {
       // If this hits, auth and DB are out of sync, which is a setup problem not a user mistake.

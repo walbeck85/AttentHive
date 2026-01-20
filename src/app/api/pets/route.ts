@@ -7,6 +7,12 @@ import {
   PET_CHARACTERISTIC_IDS,
   type PetCharacteristicId,
 } from '@/lib/petCharacteristics';
+import {
+  apiLimiter,
+  checkRateLimit,
+  rateLimitResponse,
+  getClientIp,
+} from '@/lib/rate-limit';
 
 // Validation schema for creating a pet
 const createPetSchema = z.object({
@@ -77,6 +83,14 @@ export async function POST(request: NextRequest) {
   try {
     // Step 1: Ensure we have a logged-in user AND a backing DB user
     const { session, dbUser } = await getOrCreateDbUserForSession();
+
+    // Rate limit by user ID if authenticated, otherwise by IP
+    const identifier = dbUser?.id ?? getClientIp(request);
+    const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+    if (!rateLimitResult.success) {
+      return rateLimitResponse(rateLimitResult);
+    }
 
     if (!session || !dbUser) {
       return NextResponse.json(
@@ -161,10 +175,18 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/pets - Get all pets for the logged-in user
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     // Step 1: Ensure we have a logged-in user AND a backing DB user
     const { session, dbUser } = await getOrCreateDbUserForSession();
+
+    // Rate limit by user ID if authenticated, otherwise by IP
+    const identifier = dbUser?.id ?? getClientIp(request);
+    const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+    if (!rateLimitResult.success) {
+      return rateLimitResponse(rateLimitResult);
+    }
 
     if (!session || !dbUser) {
       return NextResponse.json(

@@ -6,6 +6,12 @@ import { authOptions } from '@/lib/auth';
 import { canWriteToPet } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { uploadImage, deleteImageByUrl } from '@/lib/storage';
+import {
+  apiLimiter,
+  checkRateLimit,
+  rateLimitResponse,
+  getClientIp,
+} from '@/lib/rate-limit';
 
 // Force Node runtime so file uploads and Supabase SDK behave consistently.
 export const runtime = 'nodejs';
@@ -48,6 +54,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   try {
     const { session, dbUser } = await getDbUserForSession();
+
+    // Rate limit by user ID if authenticated, otherwise by IP
+    const identifier = dbUser?.id ?? getClientIp(request);
+    const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+    if (!rateLimitResult.success) {
+      return rateLimitResponse(rateLimitResult);
+    }
 
     if (!session || !dbUser) {
       return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
@@ -121,6 +135,14 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
   try {
     const { session, dbUser } = await getDbUserForSession();
+
+    // Rate limit by user ID if authenticated, otherwise by IP
+    const identifier = dbUser?.id ?? getClientIp(request);
+    const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+    if (!rateLimitResult.success) {
+      return rateLimitResponse(rateLimitResult);
+    }
 
     if (!session || !dbUser) {
       return jsonResponse({ error: 'Unauthorized' }, { status: 401 });

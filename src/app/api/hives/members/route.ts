@@ -10,10 +10,24 @@ import {
   canRemoveMember,
   type PetWithOwnership,
 } from "@/lib/permissions";
+import {
+  apiLimiter,
+  checkRateLimit,
+  rateLimitResponse,
+  getClientIp,
+} from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   // Ensure the caller is authenticated - use email-based lookup for OAuth compatibility
   const dbUser = await getDbUserFromSession();
+
+  // Rate limit by user ID if authenticated, otherwise by IP
+  const identifier = dbUser?.id ?? getClientIp(request);
+  const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+  if (!rateLimitResult.success) {
+    return rateLimitResponse(rateLimitResult);
+  }
 
   if (!dbUser) {
     return NextResponse.json(
@@ -61,6 +75,14 @@ export async function GET(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   // Auth gate: only logged-in users can attempt to remove care circle members.
   const dbUser = await getDbUserFromSession();
+
+  // Rate limit by user ID if authenticated, otherwise by IP
+  const identifier = dbUser?.id ?? getClientIp(request);
+  const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+  if (!rateLimitResult.success) {
+    return rateLimitResponse(rateLimitResult);
+  }
 
   if (!dbUser) {
     return NextResponse.json(
