@@ -8,6 +8,12 @@ import {
   type PetCharacteristicId,
 } from '@/lib/petCharacteristics';
 import { canEditPet, type PetWithOwnership } from '@/lib/permissions';
+import {
+  apiLimiter,
+  checkRateLimit,
+  rateLimitResponse,
+  getClientIp,
+} from '@/lib/rate-limit';
 
 // Helper: create a JSON Response without relying on Response.json,
 // which can be missing or behave differently in some Jest environments.
@@ -127,6 +133,14 @@ export async function POST(request: NextRequest) {
     // Step 1: Ensure we have a logged-in user AND a backing DB user
     const { session, dbUser } = await getOrCreateDbUserForSession();
 
+    // Rate limit by user ID if authenticated, otherwise by IP
+    const identifier = dbUser?.id ?? getClientIp(request);
+    const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+    if (!rateLimitResult.success) {
+      return rateLimitResponse(rateLimitResult);
+    }
+
     if (!session || !dbUser) {
       return jsonResponse(
         { error: 'You must be logged in to add a pet' },
@@ -215,6 +229,14 @@ export async function GET(
     // Step 1: Ensure we have a logged-in user AND a backing DB user
     const { session, dbUser } = await getOrCreateDbUserForSession();
 
+    // Rate limit by user ID if authenticated, otherwise by IP
+    const identifier = dbUser?.id ?? getClientIp(request);
+    const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+    if (!rateLimitResult.success) {
+      return rateLimitResponse(rateLimitResult);
+    }
+
     if (!session || !dbUser) {
       return jsonResponse(
         { error: 'You must be logged in to view this pet' },
@@ -280,6 +302,14 @@ export async function PATCH(
   try {
     // Step 1: Ensure we have a logged-in user AND a backing DB user
     const { session, dbUser } = await getOrCreateDbUserForSession();
+
+    // Rate limit by user ID if authenticated, otherwise by IP
+    const identifier = dbUser?.id ?? getClientIp(request);
+    const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+    if (!rateLimitResult.success) {
+      return rateLimitResponse(rateLimitResult);
+    }
 
     if (!session || !dbUser) {
       return jsonResponse(

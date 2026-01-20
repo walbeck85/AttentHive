@@ -5,6 +5,12 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  apiLimiter,
+  checkRateLimit,
+  rateLimitResponse,
+  getClientIp,
+} from "@/lib/rate-limit";
 
 // This type keeps the payload intentionally small and focused on fields
 // users are allowed to edit from the profile page.
@@ -17,8 +23,21 @@ type ProfilePayload = {
 
 // GET /api/user/profile
 // Used by the account page to load the current user's profile data.
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
+
+  // Get user for rate limiting
+  const dbUser = session?.user?.email
+    ? await prisma.user.findUnique({ where: { email: session.user.email } })
+    : null;
+
+  // Rate limit by user ID if authenticated, otherwise by IP
+  const identifier = dbUser?.id ?? getClientIp(request);
+  const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+  if (!rateLimitResult.success) {
+    return rateLimitResponse(rateLimitResult);
+  }
 
   // If there is no valid session, we fail fast so we don't expose anything.
   if (!session?.user?.email) {
@@ -52,6 +71,19 @@ export async function GET() {
 // of fields, not replacing the whole resource.
 export async function PATCH(request: NextRequest) {
   const session = await getServerSession(authOptions);
+
+  // Get user for rate limiting
+  const dbUser = session?.user?.email
+    ? await prisma.user.findUnique({ where: { email: session.user.email } })
+    : null;
+
+  // Rate limit by user ID if authenticated, otherwise by IP
+  const identifier = dbUser?.id ?? getClientIp(request);
+  const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+  if (!rateLimitResult.success) {
+    return rateLimitResponse(rateLimitResult);
+  }
 
   // Again, fail fast if we don't have a logged-in user.
   if (!session?.user?.email) {

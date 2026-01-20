@@ -5,6 +5,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { canWriteToPet } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
+import {
+  apiLimiter,
+  checkRateLimit,
+  rateLimitResponse,
+  getClientIp,
+} from '@/lib/rate-limit';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -32,6 +38,14 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
   try {
     const { session, dbUser } = await getDbUserForSession();
+
+    // Rate limit by user ID if authenticated, otherwise by IP
+    const identifier = dbUser?.id ?? getClientIp(request);
+    const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+    if (!rateLimitResult.success) {
+      return rateLimitResponse(rateLimitResult);
+    }
 
     if (!session || !dbUser) {
       return NextResponse.json({ error: 'You must be logged in to edit care logs' }, { status: 401 });
@@ -120,6 +134,14 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
   try {
     const { session, dbUser } = await getDbUserForSession();
+
+    // Rate limit by user ID if authenticated, otherwise by IP
+    const identifier = dbUser?.id ?? getClientIp(request);
+    const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+    if (!rateLimitResult.success) {
+      return rateLimitResponse(rateLimitResult);
+    }
 
     if (!session || !dbUser) {
       return NextResponse.json({ error: 'You must be logged in to delete care logs' }, { status: 401 });

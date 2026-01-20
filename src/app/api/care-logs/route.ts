@@ -5,6 +5,12 @@ import { ActivityType, Prisma } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { canAccessPet, canWriteToPet } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
+import {
+  apiLimiter,
+  checkRateLimit,
+  rateLimitResponse,
+  getClientIp,
+} from "@/lib/rate-limit";
 
 // Metadata type for WALK activities with timer and bathroom tracking
 type WalkMetadata = {
@@ -53,6 +59,14 @@ async function getDbUserForSession() {
 export async function GET(request: NextRequest) {
   try {
     const { session, dbUser } = await getDbUserForSession();
+
+    // Rate limit by user ID if authenticated, otherwise by IP
+    const identifier = dbUser?.id ?? getClientIp(request);
+    const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+    if (!rateLimitResult.success) {
+      return rateLimitResponse(rateLimitResult);
+    }
 
     if (!session || !dbUser) {
       return NextResponse.json(
@@ -125,6 +139,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { session, dbUser } = await getDbUserForSession();
+
+    // Rate limit by user ID if authenticated, otherwise by IP
+    const identifier = dbUser?.id ?? getClientIp(request);
+    const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+    if (!rateLimitResult.success) {
+      return rateLimitResponse(rateLimitResult);
+    }
 
     if (!session || !dbUser) {
       return NextResponse.json(

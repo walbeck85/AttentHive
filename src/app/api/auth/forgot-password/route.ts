@@ -1,17 +1,34 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { resend, EMAIL_FROM } from '@/lib/email';
+import {
+  passwordResetLimiter,
+  checkRateLimit,
+  rateLimitResponse,
+} from '@/lib/rate-limit';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
+    const body = await request.json();
+    const email = body.email;
 
     if (!email || typeof email !== 'string') {
       return NextResponse.json(
         { error: 'Email is required' },
         { status: 400 }
       );
+    }
+
+    // Rate limit by email address: 3 attempts per hour
+    // Using email as identifier prevents abuse targeting specific accounts
+    const rateLimitResult = await checkRateLimit(
+      passwordResetLimiter,
+      email.toLowerCase()
+    );
+
+    if (!rateLimitResult.success) {
+      return rateLimitResponse(rateLimitResult);
     }
 
     // Find user by email (case-insensitive)

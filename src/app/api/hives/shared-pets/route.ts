@@ -1,14 +1,41 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getSharedPetsForUser } from '@/lib/hive';
+import {
+  apiLimiter,
+  checkRateLimit,
+  rateLimitResponse,
+  getClientIp,
+} from '@/lib/rate-limit';
 
 // GET /api/hives/shared-pets
 // Returns all pets where the current user has Hive access.
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
+
+    // Get DB user early for rate limiting
+    const dbUser = session?.user?.email
+      ? await prisma.user.upsert({
+          where: { email: session.user.email },
+          update: {},
+          create: {
+            email: session.user.email,
+            name: session.user.name ?? '',
+            passwordHash: 'google-oauth',
+          },
+        })
+      : null;
+
+    // Rate limit by user ID if authenticated, otherwise by IP
+    const identifier = dbUser?.id ?? getClientIp(request);
+    const rateLimitResult = await checkRateLimit(apiLimiter, identifier);
+
+    if (!rateLimitResult.success) {
+      return rateLimitResponse(rateLimitResult);
+    }
 
     if (!session || !session.user?.email) {
       return NextResponse.json(
@@ -17,19 +44,8 @@ export async function GET() {
       );
     }
 
-    // Mirror the get-or-create DB user pattern from /api/pets
-    const dbUser = await prisma.user.upsert({
-      where: { email: session.user.email },
-      update: {},
-      create: {
-        email: session.user.email,
-        name: session.user.name ?? '',
-        // This value is never used for login; it just satisfies the schema.
-        passwordHash: 'google-oauth',
-      },
-    });
-
-    const memberships = await getSharedPetsForUser(dbUser.id);
+    // dbUser was already created/fetched above for rate limiting
+    const memberships = await getSharedPetsForUser(dbUser!.id);
 
     // Shape the data conveniently for the UI:
     // - spread the Recipient fields
