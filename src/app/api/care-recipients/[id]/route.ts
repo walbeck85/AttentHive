@@ -127,7 +127,7 @@ async function getOrCreateDbUserForSession() {
   return { session, dbUser };
 }
 
-// POST /api/pets - Create a new pet
+// POST /api/care-recipients - Create a new care recipient
 export async function POST(request: NextRequest) {
   try {
     // Step 1: Ensure we have a logged-in user AND a backing DB user
@@ -211,7 +211,7 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     );
   } catch (error) {
-    console.error('❌ Error in POST /api/pets:', error);
+    console.error('❌ Error in POST /api/care-recipients:', error);
     return jsonResponse(
       { error: 'Something went wrong while creating the pet' },
       { status: 500 },
@@ -219,7 +219,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET /api/pets/[id] - Get a single pet for the logged-in user
+// GET /api/care-recipients/[id] - Get a single care recipient for the logged-in user
 // This powers the pet details page and always returns a single `pet` object
 // (or a 404) rather than a collection.
 export async function GET(
@@ -285,7 +285,7 @@ export async function GET(
     // collection shape used on the dashboard list route.
     return jsonResponse({ pet }, { status: 200 });
   } catch (error) {
-    console.error('❌ Error in GET /api/pets/[id]:', error);
+    console.error('❌ Error in GET /api/care-recipients/[id]:', error);
     return jsonResponse(
       { error: 'Failed to fetch pet details' },
       { status: 500 },
@@ -293,8 +293,8 @@ export async function GET(
   }
 }
 
-// PATCH /api/pets/[id] - Update an existing pet. This is used by the
-// pet details page (and tests) to update fields like name, weight, and
+// PATCH /api/care-recipients/[id] - Update an existing care recipient. This is used by the
+// recipient details page (and tests) to update fields like name, weight, and
 // birth date for the currently authenticated owner.
 export async function PATCH(
   request: NextRequest,
@@ -384,7 +384,7 @@ export async function PATCH(
       const primaryMessage =
         validationResult.error.issues[0]?.message ?? 'Invalid pet update data';
 
-      console.log('❌ Validation failed in PATCH /api/pets/[id]:', formattedErrors);
+      console.log('❌ Validation failed in PATCH /api/care-recipients/[id]:', formattedErrors);
 
       return jsonResponse(
         {
@@ -436,7 +436,7 @@ export async function PATCH(
       { status: 200 },
     );
   } catch (error) {
-    console.error('❌ Error in PATCH /api/pets/[id]:', error);
+    console.error('❌ Error in PATCH /api/care-recipients/[id]:', error);
     return jsonResponse(
       { error: 'Failed to update pet' },
       { status: 500 },

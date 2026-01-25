@@ -149,7 +149,7 @@ export default function PetDetailProfileSection({
     }
 
     try {
-      const res = await fetch(`/api/pets/${pet.id}`, {
+      const res = await fetch(`/api/care-recipients/${pet.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

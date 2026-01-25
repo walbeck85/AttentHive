@@ -177,7 +177,7 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
         payload.specialNotes = trimmedSpecialNotes;
       }
 
-      const res = await fetch('/api/pets', {
+      const res = await fetch('/api/care-recipients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

@@ -1,4 +1,4 @@
-// src/app/api/pets/[id]/photo/route.ts
+// src/app/api/care-recipients/[id]/photo/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';

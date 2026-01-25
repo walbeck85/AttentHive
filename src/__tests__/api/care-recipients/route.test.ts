@@ -1,4 +1,4 @@
-import { POST, GET } from '../../../app/api/pets/route';
+import { POST, GET } from '../../../app/api/care-recipients/route';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { createMockUser, createMockCareRecipient } from '../../utils/test-factories';
@@ -58,7 +58,7 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-describe('GET /api/pets', () => {
+describe('GET /api/care-recipients', () => {
   it("returns user's pets when authenticated", async () => {
     const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
     const mockPets = [
@@ -120,7 +120,7 @@ describe('GET /api/pets', () => {
   });
 });
 
-describe('POST /api/pets', () => {
+describe('POST /api/care-recipients', () => {
   const validPetData = {
     name: 'Buddy',
     type: 'DOG',

@@ -63,7 +63,7 @@ export default function PetPhotoUpload({
     );
 
     try {
-      const response = await fetch(`/api/pets/${recipientId}/photo`, {
+      const response = await fetch(`/api/care-recipients/${recipientId}/photo`, {
         method: 'POST',
         body: formData,
       });

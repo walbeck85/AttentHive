@@ -117,7 +117,7 @@ function createMockRequest(
 
   const request = {
     formData: async () => mockFormData,
-    url: `http://localhost/api/pets/${petId}/photo`,
+    url: `http://localhost/api/care-recipients/${petId}/photo`,
   } as unknown as Request;
 
   return {
@@ -133,7 +133,7 @@ beforeEach(() => {
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key';
 });
 
-describe('POST /api/pets/[id]/photo - Security', () => {
+describe('POST /api/care-recipients/[id]/photo - Security', () => {
   describe('MIME Spoofing Prevention', () => {
     it('rejects text file claiming to be image/jpeg', async () => {
       const owner = createMockUser({ id: 'owner-1', email: 'owner@example.com' });
