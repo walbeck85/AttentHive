@@ -152,6 +152,7 @@ export async function POST(request: NextRequest) {
         ...(description !== undefined ? { description } : {}),
         ...(specialNotes !== undefined ? { specialNotes } : {}),
         ownerId: dbUser.id, // ✅ use real DB user id, not session.user.id
+        category: 'PET',
       },
     });
 

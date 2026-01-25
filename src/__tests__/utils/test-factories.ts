@@ -7,6 +7,7 @@ import type {
   HiveRole,
   Gender,
   PetType,
+  RecipientCategory,
 } from '@prisma/client';
 
 let idCounter = 0;
@@ -51,7 +52,7 @@ export function createMockRecipient(overrides?: Partial<Recipient>): Recipient {
     updatedAt: now,
     gender: 'MALE' as Gender,
     imageUrl: null,
-    category: null,
+    category: 'PET' as RecipientCategory,
     subtype: null,
     plantSpecies: null,
     sunlight: null,

@@ -196,6 +196,7 @@ export async function POST(request: NextRequest) {
         weight: rest.weight,
         characteristics,
         ownerId: dbUser.id, // use real DB user id, not session.user.id
+        category: 'PET',
       },
     });
 

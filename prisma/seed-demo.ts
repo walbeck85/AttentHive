@@ -91,6 +91,7 @@ async function main() {
         description: 'Friendly and energetic lab who loves fetch and swimming.',
         characteristics: ['MEDICATIONS'],
         specialNotes: 'Takes joint supplement with morning meal.',
+        category: 'PET',
       },
     });
     console.log(`  Created: ${murphy.name} (${murphy.breed})`);
@@ -106,6 +107,7 @@ async function main() {
         ownerId: DEMO_USER_ID,
         description: 'Curious and independent. Loves sunny windowsills.',
         characteristics: [],
+        category: 'PET',
       },
     });
     console.log(`  Created: ${luna.name} (${luna.breed})`);
@@ -122,6 +124,7 @@ async function main() {
         description: 'Sweet rescue pup. A bit shy but warms up quickly.',
         characteristics: ['SHY', 'SEPARATION_ANXIETY'],
         specialNotes: 'Needs slow introductions to new people.',
+        category: 'PET',
       },
     });
     console.log(`  Created: ${mona.name} (${mona.breed})`);

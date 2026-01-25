@@ -62,7 +62,7 @@ model Recipient {
   gender          Gender
   imageUrl        String? // Keeping this nullable so existing recipients don't break while we roll out photo uploads gradually.
   // Category system (new)
-  category        RecipientCategory?
+  category        RecipientCategory
   subtype         String?
   // Plant-specific fields (null for pets/people)
   plantSpecies    String?
