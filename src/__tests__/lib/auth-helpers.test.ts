@@ -1,4 +1,4 @@
-import { canAccessPet, canWriteToPet } from '@/lib/auth-helpers';
+import { canAccessRecipient, canWriteToRecipient } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 
 // Mock next-auth since auth-helpers imports it
@@ -25,11 +25,11 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-describe('canAccessPet', () => {
+describe('canAccessRecipient', () => {
   it('returns { canAccess: false, role: null } when pet does not exist', async () => {
     (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue(null);
 
-    const result = await canAccessPet('user-1', 'nonexistent-pet');
+    const result = await canAccessRecipient('user-1', 'nonexistent-pet');
 
     expect(result).toEqual({ canAccess: false, role: null });
   });
@@ -40,7 +40,7 @@ describe('canAccessPet', () => {
       hives: [],
     });
 
-    const result = await canAccessPet('user-1', 'pet-1');
+    const result = await canAccessRecipient('user-1', 'pet-1');
 
     expect(result).toEqual({ canAccess: true, role: 'OWNER' });
   });
@@ -51,7 +51,7 @@ describe('canAccessPet', () => {
       hives: [{ role: 'CAREGIVER' }],
     });
 
-    const result = await canAccessPet('caregiver-1', 'pet-1');
+    const result = await canAccessRecipient('caregiver-1', 'pet-1');
 
     expect(result).toEqual({ canAccess: true, role: 'CAREGIVER' });
   });
@@ -62,7 +62,7 @@ describe('canAccessPet', () => {
       hives: [{ role: 'VIEWER' }],
     });
 
-    const result = await canAccessPet('viewer-1', 'pet-1');
+    const result = await canAccessRecipient('viewer-1', 'pet-1');
 
     expect(result).toEqual({ canAccess: true, role: 'VIEWER' });
   });
@@ -73,13 +73,13 @@ describe('canAccessPet', () => {
       hives: [], // No hive membership
     });
 
-    const result = await canAccessPet('random-user', 'pet-1');
+    const result = await canAccessRecipient('random-user', 'pet-1');
 
     expect(result).toEqual({ canAccess: false, role: null });
   });
 });
 
-describe('canWriteToPet', () => {
+describe('canWriteToRecipient', () => {
   describe('Role-Based Write Access', () => {
     it('returns true for OWNER', async () => {
       (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
@@ -87,7 +87,7 @@ describe('canWriteToPet', () => {
         hives: [],
       });
 
-      const result = await canWriteToPet('owner-1', 'pet-1');
+      const result = await canWriteToRecipient('owner-1', 'pet-1');
 
       expect(result).toBe(true);
     });
@@ -98,7 +98,7 @@ describe('canWriteToPet', () => {
         hives: [{ role: 'CAREGIVER' }],
       });
 
-      const result = await canWriteToPet('caregiver-1', 'pet-1');
+      const result = await canWriteToRecipient('caregiver-1', 'pet-1');
 
       expect(result).toBe(true);
     });
@@ -109,7 +109,7 @@ describe('canWriteToPet', () => {
         hives: [{ role: 'VIEWER' }],
       });
 
-      const result = await canWriteToPet('viewer-1', 'pet-1');
+      const result = await canWriteToRecipient('viewer-1', 'pet-1');
 
       expect(result).toBe(false);
     });
@@ -120,7 +120,7 @@ describe('canWriteToPet', () => {
         hives: [],
       });
 
-      const result = await canWriteToPet('random-user', 'pet-1');
+      const result = await canWriteToRecipient('random-user', 'pet-1');
 
       expect(result).toBe(false);
     });
@@ -128,7 +128,7 @@ describe('canWriteToPet', () => {
     it('returns false when pet does not exist', async () => {
       (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue(null);
 
-      const result = await canWriteToPet('user-1', 'nonexistent-pet');
+      const result = await canWriteToRecipient('user-1', 'nonexistent-pet');
 
       expect(result).toBe(false);
     });
@@ -146,7 +146,7 @@ describe('canWriteToPet', () => {
         hives: [{ role: 'VIEWER' }],
       });
 
-      const canWrite = await canWriteToPet('viewer-1', 'pet-1');
+      const canWrite = await canWriteToRecipient('viewer-1', 'pet-1');
 
       expect(canWrite).toBe(false);
     });
@@ -157,7 +157,7 @@ describe('canWriteToPet', () => {
         hives: [{ role: 'CAREGIVER' }],
       });
 
-      const canWrite = await canWriteToPet('caregiver-1', 'pet-1');
+      const canWrite = await canWriteToRecipient('caregiver-1', 'pet-1');
 
       expect(canWrite).toBe(true);
     });

@@ -77,7 +77,7 @@ describe('GET /api/hives/members - Security', () => {
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      // canAccessPet query returns owner
+      // canAccessRecipient query returns owner
       (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
         ownerId: 'owner-1',
         hives: [],
@@ -102,7 +102,7 @@ describe('GET /api/hives/members - Security', () => {
         user: { email: 'caregiver@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(caregiver);
-      // canAccessPet query returns caregiver's hive membership
+      // canAccessRecipient query returns caregiver's hive membership
       (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
         ownerId: 'owner-1',
         hives: [{ role: 'CAREGIVER' }],

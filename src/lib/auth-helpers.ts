@@ -1,31 +1,31 @@
 // src/lib/auth-helpers.ts
-// Centralized authorization helpers for pet access control
+// Centralized authorization helpers for recipient access control
 
 import { getServerSession } from 'next-auth';
 import type { User } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-export type PetAccessResult = {
+export type RecipientAccessResult = {
   canAccess: boolean;
   role: 'OWNER' | 'CAREGIVER' | 'VIEWER' | null;
 };
 
 /**
- * Check if a user can access a pet (read operations).
- * A user can access a pet if they are:
+ * Check if a user can access a recipient (read operations).
+ * A user can access a recipient if they are:
  * - The owner (recipient.ownerId === userId)
- * - A member of the pet's Hive (any role: OWNER, CAREGIVER, or VIEWER)
+ * - A member of the recipient's Hive (any role: OWNER, CAREGIVER, or VIEWER)
  *
  * Uses a single efficient Prisma query.
  */
-export async function canAccessPet(
+export async function canAccessRecipient(
   userId: string,
-  petId: string
-): Promise<PetAccessResult> {
-  // Single query to get pet ownership and hive membership in one go
-  const pet = await prisma.careRecipient.findUnique({
-    where: { id: petId },
+  recipientId: string
+): Promise<RecipientAccessResult> {
+  // Single query to get recipient ownership and hive membership in one go
+  const recipient = await prisma.careRecipient.findUnique({
+    where: { id: recipientId },
     select: {
       ownerId: true,
       hives: {
@@ -35,20 +35,20 @@ export async function canAccessPet(
     },
   });
 
-  // Pet doesn't exist
-  if (!pet) {
+  // Recipient doesn't exist
+  if (!recipient) {
     return { canAccess: false, role: null };
   }
 
   // User is the owner
-  if (pet.ownerId === userId) {
+  if (recipient.ownerId === userId) {
     return { canAccess: true, role: 'OWNER' };
   }
 
   // Check for Hive membership
-  const hiveMembership = pet.hives[0];
+  const hiveMembership = recipient.hives[0];
   if (hiveMembership) {
-    return { canAccess: true, role: hiveMembership.role as PetAccessResult['role'] };
+    return { canAccess: true, role: hiveMembership.role as RecipientAccessResult['role'] };
   }
 
   // No access
@@ -56,28 +56,28 @@ export async function canAccessPet(
 }
 
 /**
- * Check if a user can write to a pet (create/update/delete operations).
+ * Check if a user can write to a recipient (create/update/delete operations).
  *
  * Role Hierarchy (highest to lowest privilege):
  * - OWNER: Full access - can read, write, and manage hive members
  * - CAREGIVER: Can read and write (log care activities)
- * - VIEWER: Read-only - can view pet info and care logs, but CANNOT write
+ * - VIEWER: Read-only - can view recipient info and care logs, but CANNOT write
  *
  * This function returns TRUE only for OWNER and CAREGIVER roles.
  * VIEWER role is explicitly excluded from write operations.
  *
  * Use this for: POST care-logs, DELETE care-logs, any mutation endpoints
- * Use canAccessPet() instead for: GET operations where VIEWERs should have access
+ * Use canAccessRecipient() instead for: GET operations where VIEWERs should have access
  *
  * @param userId - The database User.id to check
- * @param petId - The Recipient (pet) ID to check access for
+ * @param recipientId - The CareRecipient ID to check access for
  * @returns true if user can write, false otherwise
  */
-export async function canWriteToPet(
+export async function canWriteToRecipient(
   userId: string,
-  petId: string
+  recipientId: string
 ): Promise<boolean> {
-  const { canAccess, role } = await canAccessPet(userId, petId);
+  const { canAccess, role } = await canAccessRecipient(userId, recipientId);
 
   if (!canAccess) {
     return false;

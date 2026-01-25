@@ -218,8 +218,8 @@ Last updated: 2025-12-24
 - Co-owners have same permissions as primary (except removing primary)
 
 **Authorization updates needed:**
-- `canAccessPet()` - already checks Hive, should work
-- `canWriteToPet()` - already checks Hive OWNER role, should work
+- `canAccessRecipient()` - already checks Hive, should work
+- `canWriteToRecipient()` - already checks Hive OWNER role, should work
 - New: `isPrimaryOwner()` helper for owner management UI
 - New: Prevent primary owner from being removed
 

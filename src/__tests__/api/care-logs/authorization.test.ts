@@ -92,7 +92,7 @@ describe('Care Logs Authorization', () => {
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      // First call for canAccessPet, second call for pet name
+      // First call for canAccessRecipient, second call for pet name
       (prisma.careRecipient.findUnique as jest.Mock)
         .mockResolvedValueOnce({ ownerId: 'owner-1', hives: [] })
         .mockResolvedValueOnce(pet);
@@ -319,7 +319,7 @@ describe('Care Logs Authorization', () => {
      * VIEWER Role Contract:
      * - VIEWERs CAN read care logs (GET operations)
      * - VIEWERs CANNOT create care logs (POST operations)
-     * - This is enforced by canWriteToPet() returning false for VIEWERs
+     * - This is enforced by canWriteToRecipient() returning false for VIEWERs
      */
 
     it('VIEWER can read care logs (GET succeeds)', async () => {

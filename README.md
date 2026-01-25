@@ -241,7 +241,7 @@ AttentHive/
 │   │   └── UserProfileForm.tsx          # Form for editing user profile/contact info
 │   ├── lib
 │   │   ├── auth-client.ts               # Client-side helpers for NextAuth sign-in/out
-│   │   ├── auth-helpers.ts              # Centralized auth functions (getDbUserFromSession, canAccessPet, etc.)
+│   │   ├── auth-helpers.ts              # Centralized auth functions (getDbUserFromSession, canAccessRecipient, etc.)
 │   │   ├── auth.ts                      # NextAuth server configuration and adapters
 │   │   ├── authRedirect.ts              # Safe callback URL handling to prevent open redirects
 │   │   ├── breeds.ts                    # Static breed list and helpers for BreedSelect

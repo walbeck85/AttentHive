@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 
 import { authOptions } from '@/lib/auth';
-import { canWriteToPet } from '@/lib/auth-helpers';
+import { canWriteToRecipient } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import {
   apiLimiter,
@@ -69,7 +69,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     // Authorization: user must have write access to the pet
     // This allows both the original creator and other caregivers/owners to edit
-    const hasWriteAccess = await canWriteToPet(dbUser.id, careLog.recipientId);
+    const hasWriteAccess = await canWriteToRecipient(dbUser.id, careLog.recipientId);
 
     if (!hasWriteAccess) {
       return NextResponse.json({ error: 'Care log not found' }, { status: 404 });
@@ -162,7 +162,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     }
 
     // Authorization: user must have write access to the pet
-    const hasWriteAccess = await canWriteToPet(dbUser.id, careLog.recipientId);
+    const hasWriteAccess = await canWriteToRecipient(dbUser.id, careLog.recipientId);
 
     if (!hasWriteAccess) {
       return NextResponse.json({ error: 'Care log not found' }, { status: 404 });
