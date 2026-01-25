@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
 
     const characteristics = sanitizeCharacteristics(rawCharacteristics);
 
-    const newPet = await prisma.recipient.create({
+    const newPet = await prisma.careRecipient.create({
       data: {
         ...rest,
         gender: rest.gender,
@@ -152,6 +152,7 @@ export async function POST(request: NextRequest) {
         ...(description !== undefined ? { description } : {}),
         ...(specialNotes !== undefined ? { specialNotes } : {}),
         ownerId: dbUser.id, // ✅ use real DB user id, not session.user.id
+        category: 'PET',
       },
     });
 
@@ -196,7 +197,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Step 2: Fetch all pets for this user WITH their last activity
-    const pets = await prisma.recipient.findMany({
+    const pets = await prisma.careRecipient.findMany({
       where: {
         ownerId: dbUser.id, // ✅ query by DB user id
       },

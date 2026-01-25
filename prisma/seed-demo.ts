@@ -66,7 +66,7 @@ async function main() {
   console.log(`Found demo user: ${demoUser.name} (${demoUser.email})\n`);
 
   // Check for existing pets
-  const existingPets = await prisma.recipient.findMany({
+  const existingPets = await prisma.careRecipient.findMany({
     where: { ownerId: DEMO_USER_ID },
   });
 
@@ -79,7 +79,7 @@ async function main() {
     // Create pets
     console.log('Creating pets...');
 
-    const murphy = await prisma.recipient.create({
+    const murphy = await prisma.careRecipient.create({
       data: {
         name: 'Murphy',
         type: PetType.DOG,
@@ -91,11 +91,12 @@ async function main() {
         description: 'Friendly and energetic lab who loves fetch and swimming.',
         characteristics: ['MEDICATIONS'],
         specialNotes: 'Takes joint supplement with morning meal.',
+        category: 'PET',
       },
     });
     console.log(`  Created: ${murphy.name} (${murphy.breed})`);
 
-    const luna = await prisma.recipient.create({
+    const luna = await prisma.careRecipient.create({
       data: {
         name: 'Luna',
         type: PetType.CAT,
@@ -106,11 +107,12 @@ async function main() {
         ownerId: DEMO_USER_ID,
         description: 'Curious and independent. Loves sunny windowsills.',
         characteristics: [],
+        category: 'PET',
       },
     });
     console.log(`  Created: ${luna.name} (${luna.breed})`);
 
-    const mona = await prisma.recipient.create({
+    const mona = await prisma.careRecipient.create({
       data: {
         name: 'Mona',
         type: PetType.DOG,
@@ -122,6 +124,7 @@ async function main() {
         description: 'Sweet rescue pup. A bit shy but warms up quickly.',
         characteristics: ['SHY', 'SEPARATION_ANXIETY'],
         specialNotes: 'Needs slow introductions to new people.',
+        category: 'PET',
       },
     });
     console.log(`  Created: ${mona.name} (${mona.breed})`);
@@ -297,7 +300,7 @@ async function main() {
   }
 
   // Summary
-  const pets = await prisma.recipient.findMany({
+  const pets = await prisma.careRecipient.findMany({
     where: { ownerId: DEMO_USER_ID },
     include: { careLogs: true, hives: true },
   });

@@ -50,7 +50,7 @@ export default async function DashboardPage() {
 
   // Now we query pets by the *database* user id, which is the same id that
   // /api/pets uses as ownerId when creating new recipients.
-  const ownedPets = await prisma.recipient.findMany({
+  const ownedPets = await prisma.careRecipient.findMany({
     where: {
       ownerId: dbUser.id,
     },

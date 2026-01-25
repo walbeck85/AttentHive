@@ -1,12 +1,13 @@
 import type {
   User,
-  Recipient,
+  CareRecipient,
   CareLog,
   Hive,
   ActivityType,
   HiveRole,
   Gender,
   PetType,
+  RecipientCategory,
 } from '@prisma/client';
 
 let idCounter = 0;
@@ -33,7 +34,7 @@ export function createMockUser(overrides?: Partial<User>): User {
   };
 }
 
-export function createMockRecipient(overrides?: Partial<Recipient>): Recipient {
+export function createMockCareRecipient(overrides?: Partial<CareRecipient>): CareRecipient {
   const now = new Date();
   return {
     id: generateId(),
@@ -51,6 +52,12 @@ export function createMockRecipient(overrides?: Partial<Recipient>): Recipient {
     updatedAt: now,
     gender: 'MALE' as Gender,
     imageUrl: null,
+    category: 'PET' as RecipientCategory,
+    subtype: null,
+    plantSpecies: null,
+    sunlight: null,
+    waterFrequency: null,
+    relationship: null,
     ...overrides,
   };
 }

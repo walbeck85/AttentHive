@@ -49,7 +49,7 @@ export default async function PetDetailsPage({ params }: Params) {
 
   // I pull back the full recipient record with care logs here so we can
   // reshape it once at the server boundary instead of inside the React tree.
-  const dbPet = await prisma.recipient.findFirst({
+  const dbPet = await prisma.careRecipient.findFirst({
     where: {
       id: petId,
     },

@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { PATCH, DELETE } from '../../../app/api/care-logs/[id]/route';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
-import { canWriteToPet } from '@/lib/auth-helpers';
+import { canWriteToRecipient } from '@/lib/auth-helpers';
 import { createMockUser, createMockCareLog } from '../../utils/test-factories';
 
 // Typed spy for console suppression
@@ -27,7 +27,7 @@ jest.mock('@/lib/auth', () => ({
 }));
 
 jest.mock('@/lib/auth-helpers', () => ({
-  canWriteToPet: jest.fn(),
+  canWriteToRecipient: jest.fn(),
 }));
 
 jest.mock('@/lib/prisma', () => ({
@@ -77,7 +77,7 @@ describe('PATCH /api/care-logs/[id]', () => {
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       (prisma.careLog.findUnique as jest.Mock).mockResolvedValue(mockCareLog);
-      (canWriteToPet as jest.Mock).mockResolvedValue(true);
+      (canWriteToRecipient as jest.Mock).mockResolvedValue(true);
       (prisma.careLog.update as jest.Mock).mockResolvedValue({
         ...mockCareLog,
         notes: 'Updated notes',
@@ -122,7 +122,7 @@ describe('PATCH /api/care-logs/[id]', () => {
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       (prisma.careLog.findUnique as jest.Mock).mockResolvedValue(mockCareLog);
-      (canWriteToPet as jest.Mock).mockResolvedValue(true);
+      (canWriteToRecipient as jest.Mock).mockResolvedValue(true);
       (prisma.careLog.update as jest.Mock).mockResolvedValue({
         ...mockCareLog,
         photoUrl: 'https://example.com/photo.jpg',
@@ -160,7 +160,7 @@ describe('PATCH /api/care-logs/[id]', () => {
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       (prisma.careLog.findUnique as jest.Mock).mockResolvedValue(mockCareLog);
-      (canWriteToPet as jest.Mock).mockResolvedValue(true);
+      (canWriteToRecipient as jest.Mock).mockResolvedValue(true);
       (prisma.careLog.update as jest.Mock).mockResolvedValue({
         ...mockCareLog,
         photoUrl: null,
@@ -197,7 +197,7 @@ describe('PATCH /api/care-logs/[id]', () => {
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       (prisma.careLog.findUnique as jest.Mock).mockResolvedValue(mockCareLog);
-      (canWriteToPet as jest.Mock).mockResolvedValue(true);
+      (canWriteToRecipient as jest.Mock).mockResolvedValue(true);
       (prisma.careLog.update as jest.Mock).mockResolvedValue({
         ...mockCareLog,
         notes: 'New notes',
@@ -271,7 +271,7 @@ describe('PATCH /api/care-logs/[id]', () => {
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       (prisma.careLog.findUnique as jest.Mock).mockResolvedValue(mockCareLog);
-      (canWriteToPet as jest.Mock).mockResolvedValue(false);
+      (canWriteToRecipient as jest.Mock).mockResolvedValue(false);
 
       const req = createPatchRequest({ notes: 'Updated notes' });
       const ctx = createContext('log-1');
@@ -295,7 +295,7 @@ describe('PATCH /api/care-logs/[id]', () => {
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       (prisma.careLog.findUnique as jest.Mock).mockResolvedValue(mockCareLog);
-      (canWriteToPet as jest.Mock).mockResolvedValue(true);
+      (canWriteToRecipient as jest.Mock).mockResolvedValue(true);
 
       const req = createPatchRequest({});
       const ctx = createContext('log-1');
@@ -323,7 +323,7 @@ describe('DELETE /api/care-logs/[id]', () => {
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       (prisma.careLog.findUnique as jest.Mock).mockResolvedValue(mockCareLog);
-      (canWriteToPet as jest.Mock).mockResolvedValue(true);
+      (canWriteToRecipient as jest.Mock).mockResolvedValue(true);
       (prisma.careLog.delete as jest.Mock).mockResolvedValue(mockCareLog);
 
       const req = createDeleteRequest();
@@ -382,7 +382,7 @@ describe('DELETE /api/care-logs/[id]', () => {
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       (prisma.careLog.findUnique as jest.Mock).mockResolvedValue(mockCareLog);
-      (canWriteToPet as jest.Mock).mockResolvedValue(false);
+      (canWriteToRecipient as jest.Mock).mockResolvedValue(false);
 
       const req = createDeleteRequest();
       const ctx = createContext('log-1');

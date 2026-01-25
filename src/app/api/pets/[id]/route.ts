@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
 
     const characteristics = sanitizeCharacteristics(rawCharacteristics);
 
-    const newPet = await prisma.recipient.create({
+    const newPet = await prisma.careRecipient.create({
       data: {
         ...rest,
         gender: rest.gender,
@@ -196,6 +196,7 @@ export async function POST(request: NextRequest) {
         weight: rest.weight,
         characteristics,
         ownerId: dbUser.id, // use real DB user id, not session.user.id
+        category: 'PET',
       },
     });
 
@@ -251,7 +252,7 @@ export async function GET(
     const petId = resolvedParams.id;
 
     // Step 2: Fetch the pet for this user, including recent care logs
-    const pet = await prisma.recipient.findFirst({
+    const pet = await prisma.careRecipient.findFirst({
       where: {
         id: petId,
         ownerId: dbUser.id,
@@ -325,7 +326,7 @@ export async function PATCH(
     const petId = resolvedParams.id;
 
     // Step 2: Verify the pet exists and user has permission to edit
-    const existingPet = await prisma.recipient.findUnique({
+    const existingPet = await prisma.careRecipient.findUnique({
       where: { id: petId },
       select: {
         id: true,
@@ -411,7 +412,7 @@ export async function PATCH(
         : undefined;
 
     // Step 4: Apply the update
-    const updatedPet = await prisma.recipient.update({
+    const updatedPet = await prisma.careRecipient.update({
       where: { id: petId },
       data: {
         ...rest,

@@ -10,12 +10,12 @@ async function main() {
   // Simple sanity check to see if Prisma can talk to the DB at all
   const [userCount, recipientCount, hiveCount, logCount] = await Promise.all([
     prisma.user.count(),
-    prisma.recipient.count(),
+    prisma.careRecipient.count(),
     prisma.hive.count(),
     prisma.careLog.count(),
   ]);
 
-  console.log({ userCount, recipientCount, hiveCount, logCount });
+  console.log({ userCount, careRecipientCount: recipientCount, hiveCount, logCount });
 }
 
 main()

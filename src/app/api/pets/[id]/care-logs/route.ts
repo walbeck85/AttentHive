@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDbUserFromSession, canAccessPet } from '@/lib/auth-helpers';
+import { getDbUserFromSession, canAccessRecipient } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 
 // GET /api/pets/[id]/care-logs
@@ -27,7 +27,7 @@ export async function GET(
     }
 
     // 3. Authorization: verify the user has access to this specific pet
-    const { canAccess } = await canAccessPet(dbUser.id, petId);
+    const { canAccess } = await canAccessRecipient(dbUser.id, petId);
 
     if (!canAccess) {
       // Return 404 to avoid leaking pet existence information
@@ -38,7 +38,7 @@ export async function GET(
     }
 
     // Fetch pet name for response
-    const pet = await prisma.recipient.findUnique({
+    const pet = await prisma.careRecipient.findUnique({
       where: { id: petId },
       select: { name: true },
     });

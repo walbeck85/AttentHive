@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 
 import { authOptions } from '@/lib/auth';
-import { canWriteToPet } from '@/lib/auth-helpers';
+import { canWriteToRecipient } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { uploadImage, deleteImageByUrl } from '@/lib/storage';
 import {
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     // Authorization: user must have write access to the pet
-    const hasWriteAccess = await canWriteToPet(dbUser.id, careLog.recipientId);
+    const hasWriteAccess = await canWriteToRecipient(dbUser.id, careLog.recipientId);
 
     if (!hasWriteAccess) {
       return jsonResponse({ error: 'Care log not found' }, { status: 404 });
@@ -163,7 +163,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     }
 
     // Authorization: user must have write access to the pet
-    const hasWriteAccess = await canWriteToPet(dbUser.id, careLog.recipientId);
+    const hasWriteAccess = await canWriteToRecipient(dbUser.id, careLog.recipientId);
 
     if (!hasWriteAccess) {
       return jsonResponse({ error: 'Care log not found' }, { status: 404 });

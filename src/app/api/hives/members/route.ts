@@ -1,7 +1,7 @@
 // src/app/api/hives/members/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
-import { getDbUserFromSession, canAccessPet } from "@/lib/auth-helpers";
+import { getDbUserFromSession, canAccessRecipient } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { getHiveMembersForPet } from "@/lib/hive";
 import {
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Authorization: user must be owner OR have a Hive membership for this pet
-  const { canAccess, role } = await canAccessPet(dbUser.id, recipientId);
+  const { canAccess, role } = await canAccessRecipient(dbUser.id, recipientId);
 
   if (!canAccess) {
     // Return 404 to avoid revealing pet existence to unauthorized users

@@ -65,7 +65,7 @@ export async function loadHivePageData(): Promise<HivePageData | null> {
 
   // 1) Pets you own – used for the lightweight footer section.
   // I keep this selection narrow so we don't haul more fields than the UI needs.
-  const ownedPetsRecords = await prisma.recipient.findMany({
+  const ownedPetsRecords = await prisma.careRecipient.findMany({
     where: { ownerId: dbUser.id },
     orderBy: { createdAt: "asc" },
     select: {

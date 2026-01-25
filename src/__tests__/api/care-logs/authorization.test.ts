@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import {
   createMockUser,
-  createMockRecipient,
+  createMockCareRecipient,
   createMockCareLog,
 } from '../../utils/test-factories';
 
@@ -37,7 +37,7 @@ jest.mock('@/lib/prisma', () => ({
       findUnique: jest.fn(),
       create: jest.fn(),
     },
-    recipient: {
+    careRecipient: {
       findUnique: jest.fn(),
     },
     careLog: {
@@ -83,7 +83,7 @@ describe('Care Logs Authorization', () => {
 
     it('allows owner to read their pet logs', async () => {
       const owner = createMockUser({ id: 'owner-1', email: 'owner@example.com' });
-      const pet = createMockRecipient({ id: 'pet-1', ownerId: 'owner-1' });
+      const pet = createMockCareRecipient({ id: 'pet-1', ownerId: 'owner-1' });
       const logs = [
         createMockCareLog({ recipientId: 'pet-1', userId: 'owner-1' }),
       ];
@@ -92,8 +92,8 @@ describe('Care Logs Authorization', () => {
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      // First call for canAccessPet, second call for pet name
-      (prisma.recipient.findUnique as jest.Mock)
+      // First call for canAccessRecipient, second call for pet name
+      (prisma.careRecipient.findUnique as jest.Mock)
         .mockResolvedValueOnce({ ownerId: 'owner-1', hives: [] })
         .mockResolvedValueOnce(pet);
       (prisma.careLog.findMany as jest.Mock).mockResolvedValue(logs);
@@ -109,14 +109,14 @@ describe('Care Logs Authorization', () => {
         id: 'caregiver-1',
         email: 'caregiver@example.com',
       });
-      const pet = createMockRecipient({ id: 'pet-1', ownerId: 'owner-1' });
+      const pet = createMockCareRecipient({ id: 'pet-1', ownerId: 'owner-1' });
       const logs = [createMockCareLog({ recipientId: 'pet-1' })];
 
       (getServerSession as jest.Mock).mockResolvedValue({
         user: { email: 'caregiver@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(caregiver);
-      (prisma.recipient.findUnique as jest.Mock)
+      (prisma.careRecipient.findUnique as jest.Mock)
         .mockResolvedValueOnce({ ownerId: 'owner-1', hives: [{ role: 'CAREGIVER' }] })
         .mockResolvedValueOnce(pet);
       (prisma.careLog.findMany as jest.Mock).mockResolvedValue(logs);
@@ -132,14 +132,14 @@ describe('Care Logs Authorization', () => {
         id: 'viewer-1',
         email: 'viewer@example.com',
       });
-      const pet = createMockRecipient({ id: 'pet-1', ownerId: 'owner-1' });
+      const pet = createMockCareRecipient({ id: 'pet-1', ownerId: 'owner-1' });
       const logs = [createMockCareLog({ recipientId: 'pet-1' })];
 
       (getServerSession as jest.Mock).mockResolvedValue({
         user: { email: 'viewer@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(viewer);
-      (prisma.recipient.findUnique as jest.Mock)
+      (prisma.careRecipient.findUnique as jest.Mock)
         .mockResolvedValueOnce({ ownerId: 'owner-1', hives: [{ role: 'VIEWER' }] })
         .mockResolvedValueOnce(pet);
       (prisma.careLog.findMany as jest.Mock).mockResolvedValue(logs);
@@ -161,7 +161,7 @@ describe('Care Logs Authorization', () => {
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(randomUser);
       // Pet exists but user has no access (not owner, no hive membership)
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValueOnce({
         ownerId: 'owner-1',
         hives: [],
       });
@@ -180,7 +180,7 @@ describe('Care Logs Authorization', () => {
         user: { email: 'user@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(user);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValueOnce(null);
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValueOnce(null);
 
       const req = createGetRequest('http://localhost/api/care-logs?id=nonexistent');
       const res = await getHandler(req);
@@ -211,7 +211,7 @@ describe('Care Logs Authorization', () => {
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValueOnce({
         ownerId: 'owner-1',
         hives: [],
       });
@@ -239,7 +239,7 @@ describe('Care Logs Authorization', () => {
         user: { email: 'caregiver@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(caregiver);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValueOnce({
         ownerId: 'owner-1',
         hives: [{ role: 'CAREGIVER' }],
       });
@@ -262,7 +262,7 @@ describe('Care Logs Authorization', () => {
         user: { email: 'viewer@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(viewer);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValueOnce({
         ownerId: 'owner-1',
         hives: [{ role: 'VIEWER' }],
       });
@@ -285,7 +285,7 @@ describe('Care Logs Authorization', () => {
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(randomUser);
       // Pet exists but user has no access
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValueOnce({
         ownerId: 'owner-1',
         hives: [],
       });
@@ -304,7 +304,7 @@ describe('Care Logs Authorization', () => {
         user: { email: 'user@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(user);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValueOnce(null);
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValueOnce(null);
 
       const req = createRequest({ petId: 'nonexistent', activityType: 'FEED' });
       const res = await postHandler(req);
@@ -319,7 +319,7 @@ describe('Care Logs Authorization', () => {
      * VIEWER Role Contract:
      * - VIEWERs CAN read care logs (GET operations)
      * - VIEWERs CANNOT create care logs (POST operations)
-     * - This is enforced by canWriteToPet() returning false for VIEWERs
+     * - This is enforced by canWriteToRecipient() returning false for VIEWERs
      */
 
     it('VIEWER can read care logs (GET succeeds)', async () => {
@@ -333,7 +333,7 @@ describe('Care Logs Authorization', () => {
         user: { email: 'viewer@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(viewer);
-      (prisma.recipient.findUnique as jest.Mock)
+      (prisma.careRecipient.findUnique as jest.Mock)
         .mockResolvedValueOnce({ ownerId: 'owner-1', hives: [{ role: 'VIEWER' }] })
         .mockResolvedValueOnce({ name: 'Buddy' });
       (prisma.careLog.findMany as jest.Mock).mockResolvedValue(logs);
@@ -355,7 +355,7 @@ describe('Care Logs Authorization', () => {
         user: { email: 'viewer@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(viewer);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValueOnce({
         ownerId: 'owner-1',
         hives: [{ role: 'VIEWER' }],
       });
@@ -379,7 +379,7 @@ describe('Care Logs Authorization', () => {
         user: { email: 'viewer@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(viewer);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValueOnce({
         ownerId: 'owner-1',
         hives: [{ role: 'VIEWER' }],
       });
@@ -405,7 +405,7 @@ describe('Care Logs Authorization', () => {
         user: { email: 'viewer@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(viewer);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValueOnce({
         ownerId: 'owner-1',
         hives: [{ role: 'VIEWER' }],
       });
@@ -453,7 +453,7 @@ describe('Care Logs Authorization', () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(dbUser);
 
       // Authorization check uses dbUser.id (the correct one)
-      (prisma.recipient.findUnique as jest.Mock)
+      (prisma.careRecipient.findUnique as jest.Mock)
         .mockResolvedValueOnce({ ownerId: dbUserId, hives: [] })
         .mockResolvedValueOnce({ name: 'Buddy' });
       (prisma.careLog.findMany as jest.Mock).mockResolvedValue(logs);
@@ -492,7 +492,7 @@ describe('Care Logs Authorization', () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(dbUser);
 
       // Authorization uses dbUser.id
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValueOnce({
         ownerId: dbUserId,
         hives: [],
       });

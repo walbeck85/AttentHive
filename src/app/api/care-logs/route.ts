@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { ActivityType, Prisma } from "@prisma/client";
 
 import { authOptions } from "@/lib/auth";
-import { canAccessPet, canWriteToPet } from "@/lib/auth-helpers";
+import { canAccessRecipient, canWriteToRecipient } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import {
   apiLimiter,
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check authorization: user must be owner or have Hive membership
-    const { canAccess } = await canAccessPet(dbUser.id, recipientId);
+    const { canAccess } = await canAccessRecipient(dbUser.id, recipientId);
 
     if (!canAccess) {
       // Return 404 to avoid leaking pet existence information
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const pet = await prisma.recipient.findUnique({
+    const pet = await prisma.careRecipient.findUnique({
       where: { id: recipientId },
       select: { name: true },
     });
@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
     const activityType = body.activityType as ActivityType;
 
     // Check authorization: user must be owner or CAREGIVER (not VIEWER)
-    const hasWriteAccess = await canWriteToPet(dbUser.id, recipientId);
+    const hasWriteAccess = await canWriteToRecipient(dbUser.id, recipientId);
 
     if (!hasWriteAccess) {
       // Return 404 to avoid leaking pet existence information

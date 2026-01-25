@@ -48,7 +48,7 @@ export async function inviteMemberToPet(
   const dbUser = await getCurrentDbUserOrThrow();
 
   // Make sure the current user actually owns this pet
-  const recipient = await prisma.recipient.findUnique({
+  const recipient = await prisma.careRecipient.findUnique({
     where: { id: recipientId },
   });
 
@@ -161,7 +161,7 @@ export async function removeCaregiverFromPet(
 ) {
   const dbUser = await getCurrentDbUserOrThrow();
 
-  const recipient = await prisma.recipient.findUnique({
+  const recipient = await prisma.careRecipient.findUnique({
     where: { id: recipientId },
   });
 
