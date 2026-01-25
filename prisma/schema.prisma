@@ -61,6 +61,15 @@ model Recipient {
   updatedAt       DateTime  @updatedAt
   gender          Gender
   imageUrl        String? // Keeping this nullable so existing recipients don't break while we roll out photo uploads gradually.
+  // Category system (new)
+  category        RecipientCategory?
+  subtype         String?
+  // Plant-specific fields (null for pets/people)
+  plantSpecies    String?
+  sunlight        String?
+  waterFrequency  String?
+  // Person-specific fields (null for pets/plants)
+  relationship    String?
   hives           Hive[]
   careLogs        CareLog[]
   owner           User      @relation("PetOwner", fields: [ownerId], references: [id], onDelete: Cascade)
@@ -121,4 +130,10 @@ enum PetCharacteristic {
 enum PetType {
   DOG
   CAT
+}
+
+enum RecipientCategory {
+  PET
+  PLANT
+  PERSON
 }

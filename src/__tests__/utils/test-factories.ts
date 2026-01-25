@@ -51,6 +51,12 @@ export function createMockRecipient(overrides?: Partial<Recipient>): Recipient {
     updatedAt: now,
     gender: 'MALE' as Gender,
     imageUrl: null,
+    category: null,
+    subtype: null,
+    plantSpecies: null,
+    sunlight: null,
+    waterFrequency: null,
+    relationship: null,
     ...overrides,
   };
 }
