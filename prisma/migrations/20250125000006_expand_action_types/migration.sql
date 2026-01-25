@@ -1,0 +1,26 @@
+-- Expand ActivityType enum to support all recipient categories
+-- Pets (other animals)
+ALTER TYPE "ActivityType" ADD VALUE 'GROOMING';
+ALTER TYPE "ActivityType" ADD VALUE 'VET_VISIT';
+ALTER TYPE "ActivityType" ADD VALUE 'CAGE_CLEAN';
+ALTER TYPE "ActivityType" ADD VALUE 'TANK_CLEAN';
+ALTER TYPE "ActivityType" ADD VALUE 'WATER_TEST';
+ALTER TYPE "ActivityType" ADD VALUE 'HABITAT_CLEAN';
+ALTER TYPE "ActivityType" ADD VALUE 'EXERCISE';
+ALTER TYPE "ActivityType" ADD VALUE 'TEMPERATURE_CHECK';
+
+-- Plants
+ALTER TYPE "ActivityType" ADD VALUE 'WATER';
+ALTER TYPE "ActivityType" ADD VALUE 'FERTILIZE';
+ALTER TYPE "ActivityType" ADD VALUE 'PRUNE';
+ALTER TYPE "ActivityType" ADD VALUE 'REPOT';
+ALTER TYPE "ActivityType" ADD VALUE 'SUNLIGHT_ADJUST';
+
+-- People
+ALTER TYPE "ActivityType" ADD VALUE 'MEAL';
+ALTER TYPE "ActivityType" ADD VALUE 'DOCTOR_VISIT';
+ALTER TYPE "ActivityType" ADD VALUE 'APPOINTMENT';
+ALTER TYPE "ActivityType" ADD VALUE 'ACTIVITY';
+
+-- Shared
+ALTER TYPE "ActivityType" ADD VALUE 'NOTE';
