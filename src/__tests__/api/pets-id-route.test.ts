@@ -57,7 +57,7 @@ jest.mock('@/lib/prisma', () => ({
     user: {
       upsert: jest.fn(),
     },
-    recipient: {
+    careRecipient: {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
@@ -84,11 +84,11 @@ describe('PATCH /api/pets/[id]', () => {
       user: { email: 'user@example.com' },
     })
     ;(prisma.user.upsert as jest.Mock).mockResolvedValue({ id: 'user-1' })
-    ;(prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+    ;(prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
       id: 'pet-1',
       ownerId: 'user-1',
     })
-    ;(prisma.recipient.update as jest.Mock).mockResolvedValue({
+    ;(prisma.careRecipient.update as jest.Mock).mockResolvedValue({
       id: 'pet-1',
       name: 'Updated Name',
       careLogs: [],
@@ -120,7 +120,7 @@ describe('PATCH /api/pets/[id]', () => {
       user: { email: 'user2@example.com' },
     })
     ;(prisma.user.upsert as jest.Mock).mockResolvedValue({ id: 'user-2' })
-    ;(prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+    ;(prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
       id: 'pet-1',
       ownerId: 'user-1',
     })
@@ -139,7 +139,7 @@ describe('PATCH /api/pets/[id]', () => {
       user: { email: 'user@example.com' },
     })
     ;(prisma.user.upsert as jest.Mock).mockResolvedValue({ id: 'user-1' })
-    ;(prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+    ;(prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
       id: 'pet-1',
       ownerId: 'user-1',
     })
@@ -158,7 +158,7 @@ describe('PATCH /api/pets/[id]', () => {
       user: { email: 'user@example.com' },
     })
     ;(prisma.user.upsert as jest.Mock).mockResolvedValue({ id: 'user-1' })
-    ;(prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+    ;(prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
       id: 'pet-1',
       ownerId: 'user-1',
     })
@@ -177,7 +177,7 @@ describe('PATCH /api/pets/[id]', () => {
       user: { email: 'user@example.com' },
     })
     ;(prisma.user.upsert as jest.Mock).mockResolvedValue({ id: 'user-1' })
-    ;(prisma.recipient.findUnique as jest.Mock).mockResolvedValue(null)
+    ;(prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue(null)
 
     const req = createRequest({ name: 'Updated Name' })
     const context = { params: { id: 'pet-1' } }

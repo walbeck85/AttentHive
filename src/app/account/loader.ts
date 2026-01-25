@@ -1,7 +1,7 @@
 // src/app/account/loader.ts
 
 import { getServerSession } from "next-auth";
-import type { Recipient } from "@prisma/client";
+import type { CareRecipient } from "@prisma/client";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -21,7 +21,7 @@ export type AccountUser = {
 // Shared pets are still just Recipients, but I add a lightweight access flag
 // so the UI can style or filter them differently from owned pets without
 // having to re-derive that state on the client.
-export type SharedPet = Recipient & { _accessType: "shared" };
+export type SharedPet = CareRecipient & { _accessType: "shared" };
 
 export type AccountPageData = {
   user: AccountUser;

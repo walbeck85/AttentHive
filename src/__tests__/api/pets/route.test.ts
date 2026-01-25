@@ -1,7 +1,7 @@
 import { POST, GET } from '../../../app/api/pets/route';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
-import { createMockUser, createMockRecipient } from '../../utils/test-factories';
+import { createMockUser, createMockCareRecipient } from '../../utils/test-factories';
 
 // Typed spies for console suppression
 type ConsoleSpy = jest.SpyInstance<void, [message?: unknown, ...optionalParams: unknown[]]>;
@@ -33,7 +33,7 @@ jest.mock('@/lib/prisma', () => ({
     user: {
       upsert: jest.fn(),
     },
-    recipient: {
+    careRecipient: {
       create: jest.fn(),
       findMany: jest.fn(),
     },
@@ -62,20 +62,20 @@ describe('GET /api/pets', () => {
   it("returns user's pets when authenticated", async () => {
     const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
     const mockPets = [
-      createMockRecipient({ id: 'pet-1', name: 'Buddy', ownerId: 'user-1' }),
-      createMockRecipient({ id: 'pet-2', name: 'Max', ownerId: 'user-1' }),
+      createMockCareRecipient({ id: 'pet-1', name: 'Buddy', ownerId: 'user-1' }),
+      createMockCareRecipient({ id: 'pet-2', name: 'Max', ownerId: 'user-1' }),
     ];
 
     (getServerSession as jest.Mock).mockResolvedValue({
       user: { email: 'user@example.com' },
     });
     (prisma.user.upsert as jest.Mock).mockResolvedValue(mockUser);
-    (prisma.recipient.findMany as jest.Mock).mockResolvedValue(mockPets);
+    (prisma.careRecipient.findMany as jest.Mock).mockResolvedValue(mockPets);
 
     const res = await getHandler();
 
     expect(res.status).toBe(200);
-    expect(prisma.recipient.findMany).toHaveBeenCalledWith({
+    expect(prisma.careRecipient.findMany).toHaveBeenCalledWith({
       where: { ownerId: 'user-1' },
       include: {
         careLogs: {
@@ -101,7 +101,7 @@ describe('GET /api/pets', () => {
     const res = await getHandler();
 
     expect(res.status).toBe(401);
-    expect(prisma.recipient.findMany).not.toHaveBeenCalled();
+    expect(prisma.careRecipient.findMany).not.toHaveBeenCalled();
   });
 
   it('returns empty array when user has no pets', async () => {
@@ -111,12 +111,12 @@ describe('GET /api/pets', () => {
       user: { email: 'user@example.com' },
     });
     (prisma.user.upsert as jest.Mock).mockResolvedValue(mockUser);
-    (prisma.recipient.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.careRecipient.findMany as jest.Mock).mockResolvedValue([]);
 
     const res = await getHandler();
 
     expect(res.status).toBe(200);
-    expect(prisma.recipient.findMany).toHaveBeenCalled();
+    expect(prisma.careRecipient.findMany).toHaveBeenCalled();
   });
 });
 
@@ -133,7 +133,7 @@ describe('POST /api/pets', () => {
   describe('Success cases', () => {
     it('creates pet with required fields', async () => {
       const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
-      const mockPet = createMockRecipient({
+      const mockPet = createMockCareRecipient({
         id: 'pet-1',
         name: 'Buddy',
         ownerId: 'user-1',
@@ -143,13 +143,13 @@ describe('POST /api/pets', () => {
         user: { email: 'user@example.com' },
       });
       (prisma.user.upsert as jest.Mock).mockResolvedValue(mockUser);
-      (prisma.recipient.create as jest.Mock).mockResolvedValue(mockPet);
+      (prisma.careRecipient.create as jest.Mock).mockResolvedValue(mockPet);
 
       const req = createRequest(validPetData);
       const res = await postHandler(req);
 
       expect(res.status).toBe(201);
-      expect(prisma.recipient.create).toHaveBeenCalledWith({
+      expect(prisma.careRecipient.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           name: 'Buddy',
           type: 'DOG',
@@ -163,7 +163,7 @@ describe('POST /api/pets', () => {
 
     it('creates pet with optional description and specialNotes', async () => {
       const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
-      const mockPet = createMockRecipient({
+      const mockPet = createMockCareRecipient({
         id: 'pet-1',
         name: 'Buddy',
         description: 'A friendly dog',
@@ -175,7 +175,7 @@ describe('POST /api/pets', () => {
         user: { email: 'user@example.com' },
       });
       (prisma.user.upsert as jest.Mock).mockResolvedValue(mockUser);
-      (prisma.recipient.create as jest.Mock).mockResolvedValue(mockPet);
+      (prisma.careRecipient.create as jest.Mock).mockResolvedValue(mockPet);
 
       const req = createRequest({
         ...validPetData,
@@ -185,7 +185,7 @@ describe('POST /api/pets', () => {
       const res = await postHandler(req);
 
       expect(res.status).toBe(201);
-      expect(prisma.recipient.create).toHaveBeenCalledWith({
+      expect(prisma.careRecipient.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           description: 'A friendly dog',
           specialNotes: 'Needs medication daily',
@@ -195,7 +195,7 @@ describe('POST /api/pets', () => {
 
     it('creates pet with characteristics', async () => {
       const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
-      const mockPet = createMockRecipient({
+      const mockPet = createMockCareRecipient({
         id: 'pet-1',
         name: 'Buddy',
         characteristics: ['ALLERGIES', 'SHY'],
@@ -206,7 +206,7 @@ describe('POST /api/pets', () => {
         user: { email: 'user@example.com' },
       });
       (prisma.user.upsert as jest.Mock).mockResolvedValue(mockUser);
-      (prisma.recipient.create as jest.Mock).mockResolvedValue(mockPet);
+      (prisma.careRecipient.create as jest.Mock).mockResolvedValue(mockPet);
 
       const req = createRequest({
         ...validPetData,
@@ -215,7 +215,7 @@ describe('POST /api/pets', () => {
       const res = await postHandler(req);
 
       expect(res.status).toBe(201);
-      expect(prisma.recipient.create).toHaveBeenCalledWith({
+      expect(prisma.careRecipient.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           characteristics: ['ALLERGIES', 'SHY'],
         }),
@@ -231,7 +231,7 @@ describe('POST /api/pets', () => {
       const res = await postHandler(req);
 
       expect(res.status).toBe(401);
-      expect(prisma.recipient.create).not.toHaveBeenCalled();
+      expect(prisma.careRecipient.create).not.toHaveBeenCalled();
     });
 
     it('returns 400 when name is missing', async () => {
@@ -248,7 +248,7 @@ describe('POST /api/pets', () => {
       const res = await postHandler(req);
 
       expect(res.status).toBe(400);
-      expect(prisma.recipient.create).not.toHaveBeenCalled();
+      expect(prisma.careRecipient.create).not.toHaveBeenCalled();
     });
 
     it('returns 400 when type is missing', async () => {
@@ -265,7 +265,7 @@ describe('POST /api/pets', () => {
       const res = await postHandler(req);
 
       expect(res.status).toBe(400);
-      expect(prisma.recipient.create).not.toHaveBeenCalled();
+      expect(prisma.careRecipient.create).not.toHaveBeenCalled();
     });
 
     it('returns 400 when description exceeds 500 chars', async () => {
@@ -283,7 +283,7 @@ describe('POST /api/pets', () => {
       const res = await postHandler(req);
 
       expect(res.status).toBe(400);
-      expect(prisma.recipient.create).not.toHaveBeenCalled();
+      expect(prisma.careRecipient.create).not.toHaveBeenCalled();
     });
 
     it('returns 400 when specialNotes exceeds 500 chars', async () => {
@@ -301,7 +301,7 @@ describe('POST /api/pets', () => {
       const res = await postHandler(req);
 
       expect(res.status).toBe(400);
-      expect(prisma.recipient.create).not.toHaveBeenCalled();
+      expect(prisma.careRecipient.create).not.toHaveBeenCalled();
     });
 
     it('returns 400 when weight is negative', async () => {
@@ -319,7 +319,7 @@ describe('POST /api/pets', () => {
       const res = await postHandler(req);
 
       expect(res.status).toBe(400);
-      expect(prisma.recipient.create).not.toHaveBeenCalled();
+      expect(prisma.careRecipient.create).not.toHaveBeenCalled();
     });
 
     it('returns 400 when birthDate is in the future', async () => {
@@ -340,7 +340,7 @@ describe('POST /api/pets', () => {
       const res = await postHandler(req);
 
       expect(res.status).toBe(400);
-      expect(prisma.recipient.create).not.toHaveBeenCalled();
+      expect(prisma.careRecipient.create).not.toHaveBeenCalled();
     });
 
     it('returns 400 when type is invalid', async () => {
@@ -358,7 +358,7 @@ describe('POST /api/pets', () => {
       const res = await postHandler(req);
 
       expect(res.status).toBe(400);
-      expect(prisma.recipient.create).not.toHaveBeenCalled();
+      expect(prisma.careRecipient.create).not.toHaveBeenCalled();
     });
   });
 });

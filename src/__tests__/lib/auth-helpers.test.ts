@@ -12,7 +12,7 @@ jest.mock('@/lib/auth', () => ({
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
-    recipient: {
+    careRecipient: {
       findUnique: jest.fn(),
     },
     user: {
@@ -27,7 +27,7 @@ beforeEach(() => {
 
 describe('canAccessPet', () => {
   it('returns { canAccess: false, role: null } when pet does not exist', async () => {
-    (prisma.recipient.findUnique as jest.Mock).mockResolvedValue(null);
+    (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue(null);
 
     const result = await canAccessPet('user-1', 'nonexistent-pet');
 
@@ -35,7 +35,7 @@ describe('canAccessPet', () => {
   });
 
   it('returns { canAccess: true, role: "OWNER" } when user is owner', async () => {
-    (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+    (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
       ownerId: 'user-1',
       hives: [],
     });
@@ -46,7 +46,7 @@ describe('canAccessPet', () => {
   });
 
   it('returns { canAccess: true, role: "CAREGIVER" } when user has CAREGIVER hive membership', async () => {
-    (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+    (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
       ownerId: 'owner-1',
       hives: [{ role: 'CAREGIVER' }],
     });
@@ -57,7 +57,7 @@ describe('canAccessPet', () => {
   });
 
   it('returns { canAccess: true, role: "VIEWER" } when user has VIEWER hive membership', async () => {
-    (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+    (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
       ownerId: 'owner-1',
       hives: [{ role: 'VIEWER' }],
     });
@@ -68,7 +68,7 @@ describe('canAccessPet', () => {
   });
 
   it('returns { canAccess: false, role: null } when user has no access', async () => {
-    (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+    (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
       ownerId: 'owner-1',
       hives: [], // No hive membership
     });
@@ -82,7 +82,7 @@ describe('canAccessPet', () => {
 describe('canWriteToPet', () => {
   describe('Role-Based Write Access', () => {
     it('returns true for OWNER', async () => {
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
         ownerId: 'owner-1',
         hives: [],
       });
@@ -93,7 +93,7 @@ describe('canWriteToPet', () => {
     });
 
     it('returns true for CAREGIVER', async () => {
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
         ownerId: 'owner-1',
         hives: [{ role: 'CAREGIVER' }],
       });
@@ -104,7 +104,7 @@ describe('canWriteToPet', () => {
     });
 
     it('returns false for VIEWER (read-only role)', async () => {
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
         ownerId: 'owner-1',
         hives: [{ role: 'VIEWER' }],
       });
@@ -115,7 +115,7 @@ describe('canWriteToPet', () => {
     });
 
     it('returns false when user has no access', async () => {
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
         ownerId: 'owner-1',
         hives: [],
       });
@@ -126,7 +126,7 @@ describe('canWriteToPet', () => {
     });
 
     it('returns false when pet does not exist', async () => {
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue(null);
 
       const result = await canWriteToPet('user-1', 'nonexistent-pet');
 
@@ -141,7 +141,7 @@ describe('canWriteToPet', () => {
      */
 
     it('VIEWER cannot write even if they have valid hive membership', async () => {
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
         ownerId: 'owner-1',
         hives: [{ role: 'VIEWER' }],
       });
@@ -152,7 +152,7 @@ describe('canWriteToPet', () => {
     });
 
     it('CAREGIVER can write with valid hive membership', async () => {
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
         ownerId: 'owner-1',
         hives: [{ role: 'CAREGIVER' }],
       });

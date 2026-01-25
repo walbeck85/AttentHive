@@ -1,7 +1,7 @@
 import { POST } from '../route';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
-import { createMockUser, createMockRecipient } from '@/__tests__/utils/test-factories';
+import { createMockUser, createMockCareRecipient } from '@/__tests__/utils/test-factories';
 
 // Typed spy for console suppression
 type ConsoleErrorSpy = jest.SpyInstance<
@@ -32,7 +32,7 @@ jest.mock('@/lib/prisma', () => ({
     user: {
       findUnique: jest.fn(),
     },
-    recipient: {
+    careRecipient: {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
@@ -137,13 +137,13 @@ describe('POST /api/pets/[id]/photo - Security', () => {
   describe('MIME Spoofing Prevention', () => {
     it('rejects text file claiming to be image/jpeg', async () => {
       const owner = createMockUser({ id: 'owner-1', email: 'owner@example.com' });
-      const pet = createMockRecipient({ id: 'pet-1', ownerId: 'owner-1' });
+      const pet = createMockCareRecipient({ id: 'pet-1', ownerId: 'owner-1' });
 
       (getServerSession as jest.Mock).mockResolvedValue({
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
 
       // Create a text file but claim it's image/jpeg
       const maliciousContent = '<script>alert("xss")</script>';
@@ -159,13 +159,13 @@ describe('POST /api/pets/[id]/photo - Security', () => {
 
     it('rejects HTML file claiming to be image/png', async () => {
       const owner = createMockUser({ id: 'owner-1', email: 'owner@example.com' });
-      const pet = createMockRecipient({ id: 'pet-1', ownerId: 'owner-1' });
+      const pet = createMockCareRecipient({ id: 'pet-1', ownerId: 'owner-1' });
 
       (getServerSession as jest.Mock).mockResolvedValue({
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
 
       // Create HTML file but claim it's image/png
       const htmlContent = '<!DOCTYPE html><html><body>Malicious</body></html>';
@@ -181,13 +181,13 @@ describe('POST /api/pets/[id]/photo - Security', () => {
 
     it('rejects SVG file claiming to be image/webp', async () => {
       const owner = createMockUser({ id: 'owner-1', email: 'owner@example.com' });
-      const pet = createMockRecipient({ id: 'pet-1', ownerId: 'owner-1' });
+      const pet = createMockCareRecipient({ id: 'pet-1', ownerId: 'owner-1' });
 
       (getServerSession as jest.Mock).mockResolvedValue({
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
 
       // SVG can contain JavaScript and is dangerous
       const svgContent = '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>';
@@ -203,13 +203,13 @@ describe('POST /api/pets/[id]/photo - Security', () => {
 
     it('rejects file with too few bytes to detect type', async () => {
       const owner = createMockUser({ id: 'owner-1', email: 'owner@example.com' });
-      const pet = createMockRecipient({ id: 'pet-1', ownerId: 'owner-1' });
+      const pet = createMockCareRecipient({ id: 'pet-1', ownerId: 'owner-1' });
 
       (getServerSession as jest.Mock).mockResolvedValue({
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
 
       // File too small to have valid magic bytes
       const tinyContent = new Uint8Array([0x00, 0x01, 0x02]);
@@ -227,14 +227,14 @@ describe('POST /api/pets/[id]/photo - Security', () => {
   describe('Valid Image Acceptance', () => {
     it('accepts file with valid JPEG magic bytes', async () => {
       const owner = createMockUser({ id: 'owner-1', email: 'owner@example.com' });
-      const pet = createMockRecipient({ id: 'pet-1', ownerId: 'owner-1' });
+      const pet = createMockCareRecipient({ id: 'pet-1', ownerId: 'owner-1' });
 
       (getServerSession as jest.Mock).mockResolvedValue({
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
-      (prisma.recipient.update as jest.Mock).mockResolvedValue({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
+      (prisma.careRecipient.update as jest.Mock).mockResolvedValue({
         ...pet,
         imageUrl: 'https://example.com/test.jpg',
       });
@@ -249,14 +249,14 @@ describe('POST /api/pets/[id]/photo - Security', () => {
 
     it('accepts file with valid PNG magic bytes', async () => {
       const owner = createMockUser({ id: 'owner-1', email: 'owner@example.com' });
-      const pet = createMockRecipient({ id: 'pet-1', ownerId: 'owner-1' });
+      const pet = createMockCareRecipient({ id: 'pet-1', ownerId: 'owner-1' });
 
       (getServerSession as jest.Mock).mockResolvedValue({
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
-      (prisma.recipient.update as jest.Mock).mockResolvedValue({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
+      (prisma.careRecipient.update as jest.Mock).mockResolvedValue({
         ...pet,
         imageUrl: 'https://example.com/test.png',
       });
@@ -271,14 +271,14 @@ describe('POST /api/pets/[id]/photo - Security', () => {
 
     it('accepts file with valid WebP magic bytes', async () => {
       const owner = createMockUser({ id: 'owner-1', email: 'owner@example.com' });
-      const pet = createMockRecipient({ id: 'pet-1', ownerId: 'owner-1' });
+      const pet = createMockCareRecipient({ id: 'pet-1', ownerId: 'owner-1' });
 
       (getServerSession as jest.Mock).mockResolvedValue({
         user: { email: 'owner@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
-      (prisma.recipient.update as jest.Mock).mockResolvedValue({
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
+      (prisma.careRecipient.update as jest.Mock).mockResolvedValue({
         ...pet,
         imageUrl: 'https://example.com/test.webp',
       });
@@ -305,14 +305,14 @@ describe('POST /api/pets/[id]/photo - Security', () => {
 
     it('returns 404 when user does not own the pet', async () => {
       const notOwner = createMockUser({ id: 'not-owner', email: 'other@example.com' });
-      const pet = createMockRecipient({ id: 'pet-1', ownerId: 'owner-1' });
+      const pet = createMockCareRecipient({ id: 'pet-1', ownerId: 'owner-1' });
 
       (getServerSession as jest.Mock).mockResolvedValue({
         user: { email: 'other@example.com' },
       });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(notOwner);
       // findUnique returns a pet but user is not owner and has no hive membership
-      (prisma.recipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
 
       const validFile = createMockFile(VALID_JPEG_BYTES, 'photo.jpg', 'image/jpeg');
       const { request, context } = createMockRequest(validFile);

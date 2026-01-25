@@ -1,6 +1,6 @@
 import type {
   User,
-  Recipient,
+  CareRecipient,
   CareLog,
   Hive,
   ActivityType,
@@ -34,7 +34,7 @@ export function createMockUser(overrides?: Partial<User>): User {
   };
 }
 
-export function createMockRecipient(overrides?: Partial<Recipient>): Recipient {
+export function createMockCareRecipient(overrides?: Partial<CareRecipient>): CareRecipient {
   const now = new Date();
   return {
     id: generateId(),

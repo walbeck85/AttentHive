@@ -40,10 +40,10 @@ describe('Prisma Mock', () => {
     const mockUser = createMockUser({ id: 'user-1' });
 
     prismaMock.user.findUnique.mockResolvedValue(mockUser);
-    prismaMock.recipient.findMany.mockResolvedValue([]);
+    prismaMock.careRecipient.findMany.mockResolvedValue([]);
 
     const user = await prismaMock.user.findUnique({ where: { id: 'user-1' } });
-    const recipients = await prismaMock.recipient.findMany({
+    const recipients = await prismaMock.careRecipient.findMany({
       where: { ownerId: 'user-1' },
     });
 

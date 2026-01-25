@@ -24,7 +24,7 @@ export async function canAccessPet(
   petId: string
 ): Promise<PetAccessResult> {
   // Single query to get pet ownership and hive membership in one go
-  const pet = await prisma.recipient.findUnique({
+  const pet = await prisma.careRecipient.findUnique({
     where: { id: petId },
     select: {
       ownerId: true,

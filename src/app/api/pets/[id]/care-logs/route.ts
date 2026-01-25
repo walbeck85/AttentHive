@@ -38,7 +38,7 @@ export async function GET(
     }
 
     // Fetch pet name for response
-    const pet = await prisma.recipient.findUnique({
+    const pet = await prisma.careRecipient.findUnique({
       where: { id: petId },
       select: { name: true },
     });

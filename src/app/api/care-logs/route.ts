@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const pet = await prisma.recipient.findUnique({
+    const pet = await prisma.careRecipient.findUnique({
       where: { id: recipientId },
       select: { name: true },
     });

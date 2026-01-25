@@ -141,7 +141,7 @@ export async function POST(
     }
 
     // Fetch the pet with hive members to check permissions
-    const recipient = await prisma.recipient.findUnique({
+    const recipient = await prisma.careRecipient.findUnique({
       where: { id },
       select: {
         id: true,
@@ -248,7 +248,7 @@ export async function POST(
     } = supabase.storage.from('pet-photos').getPublicUrl(data.path);
 
     // Persist the new URL on the Recipient so every consumer reads from a single source of truth.
-    const updatedRecipient = await prisma.recipient.update({
+    const updatedRecipient = await prisma.careRecipient.update({
       where: { id: recipient.id },
       data: {
         imageUrl: publicUrl,

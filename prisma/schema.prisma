@@ -15,7 +15,7 @@ model Hive {
   userId      String
   role        HiveRole  @default(VIEWER)
   grantedAt   DateTime  @default(now())
-  recipient   Recipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  recipient   CareRecipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([recipientId, userId])
@@ -34,7 +34,7 @@ model CareLog {
   createdAt    DateTime     @default(now())
   photoUrl     String?
   editedAt     DateTime?
-  recipient    Recipient    @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  recipient    CareRecipient    @relation(fields: [recipientId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([recipientId])
@@ -43,7 +43,7 @@ model CareLog {
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model Recipient {
+model CareRecipient {
   id              String    @id @default(cuid())
   name            String
   type            PetType
@@ -75,6 +75,7 @@ model Recipient {
   owner           User      @relation("PetOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@index([ownerId])
+  @@map("Recipient")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -91,7 +92,7 @@ model User {
   resetTokenExpiry  DateTime?
   hives             Hive[]
   careLogs          CareLog[]
-  ownedPets         Recipient[] @relation("PetOwner")
+  ownedPets         CareRecipient[] @relation("PetOwner")
 }
 
 enum ActivityType {
