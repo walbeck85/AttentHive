@@ -123,7 +123,7 @@ describe('GET /api/care-recipients', () => {
 describe('POST /api/care-recipients', () => {
   const validPetData = {
     name: 'Buddy',
-    type: 'DOG',
+    subtype: 'DOG',
     breed: 'Labrador',
     gender: 'MALE',
     birthDate: '2020-01-15',
@@ -152,7 +152,7 @@ describe('POST /api/care-recipients', () => {
       expect(prisma.careRecipient.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           name: 'Buddy',
-          type: 'DOG',
+          subtype: 'DOG',
           breed: 'Labrador',
           gender: 'MALE',
           weight: 25.5,
@@ -251,7 +251,7 @@ describe('POST /api/care-recipients', () => {
       expect(prisma.careRecipient.create).not.toHaveBeenCalled();
     });
 
-    it('returns 400 when type is missing', async () => {
+    it('returns 400 when subtype is missing', async () => {
       const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
 
       (getServerSession as jest.Mock).mockResolvedValue({
@@ -259,9 +259,9 @@ describe('POST /api/care-recipients', () => {
       });
       (prisma.user.upsert as jest.Mock).mockResolvedValue(mockUser);
 
-      const { type: __, ...dataWithoutType } = validPetData;
+      const { subtype: __, ...dataWithoutSubtype } = validPetData;
       void __; // Suppress unused variable warning
-      const req = createRequest(dataWithoutType);
+      const req = createRequest(dataWithoutSubtype);
       const res = await postHandler(req);
 
       expect(res.status).toBe(400);
@@ -343,7 +343,7 @@ describe('POST /api/care-recipients', () => {
       expect(prisma.careRecipient.create).not.toHaveBeenCalled();
     });
 
-    it('returns 400 when type is invalid', async () => {
+    it('returns 400 when subtype is invalid', async () => {
       const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
 
       (getServerSession as jest.Mock).mockResolvedValue({
@@ -353,7 +353,7 @@ describe('POST /api/care-recipients', () => {
 
       const req = createRequest({
         ...validPetData,
-        type: 'BIRD',
+        subtype: 'INVALID_TYPE',
       });
       const res = await postHandler(req);
 

@@ -47,37 +47,93 @@ function sanitizeCharacteristics(input: unknown): PetCharacteristicId[] {
   );
 }
 
-// Validation schema for creating a pet
-const createPetSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(50, 'Name too long'),
-  type: z.enum(['DOG', 'CAT'] as const),
-  breed: z.string().min(1, 'Breed is required').max(100, 'Breed too long'),
-  gender: z.enum(['MALE', 'FEMALE'] as const),
-  birthDate: z
-    .string()
-    .refine((date) => {
-      const birthDate = new Date(date);
-      const today = new Date();
-      return birthDate <= today;
-    }, 'Birth date cannot be in the future'),
-  weight: z.number().positive('Weight must be positive'),
-  // Client may send an array of strings for characteristic flags.
-  // We keep this loose here and enforce the canonical values via
-  // `sanitizeCharacteristics` so the schema stays simple.
-  characteristics: z.array(z.string()).optional(),
-});
+// Pet subtypes - must match frontend definition
+const PET_SUBTYPES = ['DOG', 'CAT', 'BIRD', 'FISH', 'SMALL_MAMMAL', 'REPTILE', 'EXOTIC'] as const;
+type PetSubtype = (typeof PET_SUBTYPES)[number];
+
+// Subtypes that require specific fields (for create validation)
+const SUBTYPES_WITH_BREED: PetSubtype[] = ['DOG', 'CAT', 'BIRD', 'SMALL_MAMMAL', 'REPTILE', 'EXOTIC'];
+const SUBTYPES_WITH_WEIGHT: PetSubtype[] = ['DOG', 'CAT', 'SMALL_MAMMAL', 'REPTILE', 'EXOTIC'];
+const SUBTYPES_WITH_BIRTHDATE: PetSubtype[] = ['DOG', 'CAT', 'BIRD', 'SMALL_MAMMAL', 'REPTILE', 'EXOTIC'];
+const SUBTYPES_WITH_GENDER: PetSubtype[] = ['DOG', 'CAT', 'BIRD', 'SMALL_MAMMAL', 'REPTILE', 'EXOTIC'];
+
+// Validation schema for creating a care recipient (pet)
+const createPetSchema = z
+  .object({
+    name: z.string().min(1, 'Name is required').max(50, 'Name too long'),
+    category: z.literal('PET').optional().default('PET'),
+    subtype: z.enum(PET_SUBTYPES),
+    // Optional fields - validation depends on subtype
+    breed: z.string().max(100, 'Breed too long').optional(),
+    gender: z.enum(['MALE', 'FEMALE'] as const).optional(),
+    birthDate: z
+      .string()
+      .refine((date) => {
+        if (!date) return true;
+        const birthDate = new Date(date);
+        const today = new Date();
+        return birthDate <= today;
+      }, 'Birth date cannot be in the future')
+      .optional(),
+    weight: z.number().positive('Weight must be positive').optional(),
+    // Client may send an array of strings for characteristic flags.
+    // We keep this loose here and enforce the canonical values via
+    // `sanitizeCharacteristics` so the schema stays simple.
+    characteristics: z.array(z.string()).optional(),
+  })
+  .refine(
+    (data) => {
+      // Validate breed is present for subtypes that require it
+      if (SUBTYPES_WITH_BREED.includes(data.subtype) && !data.breed?.trim()) {
+        return false;
+      }
+      return true;
+    },
+    { message: 'Breed is required', path: ['breed'] }
+  )
+  .refine(
+    (data) => {
+      // Validate birthDate is present for subtypes that require it
+      if (SUBTYPES_WITH_BIRTHDATE.includes(data.subtype) && !data.birthDate) {
+        return false;
+      }
+      return true;
+    },
+    { message: 'Birth date is required', path: ['birthDate'] }
+  )
+  .refine(
+    (data) => {
+      // Validate weight is present for subtypes that require it
+      if (SUBTYPES_WITH_WEIGHT.includes(data.subtype) && data.weight === undefined) {
+        return false;
+      }
+      return true;
+    },
+    { message: 'Weight is required', path: ['weight'] }
+  )
+  .refine(
+    (data) => {
+      // Validate gender is present for subtypes that require it
+      if (SUBTYPES_WITH_GENDER.includes(data.subtype) && !data.gender) {
+        return false;
+      }
+      return true;
+    },
+    { message: 'Gender is required', path: ['gender'] }
+  );
 
 // Validation schema for updating a pet (all fields optional)
+// Note: For updates we don't enforce subtype-specific required fields
+// since users might just update one field at a time
 const updatePetSchema = z.object({
   name: z
     .string()
     .min(1, 'Name is required')
     .max(50, 'Name too long')
     .optional(),
-  type: z.enum(['DOG', 'CAT'] as const).optional(),
+  subtype: z.enum(PET_SUBTYPES).optional(),
   breed: z
     .string()
-    .min(1, 'Breed is required')
     .max(100, 'Breed too long')
     .optional(),
   gender: z.enum(['MALE', 'FEMALE'] as const).optional(),
@@ -181,6 +237,10 @@ export async function POST(request: NextRequest) {
     const {
       birthDate,
       characteristics: rawCharacteristics,
+      subtype,
+      breed,
+      gender,
+      weight,
       ...rest
     } = petData;
 
@@ -189,11 +249,12 @@ export async function POST(request: NextRequest) {
     const newPet = await prisma.careRecipient.create({
       data: {
         ...rest,
-        gender: rest.gender,
-        type: rest.type,
-        breed: rest.breed,
-        birthDate: new Date(birthDate),
-        weight: rest.weight,
+        subtype,
+        // Only include conditional fields if they have values
+        ...(breed ? { breed } : {}),
+        ...(gender ? { gender } : {}),
+        ...(birthDate ? { birthDate: new Date(birthDate) } : {}),
+        ...(weight !== undefined ? { weight } : {}),
         characteristics,
         ownerId: dbUser.id, // use real DB user id, not session.user.id
         category: 'PET',

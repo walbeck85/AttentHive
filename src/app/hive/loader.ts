@@ -8,7 +8,8 @@ export type CaregiverPet = {
   membershipId: string;
   id: string;
   name: string;
-  type: string;
+  type: string | null;
+  subtype?: string | null;
 };
 
 export type CaregiverGroup = {
@@ -21,7 +22,8 @@ export type CaregiverGroup = {
 export type PetYouCareFor = {
   id: string;
   name: string;
-  type: string;
+  type: string | null;
+  subtype?: string | null;
   ownerName: string;
 };
 
@@ -119,6 +121,7 @@ export async function loadHivePageData(): Promise<HivePageData | null> {
       id: membership.recipient.id,
       name: membership.recipient.name,
       type: membership.recipient.type,
+      subtype: membership.recipient.subtype,
     });
   });
 
@@ -152,6 +155,7 @@ export async function loadHivePageData(): Promise<HivePageData | null> {
       id: membership.recipient.id,
       name: membership.recipient.name,
       type: membership.recipient.type,
+      subtype: membership.recipient.subtype,
       ownerName:
         membership.recipient.owner.name ??
         membership.recipient.owner.email ??

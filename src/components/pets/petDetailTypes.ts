@@ -34,7 +34,10 @@ export type CareLog = {
 export type PetData = {
   id: string;
   name: string;
-  type: string;
+  // Legacy type field - nullable for new subtypes
+  type: string | null;
+  // Primary pet subtype identifier (DOG, CAT, BIRD, FISH, etc.)
+  subtype?: string | null;
   breed: string;
   gender: string;
   birthDate: string;

@@ -97,6 +97,7 @@ export default async function PetDetailsPage({ params }: Params) {
     id: dbPet.id,
     name: dbPet.name,
     type: dbPet.type,
+    subtype: dbPet.subtype,
     // These fields are optional in practice, so I defensively default empty strings rather than
     // forcing the UI to branch on null every time it wants to render basic profile data.
     breed: dbPet.breed ?? "",

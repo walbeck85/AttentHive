@@ -46,10 +46,12 @@ model CareLog {
 model CareRecipient {
   id              String    @id @default(cuid())
   name            String
-  type            PetType
-  breed           String
-  birthDate       DateTime
-  weight          Float
+  // Legacy type field - kept for backwards compatibility, now optional as subtype is preferred
+  type            PetType?
+  // These fields are now optional to support different pet subtypes (FISH only needs name, etc.)
+  breed           String?
+  birthDate       DateTime?
+  weight          Float?
   specialNeeds    String?
   description     String?
   specialNotes    String?
@@ -59,10 +61,11 @@ model CareRecipient {
   ownerId         String
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  gender          Gender
+  gender          Gender?
   imageUrl        String? // Keeping this nullable so existing recipients don't break while we roll out photo uploads gradually.
   // Category system (new)
   category        RecipientCategory
+  // Primary pet type identifier - supports: DOG, CAT, BIRD, FISH, SMALL_MAMMAL, REPTILE, EXOTIC
   subtype         String?
   // Plant-specific fields (null for pets/people)
   plantSpecies    String?

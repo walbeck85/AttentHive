@@ -18,10 +18,33 @@ import { RecipientCategory } from '@prisma/client';
 type AddRecipientFormProps = {
   onRecipientAdded?: () => void;
 };
+
+// Pet subtype definition for UI rendering
+type PetSubtype = 'DOG' | 'CAT' | 'BIRD' | 'FISH' | 'SMALL_MAMMAL' | 'REPTILE' | 'EXOTIC';
+
+const PET_SUBTYPES: { id: PetSubtype; label: string; icon: string }[] = [
+  { id: 'DOG', label: 'Dog', icon: '🐕' },
+  { id: 'CAT', label: 'Cat', icon: '🐱' },
+  { id: 'BIRD', label: 'Bird', icon: '🐦' },
+  { id: 'FISH', label: 'Fish', icon: '🐠' },
+  { id: 'SMALL_MAMMAL', label: 'Small Mammal', icon: '🐹' },
+  { id: 'REPTILE', label: 'Reptile', icon: '🦎' },
+  { id: 'EXOTIC', label: 'Exotic', icon: '🦜' },
+];
+
+// Subtypes that require breed/species input
+const SUBTYPES_WITH_BREED: PetSubtype[] = ['DOG', 'CAT', 'BIRD', 'SMALL_MAMMAL', 'REPTILE', 'EXOTIC'];
+// Subtypes that require weight input
+const SUBTYPES_WITH_WEIGHT: PetSubtype[] = ['DOG', 'CAT', 'SMALL_MAMMAL', 'REPTILE', 'EXOTIC'];
+// Subtypes that require birthDate input
+const SUBTYPES_WITH_BIRTHDATE: PetSubtype[] = ['DOG', 'CAT', 'BIRD', 'SMALL_MAMMAL', 'REPTILE', 'EXOTIC'];
+// Subtypes that require gender input
+const SUBTYPES_WITH_GENDER: PetSubtype[] = ['DOG', 'CAT', 'BIRD', 'SMALL_MAMMAL', 'REPTILE', 'EXOTIC'];
+
 // Form state representation
 type FormState = {
   name: string;
-  type: 'DOG' | 'CAT';
+  subtype: PetSubtype;
   breed: string;
   gender: 'MALE' | 'FEMALE';
   birthDate: string;
@@ -42,7 +65,8 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [category, setCategory] = useState<RecipientCategory | null>(null);
-  const [step, setStep] = useState(0); // 0 = category selection, 1 = pet form
+  const [petSubtype, setPetSubtype] = useState<PetSubtype | null>(null);
+  const [step, setStep] = useState(0); // 0 = category selection, 1 = pet subtype, 2 = pet form
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const borderColor = theme.palette.divider;
@@ -87,7 +111,7 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
   // Form State
   const [formData, setFormData] = useState<FormState>({
     name: '',
-    type: 'DOG',
+    subtype: 'DOG',
     breed: '',
     gender: 'MALE',
     birthDate: '',
@@ -104,7 +128,7 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
   const resetForm = () => {
     setFormData({
       name: '',
-      type: 'DOG',
+      subtype: 'DOG',
       breed: '',
       gender: 'MALE',
       birthDate: '',
@@ -117,26 +141,40 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
     setFieldErrors({});
     setError(null);
     setCategory(null);
+    setPetSubtype(null);
     setStep(0);
   };
-// Validates form data and returns errors
+// Validates form data and returns errors based on subtype
   const validate = (data: FormState): FieldErrors => {
     const errors: FieldErrors = {};
-// Name, breed, birthDate, and weight are required
-    if (!data.name.trim()) errors.name = 'Name is required.';
-    if (!data.breed.trim()) errors.breed = 'Breed is required.';
-    if (!data.birthDate) errors.birthDate = 'Birth date is required.';
+    const subtype = data.subtype;
 
-    if (!data.weight.trim()) {
-      errors.weight = 'Weight is required.';
-    } else {
-      const val = parseFloat(data.weight);
-      if (Number.isNaN(val) || val <= 0) {
-        errors.weight = 'Enter a valid weight greater than 0.';
+    // Name is always required
+    if (!data.name.trim()) errors.name = 'Name is required.';
+
+    // Breed is required for most subtypes (not FISH)
+    if (SUBTYPES_WITH_BREED.includes(subtype) && !data.breed.trim()) {
+      errors.breed = subtype === 'BIRD' ? 'Species is required.' : 'Breed is required.';
+    }
+
+    // Birth date is required for most subtypes (not FISH)
+    if (SUBTYPES_WITH_BIRTHDATE.includes(subtype) && !data.birthDate) {
+      errors.birthDate = 'Birth date is required.';
+    }
+
+    // Weight is required for most subtypes (not BIRD or FISH)
+    if (SUBTYPES_WITH_WEIGHT.includes(subtype)) {
+      if (!data.weight.trim()) {
+        errors.weight = 'Weight is required.';
+      } else {
+        const val = parseFloat(data.weight);
+        if (Number.isNaN(val) || val <= 0) {
+          errors.weight = 'Enter a valid weight greater than 0.';
+        }
       }
     }
 
-    // type, gender, weightUnit have constrained inputs already,
+    // subtype, gender, weightUnit have constrained inputs already,
     // so no extra validation needed beyond presence.
     return errors;
   };
@@ -155,22 +193,37 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
     }
 // Submit to API
     try {
-      const numericWeight = parseFloat(formData.weight);
-      const weightInLbs =
-        formData.weightUnit === 'kg' ? numericWeight * 2.20462 : numericWeight;
+      const subtype = formData.subtype;
 
-      // Build the payload, only including optional fields if they have values
+      // Build the payload with category and subtype
       const payload: Record<string, unknown> = {
         name: formData.name.trim(),
-        type: formData.type,
-        breed: formData.breed.trim(),
-        gender: formData.gender,
-        birthDate: formData.birthDate,
-        weight: weightInLbs,
+        category: 'PET',
+        subtype: subtype,
         // Pass through the selected characteristic IDs so the API
         // can validate and persist them to the Recipient record.
         characteristics: formData.characteristics,
       };
+
+      // Conditionally include fields based on subtype requirements
+      if (SUBTYPES_WITH_BREED.includes(subtype)) {
+        payload.breed = formData.breed.trim();
+      }
+
+      if (SUBTYPES_WITH_GENDER.includes(subtype)) {
+        payload.gender = formData.gender;
+      }
+
+      if (SUBTYPES_WITH_BIRTHDATE.includes(subtype)) {
+        payload.birthDate = formData.birthDate;
+      }
+
+      if (SUBTYPES_WITH_WEIGHT.includes(subtype)) {
+        const numericWeight = parseFloat(formData.weight);
+        const weightInLbs =
+          formData.weightUnit === 'kg' ? numericWeight * 2.20462 : numericWeight;
+        payload.weight = weightInLbs;
+      }
 
       // Only include description if it has content
       const trimmedDescription = formData.description.trim();
@@ -391,7 +444,7 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
           component="span"
           sx={{ color: accent }}
         >
-          {step === 0 ? 'Choose Category' : 'Add New Pet'}
+          {step === 0 ? 'Choose Category' : step === 1 ? 'Choose Pet Type' : 'Add New Pet'}
         </Typography>
       </h2>
 
@@ -460,15 +513,16 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
         </Box>
       )}
 
-      {/* Step 1: Pet Form (only for PET category) */}
+      {/* Step 1: Pet Subtype Selection */}
       {step === 1 && category === 'PET' && (
-        <>
+        <Box>
           {/* Back button */}
           <button
             type="button"
             onClick={() => {
               setStep(0);
               setCategory(null);
+              setPetSubtype(null);
             }}
             className="mb-4 inline-flex items-center gap-1 text-sm hover:opacity-80"
             style={{ color: textSecondary }}
@@ -485,9 +539,78 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
             Back to categories
           </button>
 
+          <Typography variant="body2" sx={{ color: textSecondary, mb: 3 }}>
+            What type of pet would you like to add?
+          </Typography>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {PET_SUBTYPES.map((subtype) => {
+              const isSelected = petSubtype === subtype.id;
+              return (
+                <button
+                  key={subtype.id}
+                  type="button"
+                  onClick={() => {
+                    setPetSubtype(subtype.id);
+                    setFormData((prev) => ({ ...prev, subtype: subtype.id, breed: '' }));
+                    setStep(2);
+                  }}
+                  className="flex flex-col items-center p-3 rounded-lg border-2 transition-all hover:shadow-md"
+                  style={{
+                    borderColor: isSelected ? accent : borderColor,
+                    backgroundColor: isSelected ? alpha(accent, 0.08) : subtleSurface,
+                  }}
+                >
+                  <span className="text-2xl mb-1">{subtype.icon}</span>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: textPrimary }}>
+                    {subtype.label}
+                  </Typography>
+                </button>
+              );
+            })}
+          </div>
+        </Box>
+      )}
+
+      {/* Step 2: Pet Form (only for PET category with subtype selected) */}
+      {step === 2 && category === 'PET' && petSubtype && (
+        <>
+          {/* Back button */}
+          <button
+            type="button"
+            onClick={() => {
+              setStep(1);
+            }}
+            className="mb-4 inline-flex items-center gap-1 text-sm hover:opacity-80"
+            style={{ color: textSecondary }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M10 13L5 8L10 3"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Back to pet types
+          </button>
+
           <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Pet type indicator */}
+        <div
+          className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm"
+          style={{
+            backgroundColor: alpha(accent, 0.12),
+            color: accent,
+          }}
+        >
+          <span>{PET_SUBTYPES.find((s) => s.id === petSubtype)?.icon}</span>
+          <span className="font-medium">{PET_SUBTYPES.find((s) => s.id === petSubtype)?.label}</span>
+        </div>
+
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          {/* Name */}
+          {/* Name - always shown */}
           <div>
             <Typography
               component="label"
@@ -503,7 +626,7 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
               onChange={(e) => updateField('name', e.target.value)}
               className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
               style={{ ...inputStyles, ...focusRingStyle }}
-              placeholder="e.g. Truffle"
+              placeholder={petSubtype === 'FISH' ? 'e.g. Goldie' : 'e.g. Truffle'}
             />
             {fieldErrors.name && (
               <Typography
@@ -517,171 +640,157 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
             )}
           </div>
 
-          {/* Type */}
-          <div>
-            <Typography
-              component="label"
-              variant="overline"
-              className="mb-1 block font-semibold"
-              style={labelStyles}
-            >
-              Type
-            </Typography>
-            <div className="flex gap-4 text-sm" style={{ color: textPrimary }}>
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="radio"
-                  name="type"
-                  value="DOG"
-                  checked={formData.type === 'DOG'}
-                  onChange={(e) => updateField('type', e.target.value as FormState['type'])}
-                  className="focus:ring-offset-0"
-                  style={{ accentColor: accent }}
+          {/* Breed/Species - shown for most subtypes except FISH */}
+          {SUBTYPES_WITH_BREED.includes(formData.subtype) && (
+            <div>
+              <Typography
+                component="label"
+                variant="overline"
+                className="mb-1 block font-semibold"
+                style={labelStyles}
+              >
+                {formData.subtype === 'BIRD' ? 'Species' : 'Breed'}
+              </Typography>
+              {/* Use BreedSelect for DOG/CAT, text input for others */}
+              {(formData.subtype === 'DOG' || formData.subtype === 'CAT') ? (
+                <BreedSelect
+                  petType={formData.subtype}
+                  value={formData.breed}
+                  onChange={(next) => updateField('breed', next)}
+                  required
                 />
-                <span>Dog</span>
-              </label>
-              <label className="flex cursor-pointer items-center gap-2">
+              ) : (
                 <input
-                  type="radio"
-                  name="type"
-                  value="CAT"
-                  checked={formData.type === 'CAT'}
-                  onChange={(e) => updateField('type', e.target.value as FormState['type'])}
-                  className="focus:ring-offset-0"
-                  style={{ accentColor: accent }}
+                  type="text"
+                  value={formData.breed}
+                  onChange={(e) => updateField('breed', e.target.value)}
+                  className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
+                  style={{ ...inputStyles, ...focusRingStyle }}
+                  placeholder={
+                    formData.subtype === 'BIRD' ? 'e.g. Parakeet, Cockatiel' :
+                    formData.subtype === 'SMALL_MAMMAL' ? 'e.g. Hamster, Guinea Pig' :
+                    formData.subtype === 'REPTILE' ? 'e.g. Bearded Dragon, Gecko' :
+                    'e.g. Sugar Glider, Hedgehog'
+                  }
                 />
-                <span>Cat</span>
-              </label>
+              )}
+              {fieldErrors.breed && (
+                <Typography
+                  variant="caption"
+                  color="error"
+                  className="mt-1 block"
+                  component="p"
+                >
+                  {fieldErrors.breed}
+                </Typography>
+              )}
             </div>
-          </div>
+          )}
 
-          {/* Breed */}
-          <div>
-            <Typography
-              component="label"
-              variant="overline"
-              className="mb-1 block font-semibold"
-              style={labelStyles}
-            >
-              Breed
-            </Typography>
-            {/* Using the shared BreedSelect so dogs and cats get type-specific, searchable lists without changing the backend schema or validation rules. */}
-            <BreedSelect
-              petType={formData.type}
-              value={formData.breed}
-              onChange={(next) => updateField('breed', next)}
-              required
-            />
-            {fieldErrors.breed && (
+          {/* Gender - shown for most subtypes except FISH */}
+          {SUBTYPES_WITH_GENDER.includes(formData.subtype) && (
+            <div>
               <Typography
-                variant="caption"
-                color="error"
-                className="mt-1 block"
-                component="p"
+                component="label"
+                variant="overline"
+                className="mb-1 block font-semibold"
+                style={labelStyles}
               >
-                {fieldErrors.breed}
+                Gender
               </Typography>
-            )}
-          </div>
-
-          {/* Gender */}
-          <div>
-            <Typography
-              component="label"
-              variant="overline"
-              className="mb-1 block font-semibold"
-              style={labelStyles}
-            >
-              Gender
-            </Typography>
-            <select
-              value={formData.gender}
-              onChange={(e) =>
-                updateField('gender', e.target.value as FormState['gender'])
-              }
-              className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
-              style={{ ...inputStyles, ...focusRingStyle }}
-            >
-              <option value="MALE">Male</option>
-              <option value="FEMALE">Female</option>
-            </select>
-          </div>
-
-          {/* Birth Date */}
-          <div>
-            <Typography
-              component="label"
-              variant="overline"
-              className="mb-1 block font-semibold"
-              style={labelStyles}
-            >
-              Birth Date
-            </Typography>
-            <input
-              type="date"
-              value={formData.birthDate}
-              onChange={(e) => updateField('birthDate', e.target.value)}
-              className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
-              style={{ ...inputStyles, ...focusRingStyle }}
-            />
-            {fieldErrors.birthDate && (
-              <Typography
-                variant="caption"
-                color="error"
-                className="mt-1 block"
-                component="p"
-              >
-                {fieldErrors.birthDate}
-              </Typography>
-            )}
-          </div>
-
-          {/* Weight + Unit */}
-          <div>
-            <Typography
-              component="label"
-              variant="overline"
-              className="mb-1 block font-semibold"
-              style={labelStyles}
-            >
-              Weight
-            </Typography>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                step="0.1"
-                value={formData.weight}
-                onChange={(e) => updateField('weight', e.target.value)}
+              <select
+                value={formData.gender}
+                onChange={(e) =>
+                  updateField('gender', e.target.value as FormState['gender'])
+                }
                 className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
                 style={{ ...inputStyles, ...focusRingStyle }}
-                placeholder="e.g. 25"
-              />
-              <select
-                value={formData.weightUnit}
-                onChange={(e) =>
-                  updateField(
-                    'weightUnit',
-                    e.target.value as FormState['weightUnit']
-                  )
-                }
-                className="w-24 rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
-                style={{ ...inputStyles, ...focusRingStyle }}
               >
-                <option value="lbs">lbs</option>
-                <option value="kg">kg</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
               </select>
             </div>
-            {fieldErrors.weight && (
+          )}
+
+          {/* Birth Date - shown for most subtypes except FISH */}
+          {SUBTYPES_WITH_BIRTHDATE.includes(formData.subtype) && (
+            <div>
               <Typography
-                variant="caption"
-                color="error"
-                className="mt-1 block"
-                component="p"
+                component="label"
+                variant="overline"
+                className="mb-1 block font-semibold"
+                style={labelStyles}
               >
-                {fieldErrors.weight}
+                Birth Date
               </Typography>
-            )}
-          </div>
+              <input
+                type="date"
+                value={formData.birthDate}
+                onChange={(e) => updateField('birthDate', e.target.value)}
+                className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
+                style={{ ...inputStyles, ...focusRingStyle }}
+              />
+              {fieldErrors.birthDate && (
+                <Typography
+                  variant="caption"
+                  color="error"
+                  className="mt-1 block"
+                  component="p"
+                >
+                  {fieldErrors.birthDate}
+                </Typography>
+              )}
+            </div>
+          )}
+
+          {/* Weight + Unit - shown for most subtypes except BIRD and FISH */}
+          {SUBTYPES_WITH_WEIGHT.includes(formData.subtype) && (
+            <div>
+              <Typography
+                component="label"
+                variant="overline"
+                className="mb-1 block font-semibold"
+                style={labelStyles}
+              >
+                Weight
+              </Typography>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  step="0.1"
+                  value={formData.weight}
+                  onChange={(e) => updateField('weight', e.target.value)}
+                  className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
+                  style={{ ...inputStyles, ...focusRingStyle }}
+                  placeholder="e.g. 25"
+                />
+                <select
+                  value={formData.weightUnit}
+                  onChange={(e) =>
+                    updateField(
+                      'weightUnit',
+                      e.target.value as FormState['weightUnit']
+                    )
+                  }
+                  className="w-24 rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
+                  style={{ ...inputStyles, ...focusRingStyle }}
+                >
+                  <option value="lbs">lbs</option>
+                  <option value="kg">kg</option>
+                </select>
+              </div>
+              {fieldErrors.weight && (
+                <Typography
+                  variant="caption"
+                  color="error"
+                  className="mt-1 block"
+                  component="p"
+                >
+                  {fieldErrors.weight}
+                </Typography>
+              )}
+            </div>
+          )}
 
           {/* Description */}
           <div className="md:col-span-2">
