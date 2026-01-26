@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { RecipientCategory } from '@prisma/client';
 import {
@@ -14,6 +14,9 @@ import {
   Chip,
 } from '@mui/material';
 import PetAvatar from '../pets/PetAvatar';
+import QuickActions from '../pets/QuickActions';
+import ConfirmActionModal from '../pets/ConfirmActionModal';
+import { type ActivityConfig, getActivityLabel } from '@/config/activityTypes';
 
 // Type for recipients from the database
 export type RecipientData = {
@@ -102,6 +105,57 @@ export default function RecipientCard({ recipient }: Props) {
   const secondaryInfo = getSecondaryInfo(recipient);
   const categoryLabel = getCategoryLabel(recipient.category);
   const categoryColor = getCategoryColor(recipient.category);
+
+  // Modal state for quick actions
+  const [pendingAction, setPendingAction] = useState<ActivityConfig | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleAction = (config: ActivityConfig) => {
+    // For now, use confirm modal for all actions
+    // More specialized modals (timer, bathroom, accident) can be added later
+    setPendingAction(config);
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmAction = async () => {
+    if (!pendingAction) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/care-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          petId: recipient.id,
+          activityType: pendingAction.type,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        console.error('Failed to log activity', data);
+      }
+    } catch (err) {
+      console.error('Error logging activity', err);
+    } finally {
+      setIsLoading(false);
+      setIsConfirmOpen(false);
+      setPendingAction(null);
+    }
+  };
+
+  const handleCancelAction = () => {
+    setIsConfirmOpen(false);
+    setPendingAction(null);
+  };
+
+  const pendingLabel = pendingAction ? getActivityLabel(pendingAction.type) : '';
+  const modalTitle = pendingAction
+    ? `Log ${pendingLabel.toLowerCase()} for ${recipient.name}?`
+    : '';
+  const modalBody = pendingAction
+    ? `This will add a "${pendingLabel}" entry to ${recipient.name}'s activity log.`
+    : '';
 
   return (
     <Card
@@ -311,9 +365,18 @@ export default function RecipientCard({ recipient }: Props) {
             bgcolor: 'background.paper',
             px: 2.5,
             py: 2,
-            justifyContent: 'center',
+            flexDirection: 'column',
+            gap: 1.5,
           }}
         >
+          {/* Quick Actions - dynamic based on subtype */}
+          {recipient.subtype && (
+            <QuickActions
+              subtype={recipient.subtype}
+              onAction={handleAction}
+            />
+          )}
+
           <Button
             component={Link}
             href={getDetailUrl(recipient)}
@@ -328,6 +391,18 @@ export default function RecipientCard({ recipient }: Props) {
           </Button>
         </CardActions>
       </Box>
+
+      {/* Confirm Action Modal */}
+      <ConfirmActionModal
+        open={isConfirmOpen}
+        title={modalTitle}
+        body={modalBody}
+        confirmLabel={pendingLabel ? `Log ${pendingLabel}` : 'Confirm'}
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmAction}
+        onCancel={handleCancelAction}
+        isLoading={isLoading}
+      />
     </Card>
   );
 }

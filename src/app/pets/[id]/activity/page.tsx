@@ -49,7 +49,7 @@ export default function ActivityLogPage() {
   // Get filter options from centralized config
   const filterOptions: Array<'ALL' | ActivityType> = [
     'ALL',
-    ...ACTIVITY_CONFIGS.map((c) => c.type),
+    ...Object.values(ACTIVITY_CONFIGS).map((c) => c.type),
   ];
 
   // Fetch data -------------------------------------------------

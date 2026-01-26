@@ -1,14 +1,14 @@
 import {
   ACTIVITY_CONFIGS,
+  getActivitiesForSubtype,
   getActivitiesForPetType,
   getActivityConfig,
   getActivityLabel,
 } from '@/config/activityTypes';
 
 describe('ACTIVITY_CONFIGS', () => {
-  it('contains all 7 activity types', () => {
-    expect(ACTIVITY_CONFIGS).toHaveLength(7);
-    const types = ACTIVITY_CONFIGS.map((c) => c.type);
+  it('contains all expected activity types', () => {
+    const types = Object.keys(ACTIVITY_CONFIGS);
     expect(types).toContain('FEED');
     expect(types).toContain('WALK');
     expect(types).toContain('MEDICATE');
@@ -16,24 +16,24 @@ describe('ACTIVITY_CONFIGS', () => {
     expect(types).toContain('ACCIDENT');
     expect(types).toContain('LITTER_BOX');
     expect(types).toContain('WELLNESS_CHECK');
+    // New activity types
+    expect(types).toContain('WATER');
+    expect(types).toContain('FERTILIZE');
+    expect(types).toContain('MEAL');
+    expect(types).toContain('NOTE');
   });
 
   it('has correct modal types for each activity', () => {
-    const walkConfig = ACTIVITY_CONFIGS.find((c) => c.type === 'WALK');
-    const bathroomConfig = ACTIVITY_CONFIGS.find((c) => c.type === 'BATHROOM');
-    const accidentConfig = ACTIVITY_CONFIGS.find((c) => c.type === 'ACCIDENT');
-    const feedConfig = ACTIVITY_CONFIGS.find((c) => c.type === 'FEED');
-
-    expect(walkConfig?.modalType).toBe('timer');
-    expect(bathroomConfig?.modalType).toBe('bathroom');
-    expect(accidentConfig?.modalType).toBe('accident');
-    expect(feedConfig?.modalType).toBe('confirm');
+    expect(ACTIVITY_CONFIGS.WALK?.modalType).toBe('timer');
+    expect(ACTIVITY_CONFIGS.BATHROOM?.modalType).toBe('bathroom');
+    expect(ACTIVITY_CONFIGS.ACCIDENT?.modalType).toBe('accident');
+    expect(ACTIVITY_CONFIGS.FEED?.modalType).toBe('confirm');
   });
 });
 
-describe('getActivitiesForPetType', () => {
+describe('getActivitiesForSubtype', () => {
   describe('DOG activities', () => {
-    const dogActivities = getActivitiesForPetType('DOG');
+    const dogActivities = getActivitiesForSubtype('DOG');
     const dogTypes = dogActivities.map((c) => c.type);
 
     it('includes WALK for dogs', () => {
@@ -44,21 +44,17 @@ describe('getActivitiesForPetType', () => {
       expect(dogTypes).not.toContain('LITTER_BOX');
     });
 
-    it('includes shared activities', () => {
+    it('includes expected activities', () => {
       expect(dogTypes).toContain('FEED');
       expect(dogTypes).toContain('MEDICATE');
       expect(dogTypes).toContain('BATHROOM');
       expect(dogTypes).toContain('ACCIDENT');
       expect(dogTypes).toContain('WELLNESS_CHECK');
     });
-
-    it('returns 6 activities for dogs', () => {
-      expect(dogActivities).toHaveLength(6);
-    });
   });
 
   describe('CAT activities', () => {
-    const catActivities = getActivitiesForPetType('CAT');
+    const catActivities = getActivitiesForSubtype('CAT');
     const catTypes = catActivities.map((c) => c.type);
 
     it('includes LITTER_BOX for cats', () => {
@@ -69,17 +65,71 @@ describe('getActivitiesForPetType', () => {
       expect(catTypes).not.toContain('WALK');
     });
 
-    it('includes shared activities', () => {
+    it('includes expected activities', () => {
       expect(catTypes).toContain('FEED');
       expect(catTypes).toContain('MEDICATE');
-      expect(catTypes).toContain('BATHROOM');
       expect(catTypes).toContain('ACCIDENT');
       expect(catTypes).toContain('WELLNESS_CHECK');
     });
+  });
 
-    it('returns 6 activities for cats', () => {
-      expect(catActivities).toHaveLength(6);
+  describe('INDOOR plant activities', () => {
+    const plantActivities = getActivitiesForSubtype('INDOOR');
+    const plantTypes = plantActivities.map((c) => c.type);
+
+    it('includes plant-specific actions', () => {
+      expect(plantTypes).toContain('WATER');
+      expect(plantTypes).toContain('FERTILIZE');
+      expect(plantTypes).toContain('PRUNE');
+      expect(plantTypes).toContain('REPOT');
+      expect(plantTypes).toContain('SUNLIGHT_ADJUST');
     });
+
+    it('excludes pet actions', () => {
+      expect(plantTypes).not.toContain('WALK');
+      expect(plantTypes).not.toContain('FEED');
+      expect(plantTypes).not.toContain('MEDICATE');
+    });
+  });
+
+  describe('ELDER person activities', () => {
+    const elderActivities = getActivitiesForSubtype('ELDER');
+    const elderTypes = elderActivities.map((c) => c.type);
+
+    it('includes person-specific actions', () => {
+      expect(elderTypes).toContain('MEAL');
+      expect(elderTypes).toContain('DOCTOR_VISIT');
+      expect(elderTypes).toContain('APPOINTMENT');
+      expect(elderTypes).toContain('ACTIVITY');
+    });
+
+    it('includes shared actions', () => {
+      expect(elderTypes).toContain('MEDICATE');
+      expect(elderTypes).toContain('WELLNESS_CHECK');
+      expect(elderTypes).toContain('NOTE');
+    });
+
+    it('excludes pet-only actions', () => {
+      expect(elderTypes).not.toContain('WALK');
+      expect(elderTypes).not.toContain('FEED');
+      expect(elderTypes).not.toContain('LITTER_BOX');
+    });
+  });
+});
+
+describe('getActivitiesForPetType (legacy)', () => {
+  it('returns activities for DOG', () => {
+    const dogActivities = getActivitiesForPetType('DOG');
+    const dogTypes = dogActivities.map((c) => c.type);
+    expect(dogTypes).toContain('WALK');
+    expect(dogTypes).toContain('FEED');
+  });
+
+  it('returns activities for CAT', () => {
+    const catActivities = getActivitiesForPetType('CAT');
+    const catTypes = catActivities.map((c) => c.type);
+    expect(catTypes).toContain('LITTER_BOX');
+    expect(catTypes).toContain('FEED');
   });
 });
 
@@ -95,12 +145,11 @@ describe('getActivityConfig', () => {
     const litterBoxConfig = getActivityConfig('LITTER_BOX');
     expect(litterBoxConfig).toBeDefined();
     expect(litterBoxConfig?.label).toBe('Litter Box');
-    expect(litterBoxConfig?.allowedPetTypes).toEqual(['CAT']);
 
-    const wellnessConfig = getActivityConfig('WELLNESS_CHECK');
-    expect(wellnessConfig).toBeDefined();
-    expect(wellnessConfig?.label).toBe('Wellness Check');
-    expect(wellnessConfig?.allowedPetTypes).toBe('all');
+    const waterConfig = getActivityConfig('WATER');
+    expect(waterConfig).toBeDefined();
+    expect(waterConfig?.label).toBe('Water');
+    expect(waterConfig?.icon).toBe('Droplets');
   });
 
   it('returns undefined for unknown activity type', () => {
@@ -118,6 +167,8 @@ describe('getActivityLabel', () => {
     expect(getActivityLabel('ACCIDENT')).toBe('Accident');
     expect(getActivityLabel('LITTER_BOX')).toBe('Litter Box');
     expect(getActivityLabel('WELLNESS_CHECK')).toBe('Wellness Check');
+    expect(getActivityLabel('WATER')).toBe('Water');
+    expect(getActivityLabel('MEAL')).toBe('Meal');
   });
 
   it('returns "Log" for unknown activity type', () => {

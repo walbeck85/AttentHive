@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PetType, ActivityType } from '@prisma/client';
+import { ActivityType } from '@prisma/client';
 import PetDetailShell from '@/components/pets/PetDetailShell';
 import PetDetailHeaderSection from '@/components/pets/PetDetailHeaderSection';
 import PetDetailActivitySection from '@/components/pets/PetDetailActivitySection';
@@ -86,8 +86,8 @@ export default function PetDetailPage({
   // Only OWNER and CAREGIVER can log care actions
   const canLogCareActions = currentUserRole === 'OWNER' || currentUserRole === 'CAREGIVER';
 
-  // Derive pet type for QuickActions filtering
-  const petType: PetType = (pet?.type as PetType) ?? 'DOG';
+  // Derive subtype for QuickActions filtering (use subtype if available, fall back to type)
+  const petSubtype: string = pet?.subtype ?? pet?.type ?? 'DOG';
 
   useEffect(() => {
     // Whenever the server sends updated pet data, we trust that as the source of truth.
@@ -324,10 +324,10 @@ export default function PetDetailPage({
           onBack={() => router.back()}
         />
 
-        {/* QuickActions for logging care activities - filtered by pet type */}
+        {/* QuickActions for logging care activities - filtered by subtype */}
         {canLogCareActions && (
           <Box sx={{ px: { xs: 2, sm: 0 }, mb: 2 }}>
-            <QuickActions petType={petType} onAction={handleQuickAction} />
+            <QuickActions subtype={petSubtype} onAction={handleQuickAction} />
           </Box>
         )}
 

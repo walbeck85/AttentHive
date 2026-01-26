@@ -173,14 +173,14 @@ describe('PetCard', () => {
         <PetCard pet={pet} currentUserName="Will" onQuickAction={jest.fn()} />
       );
 
-      // CAT should have Litter Box but not Walk
+      // CAT should have Litter Box but not Walk or Bathroom (cats use litter box instead)
       expect(screen.getByRole('button', { name: /feed/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /litter box/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /medicate/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /bathroom/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /accident/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /wellness check/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /walk/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^bathroom$/i })).not.toBeInTheDocument();
     });
   });
 });
