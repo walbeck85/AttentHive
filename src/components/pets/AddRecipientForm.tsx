@@ -41,6 +41,15 @@ const PLANT_SUBTYPES: { id: PlantSubtype; label: string; icon: string }[] = [
   { id: 'SUCCULENT', label: 'Succulent/Cactus', icon: '🌵' },
 ];
 
+// Person subtype definition for UI rendering
+type PersonSubtype = 'ELDER' | 'CHILD' | 'OTHER';
+
+const PERSON_SUBTYPES: { id: PersonSubtype; label: string; icon: string }[] = [
+  { id: 'ELDER', label: 'Elder/Senior', icon: '👴' },
+  { id: 'CHILD', label: 'Child', icon: '👶' },
+  { id: 'OTHER', label: 'Other', icon: '👤' },
+];
+
 // Sunlight options for plants
 const SUNLIGHT_OPTIONS = [
   { value: 'LOW', label: 'Low Light' },
@@ -66,7 +75,7 @@ const SUBTYPES_WITH_BIRTHDATE: PetSubtype[] = ['DOG', 'CAT', 'BIRD', 'SMALL_MAMM
 // Subtypes that require gender input
 const SUBTYPES_WITH_GENDER: PetSubtype[] = ['DOG', 'CAT', 'BIRD', 'SMALL_MAMMAL', 'REPTILE', 'EXOTIC'];
 
-// Form state representation - includes both pet and plant fields
+// Form state representation - includes pet, plant, and person fields
 type FormState = {
   name: string;
   // Pet-specific fields
@@ -81,6 +90,9 @@ type FormState = {
   plantSpecies: string;
   sunlight: string;
   waterFrequency: string;
+  // Person-specific fields
+  personSubtype: PersonSubtype;
+  relationship: string;
   // Shared fields
   description: string;
   specialNotes: string;
@@ -99,7 +111,8 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
   const [category, setCategory] = useState<RecipientCategory | null>(null);
   const [petSubtype, setPetSubtype] = useState<PetSubtype | null>(null);
   const [plantSubtype, setPlantSubtype] = useState<PlantSubtype | null>(null);
-  // Steps: 0 = category, 1 = subtype selection (pet or plant), 2 = details form
+  const [personSubtype, setPersonSubtype] = useState<PersonSubtype | null>(null);
+  // Steps: 0 = category, 1 = subtype selection (pet, plant, or person), 2 = details form
   const [step, setStep] = useState(0);
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
@@ -157,6 +170,9 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
     plantSpecies: '',
     sunlight: '',
     waterFrequency: '',
+    // Person fields
+    personSubtype: 'ELDER',
+    relationship: '',
     // Shared fields
     description: '',
     specialNotes: '',
@@ -181,6 +197,9 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
       plantSpecies: '',
       sunlight: '',
       waterFrequency: '',
+      // Person fields
+      personSubtype: 'ELDER',
+      relationship: '',
       // Shared fields
       description: '',
       specialNotes: '',
@@ -191,6 +210,7 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
     setCategory(null);
     setPetSubtype(null);
     setPlantSubtype(null);
+    setPersonSubtype(null);
     setStep(0);
   };
 // Validates form data and returns errors based on subtype
@@ -389,6 +409,74 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
     }
   };
 
+  // Validates person form data
+  const validatePerson = (data: FormState): FieldErrors => {
+    const errors: FieldErrors = {};
+    // Name is required
+    if (!data.name.trim()) errors.name = 'Name is required.';
+    // Relationship is required
+    if (!data.relationship.trim()) errors.relationship = 'Relationship is required.';
+    return errors;
+  };
+
+  // Handles person form submission
+  const handlePersonSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
+    // Client-side validation first
+    const errors = validatePerson(formData);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      // Build the payload for person
+      const payload: Record<string, unknown> = {
+        name: formData.name.trim(),
+        category: 'PERSON',
+        subtype: formData.personSubtype,
+        relationship: formData.relationship.trim(),
+      };
+
+      // Include shared optional fields if they have content
+      const trimmedDescription = formData.description.trim();
+      if (trimmedDescription) {
+        payload.description = trimmedDescription;
+      }
+      const trimmedSpecialNotes = formData.specialNotes.trim();
+      if (trimmedSpecialNotes) {
+        payload.specialNotes = trimmedSpecialNotes;
+      }
+
+      const res = await fetch('/api/care-recipients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to add person');
+      }
+
+      // Success - reset and refresh
+      resetForm();
+      setIsExpanded(false);
+      router.refresh();
+      if (onRecipientAdded) onRecipientAdded();
+    } catch (err) {
+      console.error("Error while adding person", err);
+      setError(err instanceof Error ? err.message : 'Failed to add person');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Helper to update a single field and clear its error
   const updateField = <K extends keyof FormState>(
     key: K,
@@ -500,9 +588,8 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
         type="button"
         onClick={() => {
           setCategory(categoryType);
-          if (categoryType === 'PET' || categoryType === 'PLANT') {
-            setStep(1);
-          }
+          // All categories now have subtype selection
+          setStep(1);
         }}
         className="flex flex-col items-center p-4 rounded-lg border-2 transition-all hover:shadow-md"
         style={{
@@ -572,8 +659,16 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
           {step === 0
             ? 'Choose Category'
             : step === 1
-              ? category === 'PLANT' ? 'Choose Plant Type' : 'Choose Pet Type'
-              : category === 'PLANT' ? 'Add New Plant' : 'Add New Pet'}
+              ? category === 'PLANT'
+                ? 'Choose Plant Type'
+                : category === 'PERSON'
+                  ? 'Choose Person Type'
+                  : 'Choose Pet Type'
+              : category === 'PLANT'
+                ? 'Add New Plant'
+                : category === 'PERSON'
+                  ? 'Add New Person'
+                  : 'Add New Pet'}
         </Typography>
       </h2>
 
@@ -616,27 +711,6 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
               description="Family members needing care"
             />
           </div>
-
-          {/* Coming Soon placeholder for PERSON only */}
-          {category === 'PERSON' && (
-            <Box
-              sx={{
-                mt: 4,
-                p: 3,
-                borderRadius: 2,
-                backgroundColor: alpha(accent, 0.08),
-                border: `1px solid ${alpha(accent, 0.3)}`,
-                textAlign: 'center',
-              }}
-            >
-              <Typography variant="h6" sx={{ color: accent, mb: 1 }}>
-                Coming Soon!
-              </Typography>
-              <Typography variant="body2" sx={{ color: textSecondary }}>
-                Person care tracking is under development. Check back soon!
-              </Typography>
-            </Box>
-          )}
         </Box>
       )}
 
@@ -739,6 +813,65 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
                   onClick={() => {
                     setPlantSubtype(subtype.id);
                     setFormData((prev) => ({ ...prev, plantSubtype: subtype.id }));
+                    setStep(2);
+                  }}
+                  className="flex flex-col items-center p-4 rounded-lg border-2 transition-all hover:shadow-md"
+                  style={{
+                    borderColor: isSelected ? accent : borderColor,
+                    backgroundColor: isSelected ? alpha(accent, 0.08) : subtleSurface,
+                  }}
+                >
+                  <span className="text-3xl mb-2">{subtype.icon}</span>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: textPrimary }}>
+                    {subtype.label}
+                  </Typography>
+                </button>
+              );
+            })}
+          </div>
+        </Box>
+      )}
+
+      {/* Step 1: Person Subtype Selection */}
+      {step === 1 && category === 'PERSON' && (
+        <Box>
+          {/* Back button */}
+          <button
+            type="button"
+            onClick={() => {
+              setStep(0);
+              setCategory(null);
+              setPersonSubtype(null);
+            }}
+            className="mb-4 inline-flex items-center gap-1 text-sm hover:opacity-80"
+            style={{ color: textSecondary }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M10 13L5 8L10 3"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Back to categories
+          </button>
+
+          <Typography variant="body2" sx={{ color: textSecondary, mb: 3 }}>
+            What type of person would you like to add?
+          </Typography>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {PERSON_SUBTYPES.map((subtype) => {
+              const isSelected = personSubtype === subtype.id;
+              return (
+                <button
+                  key={subtype.id}
+                  type="button"
+                  onClick={() => {
+                    setPersonSubtype(subtype.id);
+                    setFormData((prev) => ({ ...prev, personSubtype: subtype.id }));
                     setStep(2);
                   }}
                   className="flex flex-col items-center p-4 rounded-lg border-2 transition-all hover:shadow-md"
@@ -1373,6 +1506,210 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
                 }}
               >
                 {isSubmitting ? 'Adding…' : 'Add Plant'}
+              </button>
+            </div>
+          </form>
+        </>
+      )}
+
+      {/* Step 2: Person Form (only for PERSON category with subtype selected) */}
+      {step === 2 && category === 'PERSON' && personSubtype && (
+        <>
+          {/* Back button */}
+          <button
+            type="button"
+            onClick={() => {
+              setStep(1);
+            }}
+            className="mb-4 inline-flex items-center gap-1 text-sm hover:opacity-80"
+            style={{ color: textSecondary }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M10 13L5 8L10 3"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Back to person types
+          </button>
+
+          <form onSubmit={handlePersonSubmit} className="space-y-5">
+            {/* Person type indicator */}
+            <div
+              className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm"
+              style={{
+                backgroundColor: alpha(accent, 0.12),
+                color: accent,
+              }}
+            >
+              <span>{PERSON_SUBTYPES.find((s) => s.id === personSubtype)?.icon}</span>
+              <span className="font-medium">{PERSON_SUBTYPES.find((s) => s.id === personSubtype)?.label}</span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              {/* Name - required */}
+              <div>
+                <Typography
+                  component="label"
+                  variant="overline"
+                  className="mb-1 block font-semibold"
+                  style={labelStyles}
+                >
+                  Name
+                </Typography>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => updateField('name', e.target.value)}
+                  className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
+                  style={{ ...inputStyles, ...focusRingStyle }}
+                  placeholder="e.g. Grandma Rose"
+                />
+                {fieldErrors.name && (
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    className="mt-1 block"
+                    component="p"
+                  >
+                    {fieldErrors.name}
+                  </Typography>
+                )}
+              </div>
+
+              {/* Relationship - required */}
+              <div>
+                <Typography
+                  component="label"
+                  variant="overline"
+                  className="mb-1 block font-semibold"
+                  style={labelStyles}
+                >
+                  Relationship
+                </Typography>
+                <input
+                  type="text"
+                  value={formData.relationship}
+                  onChange={(e) => updateField('relationship', e.target.value)}
+                  className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
+                  style={{ ...inputStyles, ...focusRingStyle }}
+                  placeholder="e.g. Grandmother, Nephew, Neighbor"
+                />
+                {fieldErrors.relationship && (
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    className="mt-1 block"
+                    component="p"
+                  >
+                    {fieldErrors.relationship}
+                  </Typography>
+                )}
+              </div>
+
+              {/* Description */}
+              <div className="md:col-span-2">
+                <Typography
+                  component="label"
+                  variant="overline"
+                  className="mb-1 block font-semibold"
+                  style={labelStyles}
+                >
+                  Description (Optional)
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  className="mb-2 block"
+                >
+                  General information about this person and their care needs.
+                </Typography>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => updateField('description', e.target.value)}
+                  rows={3}
+                  maxLength={500}
+                  className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
+                  style={{ ...inputStyles, ...focusRingStyle }}
+                  placeholder="e.g. Lives alone, enjoys gardening, has limited mobility..."
+                />
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  className="mt-1 block text-right"
+                >
+                  {formData.description.length}/500 characters
+                </Typography>
+              </div>
+
+              {/* Special Notes */}
+              <div className="md:col-span-2">
+                <Typography
+                  component="label"
+                  variant="overline"
+                  className="mb-1 block font-semibold"
+                  style={labelStyles}
+                >
+                  Care Notes (Optional)
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  className="mb-2 block"
+                >
+                  Important care instructions, medical notes, schedules, etc.
+                </Typography>
+                <textarea
+                  value={formData.specialNotes}
+                  onChange={(e) => updateField('specialNotes', e.target.value)}
+                  rows={3}
+                  maxLength={500}
+                  className="w-full rounded border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
+                  style={{ ...inputStyles, ...focusRingStyle }}
+                  placeholder="e.g. Takes medication at 8am and 6pm, prefers visits in the afternoon..."
+                />
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  className="mt-1 block text-right"
+                >
+                  {formData.specialNotes.length}/500 characters
+                </Typography>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div
+              className="mt-2 flex justify-end gap-3 border-t pt-3"
+              style={{ borderColor }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  resetForm();
+                  setIsExpanded(false);
+                }}
+                className="rounded-md px-4 py-1.5 text-sm font-medium transition-colors hover:opacity-80"
+                style={{
+                  color: textSecondary,
+                  backgroundColor: 'transparent',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="rounded-md px-5 py-1.5 text-sm font-semibold shadow-sm transition-colors disabled:opacity-50 hover:opacity-90"
+                style={{
+                  backgroundColor: accent,
+                  color: theme.palette.common.white,
+                }}
+              >
+                {isSubmitting ? 'Adding…' : 'Add Person'}
               </button>
             </div>
           </form>

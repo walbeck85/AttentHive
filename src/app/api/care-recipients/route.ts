@@ -21,6 +21,9 @@ type PetSubtype = (typeof PET_SUBTYPES)[number];
 // Plant subtypes - must match frontend definition
 const PLANT_SUBTYPES = ['INDOOR', 'OUTDOOR', 'SUCCULENT'] as const;
 
+// Person subtypes - must match frontend definition
+const PERSON_SUBTYPES = ['ELDER', 'CHILD', 'OTHER'] as const;
+
 // Subtypes that require specific fields
 const SUBTYPES_WITH_BREED: PetSubtype[] = ['DOG', 'CAT', 'BIRD', 'SMALL_MAMMAL', 'REPTILE', 'EXOTIC'];
 const SUBTYPES_WITH_WEIGHT: PetSubtype[] = ['DOG', 'CAT', 'SMALL_MAMMAL', 'REPTILE', 'EXOTIC'];
@@ -103,6 +106,18 @@ const createPlantSchema = z.object({
   plantSpecies: z.string().max(100, 'Species name too long').optional(),
   sunlight: z.string().max(50).optional(),
   waterFrequency: z.string().max(50).optional(),
+  // Shared optional fields
+  description: z.string().max(500, 'Description too long').optional(),
+  specialNotes: z.string().max(500, 'Special notes too long').optional(),
+});
+
+// Validation schema for creating a person
+const createPersonSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(50, 'Name too long'),
+  category: z.literal('PERSON'),
+  subtype: z.enum(PERSON_SUBTYPES),
+  // Person-specific fields
+  relationship: z.string().min(1, 'Relationship is required').max(100, 'Relationship too long'),
   // Shared optional fields
   description: z.string().max(500, 'Description too long').optional(),
   specialNotes: z.string().max(500, 'Special notes too long').optional(),
@@ -220,6 +235,52 @@ export async function POST(request: NextRequest) {
         {
           message: 'Plant created successfully!',
           recipient: newPlant,
+        },
+        { status: 201 }
+      );
+    }
+
+    if (category === 'PERSON') {
+      // Validate person data
+      const personValidation = createPersonSchema.safeParse(body);
+
+      if (!personValidation.success) {
+        console.log('❌ Person validation failed:', personValidation.error);
+        const formattedErrors = personValidation.error.issues.map(
+          (err: ZodIssue) => ({
+            field: err.path.join('.'),
+            message: err.message,
+          })
+        );
+        return NextResponse.json(
+          {
+            error: 'Invalid person data',
+            validationErrors: formattedErrors,
+          },
+          { status: 400 }
+        );
+      }
+
+      const personData = personValidation.data;
+
+      const newPerson = await prisma.careRecipient.create({
+        data: {
+          name: personData.name,
+          category: 'PERSON',
+          subtype: personData.subtype,
+          relationship: personData.relationship,
+          ...(personData.description ? { description: personData.description } : {}),
+          ...(personData.specialNotes ? { specialNotes: personData.specialNotes } : {}),
+          ownerId: dbUser.id,
+        },
+      });
+
+      console.log('✅ Person created successfully:', newPerson.id);
+
+      return NextResponse.json(
+        {
+          message: 'Person created successfully!',
+          recipient: newPerson,
         },
         { status: 201 }
       );
