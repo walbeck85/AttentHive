@@ -4,6 +4,7 @@ import { ActivityType, Prisma } from "@prisma/client";
 
 import { authOptions } from "@/lib/auth";
 import { canAccessRecipient, canWriteToRecipient } from "@/lib/auth-helpers";
+import { isValidActionForSubtype } from "@/lib/action-config";
 import { prisma } from "@/lib/prisma";
 import {
   apiLimiter,
@@ -200,6 +201,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Pet not found" },
         { status: 404 }
+      );
+    }
+
+    // Fetch recipient to get subtype for validation
+    const recipient = await prisma.careRecipient.findUnique({
+      where: { id: recipientId },
+      select: { subtype: true },
+    });
+
+    // Validate activity type against recipient's subtype
+    if (recipient?.subtype && !isValidActionForSubtype(activityType, recipient.subtype)) {
+      return NextResponse.json(
+        { error: `Activity type ${activityType} is not valid for ${recipient.subtype}` },
+        { status: 400 }
       );
     }
 
