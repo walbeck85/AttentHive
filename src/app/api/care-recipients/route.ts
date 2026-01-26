@@ -18,6 +18,9 @@ import {
 const PET_SUBTYPES = ['DOG', 'CAT', 'BIRD', 'FISH', 'SMALL_MAMMAL', 'REPTILE', 'EXOTIC'] as const;
 type PetSubtype = (typeof PET_SUBTYPES)[number];
 
+// Plant subtypes - must match frontend definition
+const PLANT_SUBTYPES = ['INDOOR', 'OUTDOOR', 'SUCCULENT'] as const;
+
 // Subtypes that require specific fields
 const SUBTYPES_WITH_BREED: PetSubtype[] = ['DOG', 'CAT', 'BIRD', 'SMALL_MAMMAL', 'REPTILE', 'EXOTIC'];
 const SUBTYPES_WITH_WEIGHT: PetSubtype[] = ['DOG', 'CAT', 'SMALL_MAMMAL', 'REPTILE', 'EXOTIC'];
@@ -91,6 +94,20 @@ const createPetSchema = z
     { message: 'Gender is required', path: ['gender'] }
   );
 
+// Validation schema for creating a plant
+const createPlantSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(50, 'Name too long'),
+  category: z.literal('PLANT'),
+  subtype: z.enum(PLANT_SUBTYPES),
+  // Plant-specific fields (all optional)
+  plantSpecies: z.string().max(100, 'Species name too long').optional(),
+  sunlight: z.string().max(50).optional(),
+  waterFrequency: z.string().max(50).optional(),
+  // Shared optional fields
+  description: z.string().max(500, 'Description too long').optional(),
+  specialNotes: z.string().max(500, 'Special notes too long').optional(),
+});
+
 // Helper: normalize and validate any incoming characteristics array against
 // the canonical list. This keeps the DB clean even if the client payload
 // drifts or a malicious caller sends arbitrary strings.
@@ -149,7 +166,7 @@ export async function POST(request: NextRequest) {
 
     if (!session || !dbUser) {
       return NextResponse.json(
-        { error: 'You must be logged in to add a pet' },
+        { error: 'You must be logged in to add a care recipient' },
         { status: 401 }
       );
     }
@@ -157,7 +174,58 @@ export async function POST(request: NextRequest) {
     // Step 2: Get the data from the request
     const body = await request.json();
 
-    // Step 3: Validate the data with Zod
+    // Step 3: Determine category and validate with appropriate schema
+    const category = body.category || 'PET';
+
+    if (category === 'PLANT') {
+      // Validate plant data
+      const plantValidation = createPlantSchema.safeParse(body);
+
+      if (!plantValidation.success) {
+        console.log('❌ Plant validation failed:', plantValidation.error);
+        const formattedErrors = plantValidation.error.issues.map(
+          (err: ZodIssue) => ({
+            field: err.path.join('.'),
+            message: err.message,
+          })
+        );
+        return NextResponse.json(
+          {
+            error: 'Invalid plant data',
+            validationErrors: formattedErrors,
+          },
+          { status: 400 }
+        );
+      }
+
+      const plantData = plantValidation.data;
+
+      const newPlant = await prisma.careRecipient.create({
+        data: {
+          name: plantData.name,
+          category: 'PLANT',
+          subtype: plantData.subtype,
+          ...(plantData.plantSpecies ? { plantSpecies: plantData.plantSpecies } : {}),
+          ...(plantData.sunlight ? { sunlight: plantData.sunlight } : {}),
+          ...(plantData.waterFrequency ? { waterFrequency: plantData.waterFrequency } : {}),
+          ...(plantData.description ? { description: plantData.description } : {}),
+          ...(plantData.specialNotes ? { specialNotes: plantData.specialNotes } : {}),
+          ownerId: dbUser.id,
+        },
+      });
+
+      console.log('✅ Plant created successfully:', newPlant.id);
+
+      return NextResponse.json(
+        {
+          message: 'Plant created successfully!',
+          recipient: newPlant,
+        },
+        { status: 201 }
+      );
+    }
+
+    // Default: Handle PET category
     const validationResult = createPetSchema.safeParse(body);
 
     if (!validationResult.success) {
@@ -229,7 +297,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ Error in POST /api/care-recipients:', error);
     return NextResponse.json(
-      { error: 'Something went wrong while creating the pet' },
+      { error: 'Something went wrong while creating the care recipient' },
       { status: 500 }
     );
   }
