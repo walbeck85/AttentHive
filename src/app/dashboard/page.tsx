@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getSharedPetsForUser } from "@/lib/hive";
-import PetList from "@/components/pets/PetList";
 import AddRecipientForm from "@/components/pets/AddRecipientForm";
+import { RecipientList, type RecipientData } from "@/components/recipients";
 // MUI layout shell for the dashboard – this keeps spacing, max-width, and card
 // geometry aligned with the global theme instead of hand-tuned Tailwind margins.
 import { Container, Paper, Stack, Typography } from "@mui/material";
@@ -48,9 +48,9 @@ export default async function DashboardPage() {
     },
   });
 
-  // Now we query pets by the *database* user id, which is the same id that
+  // Now we query recipients by the *database* user id, which is the same id that
   // /api/care-recipients uses as ownerId when creating new recipients.
-  const ownedPets = await prisma.careRecipient.findMany({
+  const ownedRecipients = await prisma.careRecipient.findMany({
     where: {
       ownerId: dbUser.id,
     },
@@ -59,16 +59,30 @@ export default async function DashboardPage() {
     },
   });
 
-  // Fetch pets shared with this user via Hive
+  // Fetch recipients shared with this user via Hive
   const sharedMemberships = await getSharedPetsForUser(dbUser.id);
 
-  const ownedPetsWithFlag = ownedPets.map((pet) => ({
-    ...pet,
+  const ownedRecipientsWithFlag: RecipientData[] = ownedRecipients.map((recipient) => ({
+    id: recipient.id,
+    name: recipient.name,
+    category: recipient.category,
+    subtype: recipient.subtype,
+    breed: recipient.breed,
+    plantSpecies: recipient.plantSpecies,
+    relationship: recipient.relationship,
+    imageUrl: recipient.imageUrl,
     _accessType: "owner" as const,
   }));
 
-  const sharedPetsWithFlag = sharedMemberships.map((membership) => ({
-    ...membership.recipient,
+  const sharedRecipientsWithFlag: RecipientData[] = sharedMemberships.map((membership) => ({
+    id: membership.recipient.id,
+    name: membership.recipient.name,
+    category: membership.recipient.category,
+    subtype: membership.recipient.subtype,
+    breed: membership.recipient.breed,
+    plantSpecies: membership.recipient.plantSpecies,
+    relationship: membership.recipient.relationship,
+    imageUrl: membership.recipient.imageUrl,
     _accessType: "shared" as const,
   }));
 
@@ -116,7 +130,7 @@ export default async function DashboardPage() {
           </Typography>
         </Paper>
 
-        {/* Add pet card */}
+        {/* Add recipient card */}
         <Paper
           elevation={0}
           sx={{
@@ -137,22 +151,21 @@ export default async function DashboardPage() {
               color: "text.secondary",
             }}
           >
-            Add new pet
+            Add new recipient
           </Typography>
 
           <Typography
             variant="body2"
             sx={{ mb: 2, color: "text.secondary" }}
           >
-            Create a profile for another member of your household.
+            Create a profile for a pet, plant, or person in your household.
           </Typography>
 
-          {/* AddRecipientForm now supports category selection (PET, PLANT, PERSON)
-              with the full pet flow working and plant/person coming soon. */}
+          {/* AddRecipientForm supports category selection (PET, PLANT, PERSON) */}
           <AddRecipientForm />
         </Paper>
 
-        {/* Owned pets */}
+        {/* Owned recipients */}
         <Paper
           elevation={0}
           sx={{
@@ -175,7 +188,7 @@ export default async function DashboardPage() {
               gap: 0.75,
             }}
           >
-            Pets you own
+            Recipients you own
             <Typography
               component="span"
               variant="caption"
@@ -184,7 +197,7 @@ export default async function DashboardPage() {
                 color: "text.secondary",
               }}
             >
-              ({ownedPetsWithFlag.length})
+              ({ownedRecipientsWithFlag.length})
             </Typography>
           </Typography>
 
@@ -192,13 +205,13 @@ export default async function DashboardPage() {
             variant="body2"
             sx={{ mb: 2, color: "text.secondary" }}
           >
-            Pets you created and fully manage.
+            Pets, plants, and people you created and fully manage.
           </Typography>
 
-          <PetList pets={ownedPetsWithFlag} />
+          <RecipientList recipients={ownedRecipientsWithFlag} groupByCategory />
         </Paper>
 
-        {/* Shared pets */}
+        {/* Shared recipients */}
         <Paper
           elevation={0}
           sx={{
@@ -222,7 +235,7 @@ export default async function DashboardPage() {
               gap: 0.75,
             }}
           >
-            Pets you care for
+            Recipients you care for
             <Typography
               component="span"
               variant="caption"
@@ -231,7 +244,7 @@ export default async function DashboardPage() {
                 color: "text.secondary",
               }}
             >
-              ({sharedPetsWithFlag.length})
+              ({sharedRecipientsWithFlag.length})
             </Typography>
           </Typography>
 
@@ -239,10 +252,10 @@ export default async function DashboardPage() {
             variant="body2"
             sx={{ mb: 2, color: "text.secondary" }}
           >
-            Pets shared with you as a caregiver.
+            Pets, plants, and people shared with you as a caregiver.
           </Typography>
 
-          <PetList pets={sharedPetsWithFlag} />
+          <RecipientList recipients={sharedRecipientsWithFlag} groupByCategory />
         </Paper>
       </Stack>
     </Container>
