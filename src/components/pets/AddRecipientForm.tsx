@@ -7,13 +7,16 @@ import BreedSelect from './BreedSelect';
 import { alpha, useTheme } from '@mui/material/styles';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 import {
   PET_CHARACTERISTICS,
   type PetCharacteristicId,
 } from '@/lib/petCharacteristics';
+import { RecipientCategory } from '@prisma/client';
+
 // Types --------------------------------------------------------
-type AddPetFormProps = {
-  onPetAdded?: () => void;
+type AddRecipientFormProps = {
+  onRecipientAdded?: () => void;
 };
 // Form state representation
 type FormState = {
@@ -33,11 +36,13 @@ type FormState = {
 // Field-specific error messages
 type FieldErrors = Partial<Record<keyof FormState, string>>;
 //  Component --------------------------------------------------
-export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
+export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [category, setCategory] = useState<RecipientCategory | null>(null);
+  const [step, setStep] = useState(0); // 0 = category selection, 1 = pet form
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const borderColor = theme.palette.divider;
@@ -111,6 +116,8 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
     });
     setFieldErrors({});
     setError(null);
+    setCategory(null);
+    setStep(0);
   };
 // Validates form data and returns errors
   const validate = (data: FormState): FieldErrors => {
@@ -192,9 +199,9 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
       // At this point the server accepted the payload, so I reset UI state first and then ask Next to re-run the dashboard query
       resetForm();
       setIsExpanded(false);
-      // Using router.refresh to keep the server-rendered dashboard in sync, while onPetAdded stays as a hook for any future client-only reactions
+      // Using router.refresh to keep the server-rendered dashboard in sync, while onRecipientAdded stays as a hook for any future client-only reactions
       router.refresh();
-      if (onPetAdded) onPetAdded();
+      if (onRecipientAdded) onRecipientAdded();
     } catch (err) {
       // Logging the raw error here so future-me has something concrete to inspect when the UI only shows a generic failure message
       console.error("Error while adding pet", err);
@@ -270,7 +277,7 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
           aria-expanded={isExpanded}
         >
           <p className="truncate">
-            Open add pet form
+            Add care recipient
           </p>
           <div
             className="ml-4 flex items-center text-xl font-semibold transition-transform group-hover:translate-x-0.5"
@@ -296,6 +303,45 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
       </Paper>
     );
   }
+
+  // Category selection card component
+  const CategoryCard = ({
+    categoryType,
+    icon,
+    title,
+    description,
+  }: {
+    categoryType: RecipientCategory;
+    icon: string;
+    title: string;
+    description: string;
+  }) => {
+    const isSelected = category === categoryType;
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setCategory(categoryType);
+          if (categoryType === 'PET') {
+            setStep(1);
+          }
+        }}
+        className="flex flex-col items-center p-4 rounded-lg border-2 transition-all hover:shadow-md"
+        style={{
+          borderColor: isSelected ? accent : borderColor,
+          backgroundColor: isSelected ? alpha(accent, 0.08) : subtleSurface,
+        }}
+      >
+        <span className="text-3xl mb-2">{icon}</span>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: textPrimary }}>
+          {title}
+        </Typography>
+        <Typography variant="caption" sx={{ color: textSecondary, textAlign: 'center' }}>
+          {description}
+        </Typography>
+      </button>
+    );
+  };
 
   // -------- Expanded form --------
   return (
@@ -331,7 +377,7 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
           borderWidth: 1,
           borderStyle: 'solid',
         }}
-        aria-label="Close add pet form"
+        aria-label="Close form"
       >
         ✕
       </button>
@@ -345,7 +391,7 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
           component="span"
           sx={{ color: accent }}
         >
-          Add New Pet
+          {step === 0 ? 'Choose Category' : 'Add New Pet'}
         </Typography>
       </h2>
 
@@ -362,7 +408,84 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Step 0: Category Selection */}
+      {step === 0 && (
+        <Box>
+          <Typography variant="body2" sx={{ color: textSecondary, mb: 3 }}>
+            What type of care recipient would you like to add?
+          </Typography>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <CategoryCard
+              categoryType="PET"
+              icon="🐾"
+              title="Pet"
+              description="Dogs, cats, and other animals"
+            />
+            <CategoryCard
+              categoryType="PLANT"
+              icon="🌱"
+              title="Plant"
+              description="Indoor and outdoor plants"
+            />
+            <CategoryCard
+              categoryType="PERSON"
+              icon="👤"
+              title="Person"
+              description="Family members needing care"
+            />
+          </div>
+
+          {/* Coming Soon placeholder for PLANT/PERSON */}
+          {(category === 'PLANT' || category === 'PERSON') && (
+            <Box
+              sx={{
+                mt: 4,
+                p: 3,
+                borderRadius: 2,
+                backgroundColor: alpha(accent, 0.08),
+                border: `1px solid ${alpha(accent, 0.3)}`,
+                textAlign: 'center',
+              }}
+            >
+              <Typography variant="h6" sx={{ color: accent, mb: 1 }}>
+                Coming Soon!
+              </Typography>
+              <Typography variant="body2" sx={{ color: textSecondary }}>
+                {category === 'PLANT'
+                  ? 'Plant care tracking is under development. Check back soon!'
+                  : 'Person care tracking is under development. Check back soon!'}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      )}
+
+      {/* Step 1: Pet Form (only for PET category) */}
+      {step === 1 && category === 'PET' && (
+        <>
+          {/* Back button */}
+          <button
+            type="button"
+            onClick={() => {
+              setStep(0);
+              setCategory(null);
+            }}
+            className="mb-4 inline-flex items-center gap-1 text-sm hover:opacity-80"
+            style={{ color: textSecondary }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M10 13L5 8L10 3"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Back to categories
+          </button>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {/* Name */}
           <div>
@@ -714,6 +837,8 @@ export default function AddPetForm({ onPetAdded }: AddPetFormProps) {
           </button>
         </div>
       </form>
+        </>
+      )}
     </Paper>
   );
 }

@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getSharedPetsForUser } from "@/lib/hive";
 import PetList from "@/components/pets/PetList";
-import AddPetForm from "@/components/pets/AddPetForm";
+import AddRecipientForm from "@/components/pets/AddRecipientForm";
 // MUI layout shell for the dashboard – this keeps spacing, max-width, and card
 // geometry aligned with the global theme instead of hand-tuned Tailwind margins.
 import { Container, Paper, Stack, Typography } from "@mui/material";
@@ -147,10 +147,9 @@ export default async function DashboardPage() {
             Create a profile for another member of your household.
           </Typography>
 
-          {/* Keeping AddPetForm as-is so all existing validation, routing, and
-              success handling continues to behave the same; we’re only changing
-              the shell it lives inside. */}
-          <AddPetForm />
+          {/* AddRecipientForm now supports category selection (PET, PLANT, PERSON)
+              with the full pet flow working and plant/person coming soon. */}
+          <AddRecipientForm />
         </Paper>
 
         {/* Owned pets */}
