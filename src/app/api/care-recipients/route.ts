@@ -78,7 +78,7 @@ async function getOrCreateDbUserForSession() {
   return { session, dbUser };
 }
 
-// POST /api/pets - Create a new pet
+// POST /api/care-recipients - Create a new care recipient
 export async function POST(request: NextRequest) {
   try {
     // Step 1: Ensure we have a logged-in user AND a backing DB user
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('❌ Error in POST /api/pets:', error);
+    console.error('❌ Error in POST /api/care-recipients:', error);
     return NextResponse.json(
       { error: 'Something went wrong while creating the pet' },
       { status: 500 }
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET /api/pets - Get all pets for the logged-in user
+// GET /api/care-recipients - Get all care recipients for the logged-in user
 export async function GET(request: NextRequest) {
   try {
     // Step 1: Ensure we have a logged-in user AND a backing DB user
@@ -234,7 +234,7 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('❌ Error in GET /api/pets:', error);
+    console.error('❌ Error in GET /api/care-recipients:', error);
     return NextResponse.json(
       { error: 'Failed to fetch pets' },
       { status: 500 }

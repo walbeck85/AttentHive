@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDbUserFromSession, canAccessRecipient } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 
-// GET /api/pets/[id]/care-logs
-// Fetches the full activity history for a specific pet
+// GET /api/care-recipients/[id]/care-logs
+// Fetches the full activity history for a specific care recipient
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

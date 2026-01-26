@@ -96,6 +96,7 @@ model User {
 }
 
 enum ActivityType {
+  // Existing (keep these)
   FEED
   WALK
   MEDICATE
@@ -103,6 +104,32 @@ enum ActivityType {
   ACCIDENT
   LITTER_BOX
   WELLNESS_CHECK
+
+  // New - Pets (other animals)
+  GROOMING
+  VET_VISIT
+  CAGE_CLEAN
+  TANK_CLEAN
+  WATER_TEST
+  HABITAT_CLEAN
+  EXERCISE
+  TEMPERATURE_CHECK
+
+  // New - Plants
+  WATER
+  FERTILIZE
+  PRUNE
+  REPOT
+  SUNLIGHT_ADJUST
+
+  // New - People
+  MEAL
+  DOCTOR_VISIT
+  APPOINTMENT
+  ACTIVITY
+
+  // New - Shared
+  NOTE
 }
 
 enum HiveRole {

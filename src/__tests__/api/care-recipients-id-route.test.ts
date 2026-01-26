@@ -1,6 +1,6 @@
-// src/__tests__/api/pets-id-route.test.ts
+// src/__tests__/api/care-recipients-id-route.test.ts
 
-import { PATCH } from '../../app/api/pets/[id]/route'
+import { PATCH } from '../../app/api/care-recipients/[id]/route'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 
@@ -78,7 +78,7 @@ beforeEach(() => {
   jest.clearAllMocks()
 })
 
-describe('PATCH /api/pets/[id]', () => {
+describe('PATCH /api/care-recipients/[id]', () => {
   it('returns 200 and the updated pet for a successful update', async () => {
     ;(getServerSession as jest.Mock).mockResolvedValue({
       user: { email: 'user@example.com' },

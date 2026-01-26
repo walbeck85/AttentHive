@@ -406,6 +406,37 @@ describe('POST /api/care-logs', () => {
       expect(res.status).toBe(404);
       expect(prisma.careLog.create).not.toHaveBeenCalled();
     });
+
+    it('returns 400 when activity type is invalid for recipient subtype', async () => {
+      const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
+
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'user@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+      // Mock returns must match what canAccessRecipient and subtype fetch expect
+      (prisma.careRecipient.findUnique as jest.Mock)
+        // First call: canAccessRecipient auth check (returns owner + hives structure)
+        .mockResolvedValueOnce({
+          ownerId: 'user-1',
+          hives: [],
+        })
+        // Second call: subtype validation (returns subtype)
+        .mockResolvedValueOnce({
+          subtype: 'DOG',
+        });
+
+      const req = createRequest({
+        petId: 'pet-1',
+        activityType: 'LITTER_BOX', // Invalid for DOG subtype
+      });
+
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(400);
+      // Verify care log was not created
+      expect(prisma.careLog.create).not.toHaveBeenCalled();
+    });
   });
 });
 

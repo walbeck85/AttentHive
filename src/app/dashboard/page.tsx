@@ -25,9 +25,9 @@ export default async function DashboardPage() {
 
   const sessionUser = session.user;
 
-  // For consistency with the /api/pets route, we resolve a *database* user
+  // For consistency with the /api/care-recipients route, we resolve a *database* user
   // based on email. This avoids the "session.id !== prisma.id" mismatch that
-  // you’re currently seeing with pets being created but not showing up.
+  // you're currently seeing with recipients being created but not showing up.
   if (!sessionUser.email) {
     // If this ever fires, something is badly wrong with auth config and we
     // want it to crash loudly instead of silently hiding pets.
@@ -49,7 +49,7 @@ export default async function DashboardPage() {
   });
 
   // Now we query pets by the *database* user id, which is the same id that
-  // /api/pets uses as ownerId when creating new recipients.
+  // /api/care-recipients uses as ownerId when creating new recipients.
   const ownedPets = await prisma.careRecipient.findMany({
     where: {
       ownerId: dbUser.id,

@@ -62,8 +62,8 @@ export default function ActivityLogPage() {
         setError(null);
 
         // IMPORTANT:
-        // The care-log API is now a flat route: GET /api/care-logs?id=PET_ID
-        // not /api/pets/:id/care-logs anymore.
+        // The care-log API is now a flat route: GET /api/care-logs?id=RECIPIENT_ID
+        // not /api/care-recipients/:id/care-logs anymore.
         const response = await fetch(`/api/care-logs?id=${petId}`);
         const data = await response.json();
 
