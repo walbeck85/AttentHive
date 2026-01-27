@@ -16,6 +16,7 @@ import {
 import PetAvatar from '../pets/PetAvatar';
 import QuickActions from '../pets/QuickActions';
 import ConfirmActionModal from '../pets/ConfirmActionModal';
+import { VetVisitModal, DoctorModal, MedicateModal } from '../activity';
 import { type ActivityConfig, getActivityLabel } from '@/config/activityTypes';
 
 // Type for recipients from the database
@@ -111,11 +112,29 @@ export default function RecipientCard({ recipient }: Props) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Specialized modal states
+  const [isVetVisitOpen, setIsVetVisitOpen] = useState(false);
+  const [isDoctorOpen, setIsDoctorOpen] = useState(false);
+  const [isMedicateOpen, setIsMedicateOpen] = useState(false);
+
   const handleAction = (config: ActivityConfig) => {
-    // For now, use confirm modal for all actions
-    // More specialized modals (timer, bathroom, accident) can be added later
-    setPendingAction(config);
-    setIsConfirmOpen(true);
+    // Route to specialized modals based on action type
+    switch (config.type) {
+      case 'VET_VISIT':
+        setIsVetVisitOpen(true);
+        break;
+      case 'DOCTOR_VISIT':
+        setIsDoctorOpen(true);
+        break;
+      case 'MEDICATE':
+        setIsMedicateOpen(true);
+        break;
+      default:
+        // Use generic confirm modal for other actions
+        setPendingAction(config);
+        setIsConfirmOpen(true);
+        break;
+    }
   };
 
   const handleConfirmAction = async () => {
@@ -147,6 +166,11 @@ export default function RecipientCard({ recipient }: Props) {
   const handleCancelAction = () => {
     setIsConfirmOpen(false);
     setPendingAction(null);
+  };
+
+  // Success handler for specialized modals (can be used for UI feedback if needed)
+  const handleModalSuccess = () => {
+    // Could add toast notification or refresh data here
   };
 
   const pendingLabel = pendingAction ? getActivityLabel(pendingAction.type) : '';
@@ -392,7 +416,7 @@ export default function RecipientCard({ recipient }: Props) {
         </CardActions>
       </Box>
 
-      {/* Confirm Action Modal */}
+      {/* Generic Confirm Action Modal */}
       <ConfirmActionModal
         open={isConfirmOpen}
         title={modalTitle}
@@ -402,6 +426,31 @@ export default function RecipientCard({ recipient }: Props) {
         onConfirm={handleConfirmAction}
         onCancel={handleCancelAction}
         isLoading={isLoading}
+      />
+
+      {/* Specialized Medical Modals */}
+      <VetVisitModal
+        open={isVetVisitOpen}
+        recipientId={recipient.id}
+        recipientName={recipient.name}
+        onSuccess={handleModalSuccess}
+        onClose={() => setIsVetVisitOpen(false)}
+      />
+
+      <DoctorModal
+        open={isDoctorOpen}
+        recipientId={recipient.id}
+        recipientName={recipient.name}
+        onSuccess={handleModalSuccess}
+        onClose={() => setIsDoctorOpen(false)}
+      />
+
+      <MedicateModal
+        open={isMedicateOpen}
+        recipientId={recipient.id}
+        recipientName={recipient.name}
+        onSuccess={handleModalSuccess}
+        onClose={() => setIsMedicateOpen(false)}
       />
     </Card>
   );
