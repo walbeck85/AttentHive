@@ -16,7 +16,7 @@ import {
 import PetAvatar from '../pets/PetAvatar';
 import QuickActions from '../pets/QuickActions';
 import ConfirmActionModal from '../pets/ConfirmActionModal';
-import { VetVisitModal, DoctorModal, MedicateModal, AppointmentModal, WaterModal } from '../activity';
+import { VetVisitModal, DoctorModal, MedicateModal, AppointmentModal, WaterModal, GroomingModal } from '../activity';
 import { type ActivityConfig, getActivityLabel } from '@/config/activityTypes';
 
 // Type for recipients from the database
@@ -118,6 +118,7 @@ export default function RecipientCard({ recipient }: Props) {
   const [isMedicateOpen, setIsMedicateOpen] = useState(false);
   const [isAppointmentOpen, setIsAppointmentOpen] = useState(false);
   const [isWaterOpen, setIsWaterOpen] = useState(false);
+  const [isGroomingOpen, setIsGroomingOpen] = useState(false);
 
   const handleAction = (config: ActivityConfig) => {
     // Route to specialized modals based on action type
@@ -136,6 +137,9 @@ export default function RecipientCard({ recipient }: Props) {
         break;
       case 'WATER':
         setIsWaterOpen(true);
+        break;
+      case 'GROOMING':
+        setIsGroomingOpen(true);
         break;
       default:
         // Use generic confirm modal for other actions
@@ -475,6 +479,14 @@ export default function RecipientCard({ recipient }: Props) {
         recipientName={recipient.name}
         onSuccess={handleModalSuccess}
         onClose={() => setIsWaterOpen(false)}
+      />
+
+      <GroomingModal
+        open={isGroomingOpen}
+        recipientId={recipient.id}
+        recipientName={recipient.name}
+        onSuccess={handleModalSuccess}
+        onClose={() => setIsGroomingOpen(false)}
       />
     </Card>
   );
