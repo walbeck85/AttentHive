@@ -188,7 +188,7 @@ export default async function DashboardPage() {
               gap: 0.75,
             }}
           >
-            Recipients you own
+            Your recipients
             <Typography
               component="span"
               variant="caption"

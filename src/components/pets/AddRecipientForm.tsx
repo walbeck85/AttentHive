@@ -726,7 +726,7 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
               setPetSubtype(null);
             }}
             className="mb-4 inline-flex items-center gap-1 text-sm hover:opacity-80"
-            style={{ color: textSecondary }}
+            style={{ color: textPrimary }}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path
@@ -785,7 +785,7 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
               setPlantSubtype(null);
             }}
             className="mb-4 inline-flex items-center gap-1 text-sm hover:opacity-80"
-            style={{ color: textSecondary }}
+            style={{ color: textPrimary }}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path
@@ -844,7 +844,7 @@ export default function AddRecipientForm({ onRecipientAdded }: AddRecipientFormP
               setPersonSubtype(null);
             }}
             className="mb-4 inline-flex items-center gap-1 text-sm hover:opacity-80"
-            style={{ color: textSecondary }}
+            style={{ color: textPrimary }}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path
