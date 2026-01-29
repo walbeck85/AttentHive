@@ -190,7 +190,7 @@ function HiveCaregiversSection({
         People caring for your pets ({caregivers.length})
       </Typography>
       <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
-        These people can view and log care for pets you own.
+        These people can view and log care for your recipients.
       </Typography>
 
       {caregivers.length === 0 ? (
@@ -381,7 +381,7 @@ function HiveOwnedPetsSection({
   return (
     <Box>
       <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
-        Pets you own ({pets.length})
+        Your pets ({pets.length})
       </Typography>
       <Typography
         variant="caption"
