@@ -10,6 +10,30 @@ jest.mock('next-auth', () => ({
   getServerSession: jest.fn(),
 }));
 
+// The page module transitively imports heavy server-side dependencies
+// (Prisma client, auth config, hive loader, Next.js server functions).
+// On Node 18's ~1.7 GB default heap limit the full module graph causes an
+// OOM crash.  Mock them out so only the lightweight presentational export
+// we actually test gets loaded.
+// TODO: Upgrading to Node >= 20 (required by several deps) will also
+// alleviate the memory pressure here.
+jest.mock('@/lib/prisma', () => ({
+  prisma: {},
+}));
+
+jest.mock('@/lib/auth', () => ({
+  authOptions: {},
+}));
+
+jest.mock('next/navigation', () => ({
+  redirect: jest.fn(),
+  revalidatePath: jest.fn(),
+}));
+
+jest.mock('@/app/hive/loader', () => ({
+  loadHivePageData: jest.fn(),
+}));
+
 describe('HivePetsYouCareForSection', () => {
   it('renders links for pets you care for with correct hrefs', () => {
     const pets = [

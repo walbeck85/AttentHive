@@ -26,6 +26,24 @@ jest.mock('@/lib/hive', () => ({
   inviteMemberToPet: jest.fn(),
 }));
 
+// The route now calls prisma.user.findUnique and rate-limit helpers before
+// reaching the session check.  Without these mocks every test hits an
+// uncaught error and returns 500.
+jest.mock('@/lib/prisma', () => ({
+  prisma: {
+    user: {
+      findUnique: jest.fn().mockResolvedValue({ id: 'user-1' }),
+    },
+  },
+}));
+
+jest.mock('@/lib/rate-limit', () => ({
+  apiLimiter: {},
+  checkRateLimit: jest.fn().mockResolvedValue({ success: true }),
+  rateLimitResponse: jest.fn(),
+  getClientIp: jest.fn().mockReturnValue('127.0.0.1'),
+}));
+
 type PostHandler = (request: Request) => Promise<Response>;
 const postHandler = POST as unknown as PostHandler;
 
