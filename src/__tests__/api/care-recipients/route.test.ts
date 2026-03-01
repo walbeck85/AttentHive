@@ -362,3 +362,330 @@ describe('POST /api/care-recipients', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// PLANT category tests
+// ---------------------------------------------------------------------------
+describe('POST /api/care-recipients (PLANT)', () => {
+  const validPlantData = {
+    name: 'Monstera',
+    category: 'PLANT',
+    subtype: 'INDOOR',
+  };
+
+  function mockAuth() {
+    const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
+    (getServerSession as jest.Mock).mockResolvedValue({
+      user: { email: 'user@example.com' },
+    });
+    (prisma.user.upsert as jest.Mock).mockResolvedValue(mockUser);
+    return mockUser;
+  }
+
+  describe('Success cases', () => {
+    it('creates plant with required fields only', async () => {
+      mockAuth();
+      const mockPlant = createMockCareRecipient({
+        id: 'plant-1',
+        name: 'Monstera',
+        category: 'PLANT',
+        subtype: 'INDOOR',
+        ownerId: 'user-1',
+      });
+      (prisma.careRecipient.create as jest.Mock).mockResolvedValue(mockPlant);
+
+      const req = createRequest(validPlantData);
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+      expect(prisma.careRecipient.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          name: 'Monstera',
+          category: 'PLANT',
+          subtype: 'INDOOR',
+          ownerId: 'user-1',
+        }),
+      });
+    });
+
+    it('creates plant with optional fields (plantSpecies, sunlight, waterFrequency)', async () => {
+      mockAuth();
+      const mockPlant = createMockCareRecipient({
+        id: 'plant-2',
+        name: 'Aloe',
+        category: 'PLANT',
+        subtype: 'SUCCULENT',
+        plantSpecies: 'Aloe Vera',
+        sunlight: 'Bright indirect',
+        waterFrequency: 'Every 2 weeks',
+        ownerId: 'user-1',
+      });
+      (prisma.careRecipient.create as jest.Mock).mockResolvedValue(mockPlant);
+
+      const req = createRequest({
+        ...validPlantData,
+        name: 'Aloe',
+        subtype: 'SUCCULENT',
+        plantSpecies: 'Aloe Vera',
+        sunlight: 'Bright indirect',
+        waterFrequency: 'Every 2 weeks',
+      });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+      expect(prisma.careRecipient.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          plantSpecies: 'Aloe Vera',
+          sunlight: 'Bright indirect',
+          waterFrequency: 'Every 2 weeks',
+        }),
+      });
+    });
+
+    it('creates OUTDOOR plant', async () => {
+      mockAuth();
+      (prisma.careRecipient.create as jest.Mock).mockResolvedValue(
+        createMockCareRecipient({ category: 'PLANT', subtype: 'OUTDOOR' }),
+      );
+
+      const req = createRequest({ ...validPlantData, subtype: 'OUTDOOR' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+    });
+
+    it('creates plant with description and specialNotes', async () => {
+      mockAuth();
+      (prisma.careRecipient.create as jest.Mock).mockResolvedValue(
+        createMockCareRecipient({ category: 'PLANT' }),
+      );
+
+      const req = createRequest({
+        ...validPlantData,
+        description: 'Gift from grandma',
+        specialNotes: 'Sensitive to cold drafts',
+      });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+      expect(prisma.careRecipient.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          description: 'Gift from grandma',
+          specialNotes: 'Sensitive to cold drafts',
+        }),
+      });
+    });
+  });
+
+  describe('Error cases', () => {
+    it('returns 400 when plant name is missing', async () => {
+      mockAuth();
+
+      const req = createRequest({ category: 'PLANT', subtype: 'INDOOR' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(400);
+      expect(prisma.careRecipient.create).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when plant subtype is missing', async () => {
+      mockAuth();
+
+      const req = createRequest({ name: 'Fern', category: 'PLANT' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(400);
+      expect(prisma.careRecipient.create).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when plant subtype is invalid', async () => {
+      mockAuth();
+
+      const req = createRequest({
+        name: 'Fern',
+        category: 'PLANT',
+        subtype: 'DOG',
+      });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(400);
+      expect(prisma.careRecipient.create).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when plantSpecies exceeds max length', async () => {
+      mockAuth();
+
+      const req = createRequest({
+        ...validPlantData,
+        plantSpecies: 'a'.repeat(101),
+      });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(400);
+      expect(prisma.careRecipient.create).not.toHaveBeenCalled();
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// PERSON category tests
+// ---------------------------------------------------------------------------
+describe('POST /api/care-recipients (PERSON)', () => {
+  const validPersonData = {
+    name: 'Grandma Rose',
+    category: 'PERSON',
+    subtype: 'ELDER',
+    relationship: 'Grandmother',
+  };
+
+  function mockAuth() {
+    const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
+    (getServerSession as jest.Mock).mockResolvedValue({
+      user: { email: 'user@example.com' },
+    });
+    (prisma.user.upsert as jest.Mock).mockResolvedValue(mockUser);
+    return mockUser;
+  }
+
+  describe('Success cases', () => {
+    it('creates person with required fields', async () => {
+      mockAuth();
+      const mockPerson = createMockCareRecipient({
+        id: 'person-1',
+        name: 'Grandma Rose',
+        category: 'PERSON',
+        subtype: 'ELDER',
+        relationship: 'Grandmother',
+        ownerId: 'user-1',
+      });
+      (prisma.careRecipient.create as jest.Mock).mockResolvedValue(mockPerson);
+
+      const req = createRequest(validPersonData);
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+      expect(prisma.careRecipient.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          name: 'Grandma Rose',
+          category: 'PERSON',
+          subtype: 'ELDER',
+          relationship: 'Grandmother',
+          ownerId: 'user-1',
+        }),
+      });
+    });
+
+    it('creates CHILD person', async () => {
+      mockAuth();
+      (prisma.careRecipient.create as jest.Mock).mockResolvedValue(
+        createMockCareRecipient({ category: 'PERSON', subtype: 'CHILD' }),
+      );
+
+      const req = createRequest({
+        ...validPersonData,
+        name: 'Tommy',
+        subtype: 'CHILD',
+        relationship: 'Son',
+      });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+    });
+
+    it('creates OTHER person subtype', async () => {
+      mockAuth();
+      (prisma.careRecipient.create as jest.Mock).mockResolvedValue(
+        createMockCareRecipient({ category: 'PERSON', subtype: 'OTHER' }),
+      );
+
+      const req = createRequest({
+        ...validPersonData,
+        subtype: 'OTHER',
+        relationship: 'Neighbor',
+      });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+    });
+
+    it('creates person with description and specialNotes', async () => {
+      mockAuth();
+      (prisma.careRecipient.create as jest.Mock).mockResolvedValue(
+        createMockCareRecipient({ category: 'PERSON' }),
+      );
+
+      const req = createRequest({
+        ...validPersonData,
+        description: 'Lives alone, needs daily check-ins',
+        specialNotes: 'Takes insulin at 8am and 6pm',
+      });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+      expect(prisma.careRecipient.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          description: 'Lives alone, needs daily check-ins',
+          specialNotes: 'Takes insulin at 8am and 6pm',
+        }),
+      });
+    });
+  });
+
+  describe('Error cases', () => {
+    it('returns 400 when relationship is missing', async () => {
+      mockAuth();
+
+      const req = createRequest({
+        name: 'Grandma Rose',
+        category: 'PERSON',
+        subtype: 'ELDER',
+      });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(400);
+      expect(prisma.careRecipient.create).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when person subtype is invalid', async () => {
+      mockAuth();
+
+      const req = createRequest({
+        name: 'Grandma Rose',
+        category: 'PERSON',
+        subtype: 'INDOOR',
+        relationship: 'Grandmother',
+      });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(400);
+      expect(prisma.careRecipient.create).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when person name is missing', async () => {
+      mockAuth();
+
+      const req = createRequest({
+        category: 'PERSON',
+        subtype: 'ELDER',
+        relationship: 'Grandmother',
+      });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(400);
+      expect(prisma.careRecipient.create).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when relationship exceeds max length', async () => {
+      mockAuth();
+
+      const req = createRequest({
+        ...validPersonData,
+        relationship: 'a'.repeat(101),
+      });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(400);
+      expect(prisma.careRecipient.create).not.toHaveBeenCalled();
+    });
+  });
+});

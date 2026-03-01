@@ -438,6 +438,215 @@ describe('POST /api/care-logs', () => {
       expect(prisma.careLog.create).not.toHaveBeenCalled();
     });
   });
+
+  // -----------------------------------------------------------------------
+  // Plant action type tests
+  // -----------------------------------------------------------------------
+  describe('Plant care log actions', () => {
+    function mockPlantOwner() {
+      const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'user@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+      return mockUser;
+    }
+
+    // Helper: set up findUnique to pass auth + subtype checks
+    function mockPlantRecipient(subtype = 'INDOOR') {
+      (prisma.careRecipient.findUnique as jest.Mock)
+        .mockResolvedValueOnce({ ownerId: 'user-1', hives: [] })
+        .mockResolvedValueOnce({ subtype });
+    }
+
+    it('creates WATER care log for an INDOOR plant', async () => {
+      mockPlantOwner();
+      mockPlantRecipient('INDOOR');
+      const mockLog = createMockCareLog({
+        id: 'log-p1',
+        recipientId: 'plant-1',
+        userId: 'user-1',
+        activityType: 'WATER',
+      });
+      (prisma.careLog.create as jest.Mock).mockResolvedValue(mockLog);
+
+      const req = createRequest({ petId: 'plant-1', activityType: 'WATER' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+      expect(prisma.careLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          recipientId: 'plant-1',
+          activityType: 'WATER',
+        }),
+      });
+    });
+
+    it('creates FERTILIZE care log for a SUCCULENT', async () => {
+      mockPlantOwner();
+      mockPlantRecipient('SUCCULENT');
+      (prisma.careLog.create as jest.Mock).mockResolvedValue(
+        createMockCareLog({ activityType: 'FERTILIZE' }),
+      );
+
+      const req = createRequest({ petId: 'plant-1', activityType: 'FERTILIZE' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+    });
+
+    it('creates PRUNE care log for an OUTDOOR plant', async () => {
+      mockPlantOwner();
+      mockPlantRecipient('OUTDOOR');
+      (prisma.careLog.create as jest.Mock).mockResolvedValue(
+        createMockCareLog({ activityType: 'PRUNE' }),
+      );
+
+      const req = createRequest({ petId: 'plant-1', activityType: 'PRUNE' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+    });
+
+    it('rejects WALK for a plant (invalid action for INDOOR subtype)', async () => {
+      mockPlantOwner();
+      mockPlantRecipient('INDOOR');
+
+      const req = createRequest({ petId: 'plant-1', activityType: 'WALK' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(400);
+      expect(prisma.careLog.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects LITTER_BOX for a plant', async () => {
+      mockPlantOwner();
+      mockPlantRecipient('INDOOR');
+
+      const req = createRequest({ petId: 'plant-1', activityType: 'LITTER_BOX' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(400);
+      expect(prisma.careLog.create).not.toHaveBeenCalled();
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Person action type tests
+  // -----------------------------------------------------------------------
+  describe('Person care log actions', () => {
+    function mockPersonOwner() {
+      const mockUser = createMockUser({ id: 'user-1', email: 'user@example.com' });
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'user@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+    }
+
+    function mockPersonRecipient(subtype = 'ELDER') {
+      (prisma.careRecipient.findUnique as jest.Mock)
+        .mockResolvedValueOnce({ ownerId: 'user-1', hives: [] })
+        .mockResolvedValueOnce({ subtype });
+    }
+
+    it('creates MEAL care log for an ELDER', async () => {
+      mockPersonOwner();
+      mockPersonRecipient('ELDER');
+      (prisma.careLog.create as jest.Mock).mockResolvedValue(
+        createMockCareLog({ activityType: 'MEAL' }),
+      );
+
+      const req = createRequest({ petId: 'person-1', activityType: 'MEAL' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+      expect(prisma.careLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ activityType: 'MEAL' }),
+      });
+    });
+
+    it('creates DOCTOR_VISIT care log for an ELDER', async () => {
+      mockPersonOwner();
+      mockPersonRecipient('ELDER');
+      (prisma.careLog.create as jest.Mock).mockResolvedValue(
+        createMockCareLog({ activityType: 'DOCTOR_VISIT' }),
+      );
+
+      const req = createRequest({ petId: 'person-1', activityType: 'DOCTOR_VISIT' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+    });
+
+    it('creates ACTIVITY care log for a CHILD', async () => {
+      mockPersonOwner();
+      mockPersonRecipient('CHILD');
+      (prisma.careLog.create as jest.Mock).mockResolvedValue(
+        createMockCareLog({ activityType: 'ACTIVITY' }),
+      );
+
+      const req = createRequest({ petId: 'person-1', activityType: 'ACTIVITY' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+    });
+
+    it('creates MEDICATE care log for a person with notes', async () => {
+      mockPersonOwner();
+      mockPersonRecipient('ELDER');
+      (prisma.careLog.create as jest.Mock).mockResolvedValue(
+        createMockCareLog({ activityType: 'MEDICATE', notes: 'Blood pressure meds' }),
+      );
+
+      const req = createRequest({
+        petId: 'person-1',
+        activityType: 'MEDICATE',
+        notes: 'Blood pressure meds',
+      });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+      expect(prisma.careLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          activityType: 'MEDICATE',
+          notes: 'Blood pressure meds',
+        }),
+      });
+    });
+
+    it('rejects WALK for a person (invalid action for ELDER subtype)', async () => {
+      mockPersonOwner();
+      mockPersonRecipient('ELDER');
+
+      const req = createRequest({ petId: 'person-1', activityType: 'WALK' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(400);
+      expect(prisma.careLog.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects WATER for a person', async () => {
+      mockPersonOwner();
+      mockPersonRecipient('CHILD');
+
+      const req = createRequest({ petId: 'person-1', activityType: 'WATER' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(400);
+      expect(prisma.careLog.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects LITTER_BOX for a person', async () => {
+      mockPersonOwner();
+      mockPersonRecipient('ELDER');
+
+      const req = createRequest({ petId: 'person-1', activityType: 'LITTER_BOX' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(400);
+      expect(prisma.careLog.create).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe('GET /api/care-logs', () => {
