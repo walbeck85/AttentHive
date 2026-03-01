@@ -97,9 +97,7 @@ function getSecondaryInfo(recipient: RecipientData): string {
 
 // Helper to get the detail page URL
 function getDetailUrl(recipient: RecipientData): string {
-  // For now, all recipients use the /pets/[id] route
-  // This can be updated when separate routes are created
-  return `/pets/${recipient.id}`;
+  return `/recipients/${recipient.id}`;
 }
 
 export default function RecipientCard({ recipient }: Props) {

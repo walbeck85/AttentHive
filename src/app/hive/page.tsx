@@ -95,7 +95,7 @@ export async function removeCaregiverMembership(formData: FormData) {
 
     // Also refresh the pet details page if we know which pet this membership belonged to.
     if (typeof recipientId === "string" && recipientId.length > 0) {
-      revalidatePath(`/pets/${recipientId}`);
+      revalidatePath(`/recipients/${recipientId}`);
     }
   } catch (error) {
     // For now, fail silently on this path; the primary, more explicit
@@ -274,7 +274,7 @@ function HiveCaregiverCard({ caregiver }: { caregiver: CaregiverGroup }) {
                  continues to match the rest of the app while the shell moves
                  over to MUI. */}
               <Link
-                href={`/pets/${pet.id}`}
+                href={`/recipients/${pet.id}`}
                 className="nav-pill text-xs"
                 data-testid={`hive-view-pet-${pet.id}`}
               >
@@ -357,7 +357,7 @@ export function HivePetsYouCareForSection({
                   </Typography>
                 </Box>
                 <Link
-                  href={`/pets/${pet.id}`}
+                  href={`/recipients/${pet.id}`}
                   className="nav-pill text-xs"
                   data-testid={`hive-view-pet-${pet.id}`}
                 >
@@ -416,7 +416,7 @@ function HiveOwnedPetsSection({
                 spacing={2}
               >
                 <Typography variant="body2">{pet.name}</Typography>
-                <Link href={`/pets/${pet.id}`} className="nav-pill text-xs">
+                <Link href={`/recipients/${pet.id}`} className="nav-pill text-xs">
                   Manage sharing
                 </Link>
               </Stack>

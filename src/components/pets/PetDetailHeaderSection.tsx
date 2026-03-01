@@ -21,21 +21,14 @@ type PetDetailHeaderSectionProps = {
   onBack: () => void;
 };
 
-// This header section centralizes the back action and high-level pet summary
-// so the main detail page component can stay focused on orchestration instead of layout.
 export default function PetDetailHeaderSection({
   pet,
   onBack,
 }: PetDetailHeaderSectionProps) {
-  const ageLabel = calculateAgeLabel(pet.birthDate);
-  const metaLine = [
-    pet.breed,
-    pet.gender === 'MALE' ? 'Male' : 'Female',
-    ageLabel,
-    `${pet.weight} lbs`,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const metaLine = buildMetaLine(pet);
+  const category = pet.category ?? 'PET';
+  const photoLabel =
+    category === 'PLANT' ? 'Plant photo' : category === 'PERSON' ? 'Photo' : 'Pet photo';
 
   return (
     <Box component="section">
@@ -84,7 +77,7 @@ export default function PetDetailHeaderSection({
                 size="lg"
               />
               <Typography variant="caption" color="text.secondary">
-                Pet photo
+                {photoLabel}
               </Typography>
             </Box>
 
@@ -99,13 +92,15 @@ export default function PetDetailHeaderSection({
                 {pet.name}
               </Typography>
 
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mb: 1.5 }}
-              >
-                {metaLine}
-              </Typography>
+              {metaLine && (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 1.5 }}
+                >
+                  {metaLine}
+                </Typography>
+              )}
 
               {Array.isArray(pet.characteristics) &&
                 pet.characteristics.length > 0 && (
@@ -132,6 +127,49 @@ export default function PetDetailHeaderSection({
       </Card>
     </Box>
   );
+}
+
+// -- Helpers ---------------------------------------------------------------
+
+function buildMetaLine(pet: PetData): string {
+  const category = pet.category ?? 'PET';
+
+  if (category === 'PLANT') {
+    return [
+      formatSubtype(pet.subtype),
+      pet.plantSpecies,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  }
+
+  if (category === 'PERSON') {
+    return [
+      formatSubtype(pet.subtype),
+      pet.relationship,
+      pet.birthDate ? calculateAgeLabel(pet.birthDate) : null,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  }
+
+  // PET (default)
+  return [
+    pet.breed,
+    pet.gender === 'MALE' ? 'Male' : pet.gender === 'FEMALE' ? 'Female' : null,
+    pet.birthDate ? calculateAgeLabel(pet.birthDate) : null,
+    pet.weight ? `${pet.weight} lbs` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+function formatSubtype(subtype: string | null | undefined): string {
+  if (!subtype) return '';
+  return subtype
+    .split('_')
+    .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
+    .join(' ');
 }
 
 function calculateAgeLabel(birthDate: string): string {

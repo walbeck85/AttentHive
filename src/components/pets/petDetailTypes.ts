@@ -29,14 +29,17 @@ export type CareLog = {
   editedAt?: string | null;
 };
 
-// Core pet data shape for this screen, decoupled from the raw Prisma model.
-// This gives the client a stable contract even if the schema grows new fields.
+// Core recipient data shape for the detail screen, decoupled from the raw
+// Prisma model.  This gives the client a stable contract even if the schema
+// grows new fields.  The type covers all three recipient categories so one
+// component tree can render pets, plants, and people.
 export type PetData = {
   id: string;
   name: string;
+  category?: 'PET' | 'PLANT' | 'PERSON';
   // Legacy type field - nullable for new subtypes
   type: string | null;
-  // Primary pet subtype identifier (DOG, CAT, BIRD, FISH, etc.)
+  // Primary subtype identifier (DOG, CAT, INDOOR, ELDER, etc.)
   subtype?: string | null;
   breed: string;
   gender: string;
@@ -48,4 +51,10 @@ export type PetData = {
   characteristics?: PetCharacteristicId[];
   description?: string;
   specialNotes?: string;
+  // Plant-specific fields (null for pets/people)
+  plantSpecies?: string | null;
+  sunlight?: string | null;
+  waterFrequency?: string | null;
+  // Person-specific fields (null for pets/plants)
+  relationship?: string | null;
 };

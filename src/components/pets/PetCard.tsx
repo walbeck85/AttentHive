@@ -712,7 +712,7 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
             >
               <Button
                 component={Link}
-                href={`/pets/${pet.id}`}
+                href={`/recipients/${pet.id}`}
                 variant="contained"
                 size="small"
                 sx={{
@@ -728,7 +728,7 @@ export default function PetCard({ pet, currentUserName, onQuickAction }: Props) 
 
               <Button
                 component={Link}
-                href={`/pets/${pet.id}/activity`}
+                href={`/recipients/${pet.id}/activity`}
                 variant="outlined"
                 size="small"
                 sx={{

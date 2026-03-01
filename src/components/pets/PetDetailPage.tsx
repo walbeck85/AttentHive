@@ -9,6 +9,7 @@ import PetDetailHeaderSection from '@/components/pets/PetDetailHeaderSection';
 import PetDetailActivitySection from '@/components/pets/PetDetailActivitySection';
 import PetDetailHiveSection from '@/components/pets/PetDetailHiveSection';
 import PetDetailProfileSection from '@/components/pets/PetDetailProfileSection';
+import RecipientInfoSection from './RecipientInfoSection';
 import QuickActions from './QuickActions';
 import ConfirmActionModal from './ConfirmActionModal';
 import WalkTimerModal from './WalkTimerModal';
@@ -266,7 +267,7 @@ export default function PetDetailPage({
         }}
       >
         <Typography variant="body2" color="text.secondary">
-          Loading pet details…
+          Loading details…
         </Typography>
       </Box>
     );
@@ -288,7 +289,7 @@ export default function PetDetailPage({
         }}
       >
         <Typography variant="h6" color="text.primary" sx={{ fontWeight: 600 }}>
-          Failed to load pet details
+          Failed to load details
         </Typography>
         {error && (
           <Typography
@@ -331,6 +332,8 @@ export default function PetDetailPage({
           </Box>
         )}
 
+        <RecipientInfoSection recipient={pet} />
+
         <PetDetailProfileSection
           pet={pet}
           setPet={setPet}
@@ -340,6 +343,7 @@ export default function PetDetailPage({
           careLogs={pet.careLogs}
           currentUserId={currentUserId}
           canEdit={canLogCareActions}
+          subtype={petSubtype}
           onCareLogUpdated={(updatedLog) => {
             setPet((prev) =>
               prev

@@ -60,7 +60,7 @@ describe('HivePetsYouCareForSection', () => {
         `hive-view-pet-${pet.id}`,
       ) as HTMLAnchorElement;
 
-      expect(link).toHaveAttribute('href', `/pets/${pet.id}`);
+      expect(link).toHaveAttribute('href', `/recipients/${pet.id}`);
     });
   });
 });
