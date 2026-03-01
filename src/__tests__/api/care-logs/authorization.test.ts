@@ -422,6 +422,130 @@ describe('Care Logs Authorization', () => {
     });
   });
 
+  describe('Cross-Category VIEWER Restrictions', () => {
+    it('VIEWER cannot create care logs for a PLANT recipient', async () => {
+      const viewer = createMockUser({
+        id: 'viewer-1',
+        email: 'viewer@example.com',
+      });
+
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'viewer@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(viewer);
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValueOnce({
+        ownerId: 'owner-1',
+        hives: [{ role: 'VIEWER' }],
+      });
+
+      const req = createRequest({ petId: 'plant-1', activityType: 'WATER' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(404);
+      expect(prisma.careLog.create).not.toHaveBeenCalled();
+    });
+
+    it('VIEWER cannot create care logs for a PERSON recipient', async () => {
+      const viewer = createMockUser({
+        id: 'viewer-1',
+        email: 'viewer@example.com',
+      });
+
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'viewer@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(viewer);
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValueOnce({
+        ownerId: 'owner-1',
+        hives: [{ role: 'VIEWER' }],
+      });
+
+      const req = createRequest({ petId: 'person-1', activityType: 'MEAL' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(404);
+      expect(prisma.careLog.create).not.toHaveBeenCalled();
+    });
+
+    it('VIEWER can read care logs for a PLANT recipient', async () => {
+      const viewer = createMockUser({
+        id: 'viewer-1',
+        email: 'viewer@example.com',
+      });
+      const logs = [createMockCareLog({ recipientId: 'plant-1' })];
+
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'viewer@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(viewer);
+      (prisma.careRecipient.findUnique as jest.Mock)
+        .mockResolvedValueOnce({ ownerId: 'owner-1', hives: [{ role: 'VIEWER' }] })
+        .mockResolvedValueOnce({ name: 'Fern' });
+      (prisma.careLog.findMany as jest.Mock).mockResolvedValue(logs);
+
+      const req = createGetRequest('http://localhost/api/care-logs?id=plant-1');
+      const res = await getHandler(req);
+
+      expect(res.status).toBe(200);
+    });
+
+    it('CAREGIVER can create care logs for a PLANT recipient', async () => {
+      const caregiver = createMockUser({
+        id: 'caregiver-1',
+        email: 'caregiver@example.com',
+      });
+      const careLog = createMockCareLog({
+        recipientId: 'plant-1',
+        userId: 'caregiver-1',
+        activityType: 'WATER',
+      });
+
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'caregiver@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(caregiver);
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValueOnce({
+        ownerId: 'owner-1',
+        hives: [{ role: 'CAREGIVER' }],
+      });
+      (prisma.careLog.create as jest.Mock).mockResolvedValue(careLog);
+
+      const req = createRequest({ petId: 'plant-1', activityType: 'WATER' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+      expect(prisma.careLog.create).toHaveBeenCalled();
+    });
+
+    it('CAREGIVER can create care logs for a PERSON recipient', async () => {
+      const caregiver = createMockUser({
+        id: 'caregiver-1',
+        email: 'caregiver@example.com',
+      });
+      const careLog = createMockCareLog({
+        recipientId: 'person-1',
+        userId: 'caregiver-1',
+        activityType: 'MEAL',
+      });
+
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'caregiver@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(caregiver);
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValueOnce({
+        ownerId: 'owner-1',
+        hives: [{ role: 'CAREGIVER' }],
+      });
+      (prisma.careLog.create as jest.Mock).mockResolvedValue(careLog);
+
+      const req = createRequest({ petId: 'person-1', activityType: 'MEAL' });
+      const res = await postHandler(req);
+
+      expect(res.status).toBe(201);
+      expect(prisma.careLog.create).toHaveBeenCalled();
+    });
+  });
+
   describe('OAuth User Access (session.user.id !== dbUser.id)', () => {
     /**
      * CRITICAL: This test verifies the fix for OAuth users.

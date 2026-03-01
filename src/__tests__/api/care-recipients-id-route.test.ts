@@ -187,4 +187,125 @@ describe('PATCH /api/care-recipients/[id]', () => {
     const json = (await res.json()) as { error: string }
     expect(json.error).toBe('Pet not found')
   })
+
+  // -- Hive role authorization ------------------------------------------------
+
+  it('returns 403 when a CAREGIVER hive member attempts to update', async () => {
+    ;(getServerSession as jest.Mock).mockResolvedValue({
+      user: { email: 'caregiver@example.com' },
+    })
+    ;(prisma.user.upsert as jest.Mock).mockResolvedValue({ id: 'user-caregiver' })
+    ;(prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
+      id: 'pet-1',
+      ownerId: 'user-owner',
+      hives: [{ userId: 'user-caregiver', role: 'CAREGIVER' }],
+    })
+
+    const req = createRequest({ name: 'Caregiver Update' })
+    const context = { params: { id: 'pet-1' } }
+    const res = await patchHandler(req, context)
+
+    expect(res.status).toBe(403)
+    const json = (await res.json()) as { error: string }
+    expect(json.error).toBe('You do not have permission to update this pet')
+  })
+
+  it('returns 403 when a VIEWER hive member attempts to update', async () => {
+    ;(getServerSession as jest.Mock).mockResolvedValue({
+      user: { email: 'viewer@example.com' },
+    })
+    ;(prisma.user.upsert as jest.Mock).mockResolvedValue({ id: 'user-viewer' })
+    ;(prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
+      id: 'pet-1',
+      ownerId: 'user-owner',
+      hives: [{ userId: 'user-viewer', role: 'VIEWER' }],
+    })
+
+    const req = createRequest({ name: 'Viewer Update' })
+    const context = { params: { id: 'pet-1' } }
+    const res = await patchHandler(req, context)
+
+    expect(res.status).toBe(403)
+    const json = (await res.json()) as { error: string }
+    expect(json.error).toBe('You do not have permission to update this pet')
+  })
+
+  it('returns 200 when a co-owner (OWNER role in hive) updates', async () => {
+    ;(getServerSession as jest.Mock).mockResolvedValue({
+      user: { email: 'coowner@example.com' },
+    })
+    ;(prisma.user.upsert as jest.Mock).mockResolvedValue({ id: 'user-coowner' })
+    ;(prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
+      id: 'pet-1',
+      ownerId: 'user-primary-owner',
+      hives: [{ userId: 'user-coowner', role: 'OWNER' }],
+    })
+    ;(prisma.careRecipient.update as jest.Mock).mockResolvedValue({
+      id: 'pet-1',
+      name: 'Co-owner Update',
+      careLogs: [],
+    })
+
+    const req = createRequest({ name: 'Co-owner Update' })
+    const context = { params: { id: 'pet-1' } }
+    const res = await patchHandler(req, context)
+
+    expect(res.status).toBe(200)
+    const json = (await res.json()) as { pet: { name: string } }
+    expect(json.pet.name).toBe('Co-owner Update')
+  })
+
+  // -- Plant/Person PATCH tests -----------------------------------------------
+
+  it('updates name on a PLANT recipient', async () => {
+    ;(getServerSession as jest.Mock).mockResolvedValue({
+      user: { email: 'user@example.com' },
+    })
+    ;(prisma.user.upsert as jest.Mock).mockResolvedValue({ id: 'user-1' })
+    ;(prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
+      id: 'plant-1',
+      ownerId: 'user-1',
+      category: 'PLANT',
+    })
+    ;(prisma.careRecipient.update as jest.Mock).mockResolvedValue({
+      id: 'plant-1',
+      name: 'My Fern',
+      category: 'PLANT',
+      careLogs: [],
+    })
+
+    const req = createRequest({ name: 'My Fern' })
+    const context = { params: { id: 'plant-1' } }
+    const res = await patchHandler(req, context)
+
+    expect(res.status).toBe(200)
+    const json = (await res.json()) as { pet: { name: string } }
+    expect(json.pet.name).toBe('My Fern')
+  })
+
+  it('updates name on a PERSON recipient', async () => {
+    ;(getServerSession as jest.Mock).mockResolvedValue({
+      user: { email: 'user@example.com' },
+    })
+    ;(prisma.user.upsert as jest.Mock).mockResolvedValue({ id: 'user-1' })
+    ;(prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({
+      id: 'person-1',
+      ownerId: 'user-1',
+      category: 'PERSON',
+    })
+    ;(prisma.careRecipient.update as jest.Mock).mockResolvedValue({
+      id: 'person-1',
+      name: 'Grandma Rose',
+      category: 'PERSON',
+      careLogs: [],
+    })
+
+    const req = createRequest({ name: 'Grandma Rose' })
+    const context = { params: { id: 'person-1' } }
+    const res = await patchHandler(req, context)
+
+    expect(res.status).toBe(200)
+    const json = (await res.json()) as { pet: { name: string } }
+    expect(json.pet.name).toBe('Grandma Rose')
+  })
 })
