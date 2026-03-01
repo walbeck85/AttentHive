@@ -1,9 +1,10 @@
 // src/components/pets/PetDetailActivitySection.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Box,
+  Button,
   Card,
   CardContent,
   CardHeader,
@@ -12,31 +13,62 @@ import {
   List,
   ListItem,
   ListItemText,
+  Stack,
   Tooltip,
   Typography,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import { formatDateTime, formatActivityDisplay } from '@/components/pets/petActivityUtils';
+import { ActivityType } from '@prisma/client';
+import {
+  formatDateTime,
+  formatActivityDisplay,
+} from '@/components/pets/petActivityUtils';
+import { getActionsForSubtype } from '@/lib/action-config';
+import { getActivityLabel } from '@/config/activityTypes';
 import type { CareLog } from '@/components/pets/petDetailTypes';
 import EditActivityModal from './EditActivityModal';
+
+const PAGE_SIZE = 20;
 
 type PetDetailActivitySectionProps = {
   careLogs: CareLog[];
   currentUserId: string;
   canEdit: boolean;
   onCareLogUpdated: (updatedLog: CareLog) => void;
+  subtype?: string;
 };
 
-// This section owns the recent activity card so the main detail page
-// doesn't have to repeat Paper/Box layout every time we tweak styling.
 export default function PetDetailActivitySection({
   careLogs,
   currentUserId,
   canEdit,
   onCareLogUpdated,
+  subtype,
 }: PetDetailActivitySectionProps) {
   const [editingLog, setEditingLog] = useState<CareLog | null>(null);
+  const [filter, setFilter] = useState<'ALL' | ActivityType>('ALL');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // Build the list of valid filter options for this subtype
+  const filterOptions = useMemo(() => {
+    if (!subtype) return [] as ActivityType[];
+    return getActionsForSubtype(subtype);
+  }, [subtype]);
+
+  // Apply filter then paginate
+  const filteredLogs = useMemo(() => {
+    if (filter === 'ALL') return careLogs;
+    return careLogs.filter((l) => l.activityType === filter);
+  }, [careLogs, filter]);
+
+  const visibleLogs = filteredLogs.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredLogs.length;
+
+  const handleFilterChange = (next: 'ALL' | ActivityType) => {
+    setFilter(next);
+    setVisibleCount(PAGE_SIZE);
+  };
 
   const handleEditClick = (log: CareLog) => {
     setEditingLog(log);
@@ -52,7 +84,6 @@ export default function PetDetailActivitySection({
   };
 
   return (
-    // Semantic section keeps this card grouped logically on the detail page while preserving any page-level spacing utilities.
     <>
       <Box component="section">
         <Card
@@ -65,9 +96,8 @@ export default function PetDetailActivitySection({
             overflow: 'hidden',
           }}
         >
-          {/* CardHeader handles the title typography and spacing so we do not rely on Tailwind for heading styles. */}
           <CardHeader
-            title="Recent activity"
+            title="Activity history"
             sx={{
               px: 3,
               pt: 2,
@@ -79,33 +109,73 @@ export default function PetDetailActivitySection({
             }}
           />
 
-          {/* CardContent manages padding; list and empty states sit inside without extra Tailwind wrappers. */}
-          <CardContent sx={{ pt: 1, px: 0, pb: 0 }}>
-            {careLogs.length === 0 && (
-              // Empty state uses muted MUI typography for clarity when no activity exists.
-              <Box sx={{ px: 3, py: 2 }}>
+          <CardContent sx={{ pt: 1.5, px: 3, pb: 2 }}>
+            {/* Filter chips */}
+            {filterOptions.length > 0 && (
+              <Stack
+                direction="row"
+                spacing={0.75}
+                sx={{ mb: 2, flexWrap: 'wrap', gap: 0.75 }}
+              >
+                <Chip
+                  label="All"
+                  size="small"
+                  variant={filter === 'ALL' ? 'filled' : 'outlined'}
+                  color={filter === 'ALL' ? 'primary' : 'default'}
+                  onClick={() => handleFilterChange('ALL')}
+                  sx={{ fontWeight: 600 }}
+                />
+                {filterOptions.map((type) => (
+                  <Chip
+                    key={type}
+                    label={getActivityLabel(type)}
+                    size="small"
+                    variant={filter === type ? 'filled' : 'outlined'}
+                    color={filter === type ? 'primary' : 'default'}
+                    onClick={() => handleFilterChange(type)}
+                  />
+                ))}
+              </Stack>
+            )}
+
+            {filteredLogs.length === 0 && (
+              <Box sx={{ py: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  No activity logged yet.
+                  {filter === 'ALL'
+                    ? 'No activity logged yet.'
+                    : `No ${getActivityLabel(filter).toLowerCase()} activity logged yet.`}
                 </Typography>
               </Box>
             )}
 
-            {careLogs.length > 0 && (
-              // Activity list relies on MUI List styling and dividers to align with the rest of the UI kit.
+            {visibleLogs.length > 0 && (
               <List disablePadding>
-                {careLogs.map((log) => {
-                  // User can edit if they have edit permission and created this log
-                  const canEditThisLog = canEdit && log.user?.id === currentUserId;
+                {visibleLogs.map((log) => {
+                  const canEditThisLog =
+                    canEdit && log.user?.id === currentUserId;
 
                   return (
                     <ListItem
                       key={log.id}
                       divider
                       alignItems="flex-start"
-                      sx={{ px: 3, py: 1.5 }}
+                      sx={{ px: 0, py: 1.5 }}
                       secondaryAction={
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-end',
+                            gap: 0.5,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                            }}
+                          >
                             {canEditThisLog && (
                               <Tooltip title="Edit activity" arrow>
                                 <IconButton
@@ -131,7 +201,10 @@ export default function PetDetailActivitySection({
                             </Typography>
                           </Box>
                           {log.editedAt && (
-                            <Tooltip title={`Edited ${formatDateTime(log.editedAt)}`} arrow>
+                            <Tooltip
+                              title={`Edited ${formatDateTime(log.editedAt)}`}
+                              arrow
+                            >
                               <Chip
                                 icon={<EditIcon sx={{ fontSize: 12 }} />}
                                 label="edited"
@@ -150,19 +223,27 @@ export default function PetDetailActivitySection({
                       }
                     >
                       <ListItemText
-                        primary={formatActivityDisplay(log.activityType, log.metadata)}
+                        primary={formatActivityDisplay(
+                          log.activityType,
+                          log.metadata,
+                        )}
                         secondary={
                           <>
-                            {/* Attribution line stays small and muted through MUI color tokens instead of Tailwind text classes. */}
                             <Typography
                               variant="body2"
-                              sx={{ fontSize: 13, mt: 0.25, color: 'text.secondary' }}
+                              sx={{
+                                fontSize: 13,
+                                mt: 0.25,
+                                color: 'text.secondary',
+                              }}
                             >
                               by{' '}
                               <Box
                                 component="span"
-                                // Accent uses theme primary color so it adapts in light and dark modes without manual checks.
-                                sx={{ color: 'primary.main', fontWeight: 500 }}
+                                sx={{
+                                  color: 'primary.main',
+                                  fontWeight: 500,
+                                }}
                               >
                                 {log.user?.name || 'Someone'}
                               </Box>
@@ -179,7 +260,6 @@ export default function PetDetailActivitySection({
                                 {log.notes}
                               </Typography>
                             )}
-                            {/* Photo thumbnail */}
                             {log.photoUrl && (
                               <Box
                                 sx={{
@@ -210,7 +290,6 @@ export default function PetDetailActivitySection({
                           variant: 'body2',
                           sx: {
                             fontWeight: 600,
-                            // Primary text leverages the palette token so it respects the active theme automatically.
                             color: 'text.primary',
                           },
                         }}
@@ -221,11 +300,23 @@ export default function PetDetailActivitySection({
                 })}
               </List>
             )}
+
+            {hasMore && (
+              <Box sx={{ mt: 1.5, textAlign: 'center' }}>
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                  sx={{ textTransform: 'none' }}
+                >
+                  Show more ({filteredLogs.length - visibleCount} remaining)
+                </Button>
+              </Box>
+            )}
           </CardContent>
         </Card>
       </Box>
 
-      {/* Edit modal */}
       <EditActivityModal
         open={!!editingLog}
         careLog={editingLog}

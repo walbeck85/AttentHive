@@ -343,6 +343,7 @@ export default function PetDetailPage({
           careLogs={pet.careLogs}
           currentUserId={currentUserId}
           canEdit={canLogCareActions}
+          subtype={petSubtype}
           onCareLogUpdated={(updatedLog) => {
             setPet((prev) =>
               prev
