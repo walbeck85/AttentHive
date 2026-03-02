@@ -55,6 +55,7 @@ export async function loadAccountPageData(): Promise<AccountPageData | null> {
       // This value is never used for auth; it just satisfies the schema
       // for OAuth users so we don't special-case them in queries.
       passwordHash: "google-oauth",
+      emailVerified: true,
     },
     select: {
       id: true,

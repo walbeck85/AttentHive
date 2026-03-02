@@ -177,6 +177,7 @@ async function getOrCreateDbUserForSession() {
       name: session.user.name ?? '',
       // This value is never used for login; it just satisfies the schema.
       passwordHash: 'google-oauth',
+      emailVerified: true,
     },
   });
 

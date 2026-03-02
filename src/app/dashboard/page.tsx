@@ -45,6 +45,8 @@ export default async function DashboardPage() {
       // This placeholder value is never used for login; it just satisfies the
       // non-null constraint on passwordHash for OAuth users.
       passwordHash: "google-oauth",
+      // Google already verified the email during the OAuth flow.
+      emailVerified: true,
     },
   });
 

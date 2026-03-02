@@ -46,6 +46,7 @@ async function getDbUserForSession() {
         name: session.user.name ?? "",
         // Satisfies schema for OAuth users; never used as a real password.
         passwordHash: "google-oauth",
+        emailVerified: true,
       },
     });
   }
