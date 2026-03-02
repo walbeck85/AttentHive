@@ -30,6 +30,9 @@ export function createMockUser(overrides?: Partial<User>): User {
     phone: null,
     resetToken: null,
     resetTokenExpiry: null,
+    emailVerified: false,
+    emailVerifyToken: null,
+    emailVerifyExpires: null,
     ...overrides,
   };
 }
