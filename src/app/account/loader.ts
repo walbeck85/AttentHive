@@ -16,6 +16,7 @@ export type AccountUser = {
   email: string;
   phone: string | null;
   address: string | null;
+  emailVerified: boolean;
 };
 
 // Shared pets are still just Recipients, but I add a lightweight access flag
@@ -63,6 +64,7 @@ export async function loadAccountPageData(): Promise<AccountPageData | null> {
       email: true,
       phone: true,
       address: true,
+      emailVerified: true,
     },
   });
 
@@ -72,6 +74,7 @@ export async function loadAccountPageData(): Promise<AccountPageData | null> {
     email: dbUserRaw.email,
     phone: dbUserRaw.phone,
     address: dbUserRaw.address,
+    emailVerified: dbUserRaw.emailVerified,
   };
 
   // Reuse the shared-pets helper so the Account page stays in sync with
