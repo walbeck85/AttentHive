@@ -135,6 +135,7 @@ export default async function RecipientDetailPage({ params }: Params) {
       isOwner={isOwner}
       currentUserRole={currentUserRole}
       currentUserId={dbUser.id}
+      emailVerified={dbUser.emailVerified}
     />
   );
 }

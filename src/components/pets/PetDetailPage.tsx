@@ -56,6 +56,8 @@ type PetDetailPageProps = {
   currentUserRole: 'OWNER' | 'CAREGIVER' | 'VIEWER';
   // The current user's ID for checking edit permissions on activities.
   currentUserId: string;
+  // Whether the current user has verified their email address.
+  emailVerified?: boolean;
 };
 
 export default function PetDetailPage({
@@ -64,6 +66,7 @@ export default function PetDetailPage({
   isOwner: isOwnerProp = false,
   currentUserRole,
   currentUserId,
+  emailVerified = false,
 }: PetDetailPageProps) {
   const router = useRouter();
 
@@ -363,6 +366,7 @@ export default function PetDetailPage({
           isOwner={currentUserRole === 'OWNER'}
           isPrimaryOwner={isOwner}
           initialMembers={hiveMembers}
+          emailVerified={emailVerified}
         />
       </PetDetailShell>
 

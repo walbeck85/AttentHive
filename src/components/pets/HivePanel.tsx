@@ -43,6 +43,7 @@ type HivePanelProps = {
   isOwner: boolean;
   isPrimaryOwner: boolean;
   initialMembers: HiveMember[];
+  emailVerified?: boolean;
 };
 
 /**
@@ -60,6 +61,7 @@ export default function HivePanel({
   isOwner,
   isPrimaryOwner,
   initialMembers,
+  emailVerified = false,
 }: HivePanelProps) {
   const [members, setMembers] = useState<HiveMember[]>(initialMembers);
   const [email, setEmail] = useState("");
@@ -301,6 +303,11 @@ export default function HivePanel({
           onSubmit={handleInvite}
           sx={{ px: 3, py: hasMembers ? 2 : 3, display: "flex", flexDirection: "column", gap: 1.5 }}
         >
+          {!emailVerified && (
+            <Typography variant="body2" color="warning.main">
+              Please verify your email address before inviting members.
+            </Typography>
+          )}
           <TextField
             type="email"
             label="Invite by email"
@@ -309,6 +316,7 @@ export default function HivePanel({
             placeholder="user@example.com"
             size="small"
             fullWidth
+            disabled={!emailVerified}
           />
 
           {isPrimaryOwner && (
@@ -370,7 +378,7 @@ export default function HivePanel({
               type="submit"
               variant="contained"
               size="small"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !emailVerified}
             >
               {isSubmitting ? "Inviting..." : `Invite ${selectedRole === "OWNER" && isPrimaryOwner ? "co-owner" : "caregiver"}`}
             </Button>
