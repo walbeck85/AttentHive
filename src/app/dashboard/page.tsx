@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getSharedPetsForUser } from "@/lib/hive";
 import AddRecipientForm from "@/components/pets/AddRecipientForm";
 import { RecipientList, type RecipientData } from "@/components/recipients";
+import VerificationBanner from "@/components/auth/VerificationBanner";
 // MUI layout shell for the dashboard – this keeps spacing, max-width, and card
 // geometry aligned with the global theme instead of hand-tuned Tailwind margins.
 import { Container, Paper, Stack, Typography } from "@mui/material";
@@ -45,6 +46,8 @@ export default async function DashboardPage() {
       // This placeholder value is never used for login; it just satisfies the
       // non-null constraint on passwordHash for OAuth users.
       passwordHash: "google-oauth",
+      // Google already verified the email during the OAuth flow.
+      emailVerified: true,
     },
   });
 
@@ -129,6 +132,10 @@ export default async function DashboardPage() {
             Welcome, {sessionUser.name ?? sessionUser.email ?? "friend"}
           </Typography>
         </Paper>
+
+        {!dbUser.emailVerified && (
+          <VerificationBanner email={dbUser.email} />
+        )}
 
         {/* Add recipient card */}
         <Paper

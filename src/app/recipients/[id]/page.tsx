@@ -40,6 +40,7 @@ export default async function RecipientDetailPage({ params }: Params) {
       email: session.user.email,
       name: session.user.name ?? "",
       passwordHash: "google-oauth",
+      emailVerified: true,
     },
   });
 
@@ -134,6 +135,7 @@ export default async function RecipientDetailPage({ params }: Params) {
       isOwner={isOwner}
       currentUserRole={currentUserRole}
       currentUserId={dbUser.id}
+      emailVerified={dbUser.emailVerified}
     />
   );
 }

@@ -50,6 +50,7 @@ export async function removeCaregiverMembership(formData: FormData) {
       name: name ?? "",
       // Satisfies schema; not used for OAuth logins
       passwordHash: "google-oauth",
+      emailVerified: true,
     },
   });
 

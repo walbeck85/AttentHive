@@ -43,6 +43,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (dbUser && !dbUser.emailVerified) {
+      return NextResponse.json(
+        { error: 'Please verify your email address before inviting members' },
+        { status: 403 },
+      );
+    }
+
     const body = await request.json();
     const parsed = inviteSchema.safeParse(body);
 

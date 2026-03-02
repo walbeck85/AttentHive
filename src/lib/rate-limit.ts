@@ -64,6 +64,16 @@ export const passwordResetLimiter = redis
     })
   : null;
 
+// Email verification limiter: 3 requests per hour
+// Prevents abuse of verification email sending
+export const verificationLimiter = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(3, '1 h'),
+      prefix: 'ratelimit:verification',
+    })
+  : null;
+
 // API limiter: 100 requests per minute
 // General protection for authenticated API endpoints
 export const apiLimiter = redis

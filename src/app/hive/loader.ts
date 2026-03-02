@@ -62,6 +62,7 @@ export async function loadHivePageData(): Promise<HivePageData | null> {
       name: name ?? "",
       // Satisfies schema; not used for OAuth logins
       passwordHash: "google-oauth",
+      emailVerified: true,
     },
   });
 

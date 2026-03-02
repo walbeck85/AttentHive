@@ -32,7 +32,7 @@ jest.mock('@/lib/hive', () => ({
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     user: {
-      findUnique: jest.fn().mockResolvedValue({ id: 'user-1' }),
+      findUnique: jest.fn().mockResolvedValue({ id: 'user-1', emailVerified: true }),
     },
   },
 }));

@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
             email: session.user.email,
             name: session.user.name ?? '',
             passwordHash: 'google-oauth',
+            emailVerified: true,
           },
         })
       : null;

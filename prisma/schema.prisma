@@ -93,6 +93,9 @@ model User {
   phone             String?
   resetToken        String?     @unique
   resetTokenExpiry  DateTime?
+  emailVerified     Boolean     @default(false)
+  emailVerifyToken  String?     @unique
+  emailVerifyExpires DateTime?
   hives             Hive[]
   careLogs          CareLog[]
   ownedPets         CareRecipient[] @relation("PetOwner")

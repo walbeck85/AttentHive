@@ -14,6 +14,7 @@ type PetDetailHiveSectionProps = {
   isOwner: boolean;
   isPrimaryOwner: boolean;
   initialMembers: HiveMember[];
+  emailVerified?: boolean;
 };
 
 // This section wraps the HivePanel so the main detail page stays focused
@@ -23,6 +24,7 @@ export default function PetDetailHiveSection({
   isOwner,
   isPrimaryOwner,
   initialMembers,
+  emailVerified = false,
 }: PetDetailHiveSectionProps) {
   return (
     <Box component="section" id="hive">
@@ -50,6 +52,7 @@ export default function PetDetailHiveSection({
             isOwner={isOwner}
             isPrimaryOwner={isPrimaryOwner}
             initialMembers={initialMembers}
+            emailVerified={emailVerified}
           />
         </CardContent>
       </Card>
