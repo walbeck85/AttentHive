@@ -35,6 +35,8 @@ async function main() {
         email: user.email,
         name: user.name,
         passwordHash: hashed,
+        // Demo accounts skip the verification flow
+        emailVerified: true,
       },
     });
 
