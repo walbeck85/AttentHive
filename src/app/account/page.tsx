@@ -158,9 +158,7 @@ function AccountProfileSection({
           initialEmail={user.email}
           initialPhone={user.phone ?? ""}
           initialAddress={user.address ?? ""}
-          // We are intentionally not threading through any "email verified"
-          // state yet because the current Prisma model does not track it.
-          // The copy inside the form already explains that gap.
+          emailVerified={user.emailVerified}
         />
       </Stack>
     </Paper>
