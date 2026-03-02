@@ -94,13 +94,22 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = (user as { id: string }).id;
+        // Fetch emailVerified from DB on initial sign-in
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { emailVerified: true },
+        });
+        token.emailVerified = dbUser?.emailVerified ?? false;
       }
       // When the client calls `update()` from useSession, NextAuth invokes
-      // this callback with trigger="update". We merge any new fields (e.g. name)
-      // into the token so subsequent session reads reflect the change.
+      // this callback with trigger="update". We merge any new fields (e.g. name,
+      // emailVerified) into the token so subsequent session reads reflect the change.
       if (trigger === "update" && session) {
         if (session.name !== undefined) {
           token.name = session.name;
+        }
+        if (session.emailVerified !== undefined) {
+          token.emailVerified = session.emailVerified;
         }
       }
       return token;
@@ -108,6 +117,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         (session.user as { id?: string }).id = token.id as string;
+        session.user.emailVerified = token.emailVerified ?? false;
       }
       return session;
     },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import AuthShell from "@/components/auth/AuthShell";
 import {
@@ -19,6 +20,7 @@ type VerifyEmailClientProps = {
 type Status = "verifying" | "success" | "expired" | "error" | "no-token";
 
 export default function VerifyEmailClient({ token }: VerifyEmailClientProps) {
+  const { update } = useSession();
   const [status, setStatus] = useState<Status>(token ? "verifying" : "no-token");
   const [resendEmail, setResendEmail] = useState("");
   const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -36,6 +38,8 @@ export default function VerifyEmailClient({ token }: VerifyEmailClientProps) {
 
         if (res.ok) {
           setStatus("success");
+          // Refresh the session JWT so emailVerified is up-to-date
+          await update({ emailVerified: true });
         } else {
           const data = await res.json().catch(() => null);
           const msg = data?.error ?? "";
@@ -51,7 +55,7 @@ export default function VerifyEmailClient({ token }: VerifyEmailClientProps) {
     }
 
     verify();
-  }, [token]);
+  }, [token, update]);
 
   async function handleResend() {
     if (!resendEmail.trim()) return;
