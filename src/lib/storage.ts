@@ -84,10 +84,12 @@ export async function uploadImage(
 
   // Validate file size
   if (file.size > MAX_FILE_SIZE_BYTES) {
+    const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+    console.warn(`Upload rejected: ${sizeMB}MB exceeds 10MB limit`);
     return {
       success: false,
       error: 'File too large. Maximum size is 10MB.',
-      status: 400,
+      status: 413,
     };
   }
 
