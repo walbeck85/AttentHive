@@ -64,18 +64,18 @@ describe('ActivityPhotoPicker', () => {
       expect(onPhotoChange).not.toHaveBeenCalled();
     });
 
-    it('shows error for files over 5MB', () => {
+    it('shows error for files over 10MB', () => {
       const onPhotoChange = jest.fn();
       renderWithProviders(<ActivityPhotoPicker {...defaultProps} onPhotoChange={onPhotoChange} />);
 
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-      // Create a file object with size > 5MB
-      const largeContent = new Array(6 * 1024 * 1024).fill('a').join('');
+      // Create a file object with size > 10MB
+      const largeContent = new Array(11 * 1024 * 1024).fill('a').join('');
       const file = new File([largeContent], 'large.jpg', { type: 'image/jpeg' });
 
       fireEvent.change(fileInput, { target: { files: [file] } });
 
-      expect(screen.getByText(/image must be under 5mb/i)).toBeInTheDocument();
+      expect(screen.getByText(/too large/i)).toBeInTheDocument();
       expect(onPhotoChange).not.toHaveBeenCalled();
     });
 
