@@ -39,9 +39,9 @@ jest.mock('@/lib/prisma', () => ({
   },
 }));
 
-// Mock Supabase - we don't need actual uploads for security tests
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn(() => ({
+// Mock the centralized Supabase client used by the refactored route
+jest.mock('@/lib/supabase-server', () => ({
+  getSupabaseServerClient: jest.fn(() => ({
     storage: {
       from: jest.fn(() => ({
         upload: jest.fn(() => ({ data: { path: 'test/path.jpg' }, error: null })),
@@ -128,9 +128,6 @@ function createMockRequest(
 
 beforeEach(() => {
   jest.clearAllMocks();
-  // Set env vars for Supabase
-  process.env.SUPABASE_URL = 'https://test.supabase.co';
-  process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key';
 });
 
 describe('POST /api/care-recipients/[id]/photo - Security', () => {
