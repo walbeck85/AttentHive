@@ -19,7 +19,7 @@ import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import { formatActivityDisplay } from '@/components/pets/petActivityUtils';
 import type { CareLog } from '@/components/pets/petDetailTypes';
 
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+import { MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_DISPLAY } from '@/lib/upload-limits';
 
 type EditActivityModalProps = {
   open: boolean;
@@ -84,7 +84,8 @@ export default function EditActivityModal({
     }
 
     if (file.size > MAX_FILE_SIZE_BYTES) {
-      setPhotoError('Image must be under 5MB');
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+      setPhotoError(`This photo is too large (${sizeMB}MB). Maximum size is ${MAX_FILE_SIZE_DISPLAY}. Try taking the photo at a lower resolution.`);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }

@@ -2,8 +2,9 @@
 import 'server-only';
 
 import { getSupabaseServerClient } from './supabase-server';
+import { MAX_FILE_SIZE_BYTES } from './upload-limits';
 
-export const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+export { MAX_FILE_SIZE_BYTES } from './upload-limits';
 export const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 /**
@@ -84,10 +85,12 @@ export async function uploadImage(
 
   // Validate file size
   if (file.size > MAX_FILE_SIZE_BYTES) {
+    const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+    console.warn(`Upload rejected: ${sizeMB}MB exceeds 10MB limit`);
     return {
       success: false,
-      error: 'File is too large. Maximum size is 5 MB.',
-      status: 400,
+      error: 'File too large. Maximum size is 10MB.',
+      status: 413,
     };
   }
 

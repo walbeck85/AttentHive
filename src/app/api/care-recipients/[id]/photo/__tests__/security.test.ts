@@ -10,13 +10,16 @@ type ConsoleErrorSpy = jest.SpyInstance<
 >;
 
 let consoleErrorSpy: ConsoleErrorSpy;
+let consoleWarnSpy: ConsoleErrorSpy;
 
 beforeAll(() => {
   consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
 afterAll(() => {
   consoleErrorSpy.mockRestore();
+  consoleWarnSpy.mockRestore();
 });
 
 jest.mock('next-auth', () => ({
@@ -39,9 +42,9 @@ jest.mock('@/lib/prisma', () => ({
   },
 }));
 
-// Mock Supabase - we don't need actual uploads for security tests
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn(() => ({
+// Mock the centralized Supabase client used by the refactored route
+jest.mock('@/lib/supabase-server', () => ({
+  getSupabaseServerClient: jest.fn(() => ({
     storage: {
       from: jest.fn(() => ({
         upload: jest.fn(() => ({ data: { path: 'test/path.jpg' }, error: null })),
@@ -106,6 +109,27 @@ function createMockFile(
   return mockFile as File;
 }
 
+// Creates a mock file with a spoofed size without allocating real memory.
+// Useful for testing size limit rejection without slow 11MB allocations.
+function createMockFileWithSize(
+  content: Uint8Array,
+  filename: string,
+  mimeType: string,
+  fakeSize: number
+): File {
+  const mockFile = Object.create(File.prototype);
+  Object.defineProperties(mockFile, {
+    name: { value: filename, writable: false },
+    type: { value: mimeType, writable: false },
+    size: { value: fakeSize, writable: false },
+    arrayBuffer: {
+      value: async () => content.buffer.slice(content.byteOffset, content.byteOffset + content.byteLength),
+      writable: false,
+    },
+  });
+  return mockFile as File;
+}
+
 // Create a mock request with formData that returns the mock file
 function createMockRequest(
   file: File | null,
@@ -128,9 +152,6 @@ function createMockRequest(
 
 beforeEach(() => {
   jest.clearAllMocks();
-  // Set env vars for Supabase
-  process.env.SUPABASE_URL = 'https://test.supabase.co';
-  process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key';
 });
 
 describe('POST /api/care-recipients/[id]/photo - Security', () => {
@@ -286,6 +307,62 @@ describe('POST /api/care-recipients/[id]/photo - Security', () => {
       const validFile = createMockFile(VALID_WEBP_BYTES, 'photo.webp', 'image/webp');
 
       const { request, context } = createMockRequest(validFile);
+      const res = await postHandler(request, context);
+
+      expect(res.status).toBe(200);
+    });
+  });
+
+  describe('File Size Limits', () => {
+    it('rejects files over 10MB with 413', async () => {
+      const owner = createMockUser({ id: 'owner-1', email: 'owner@example.com' });
+      const pet = createMockCareRecipient({ id: 'pet-1', ownerId: 'owner-1' });
+
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'owner@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
+
+      const oversizedFile = createMockFileWithSize(
+        VALID_JPEG_BYTES,
+        'huge.jpg',
+        'image/jpeg',
+        11 * 1024 * 1024
+      );
+
+      const { request, context } = createMockRequest(oversizedFile);
+      const res = await postHandler(request, context);
+
+      expect(res.status).toBe(413);
+      const body = await res.json();
+      expect(body.error).toContain('File too large');
+      expect(body.error).toContain('10MB');
+    });
+
+    it('accepts files under 10MB', async () => {
+      const owner = createMockUser({ id: 'owner-1', email: 'owner@example.com' });
+      const pet = createMockCareRecipient({ id: 'pet-1', ownerId: 'owner-1' });
+
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'owner@example.com' },
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(owner);
+      (prisma.careRecipient.findUnique as jest.Mock).mockResolvedValue({ ...pet, hives: [] });
+      (prisma.careRecipient.update as jest.Mock).mockResolvedValue({
+        ...pet,
+        imageUrl: 'https://example.com/test.jpg',
+      });
+
+      // 9MB is under the limit
+      const underLimitFile = createMockFileWithSize(
+        VALID_JPEG_BYTES,
+        'normal.jpg',
+        'image/jpeg',
+        9 * 1024 * 1024
+      );
+
+      const { request, context } = createMockRequest(underLimitFile);
       const res = await postHandler(request, context);
 
       expect(res.status).toBe(200);
